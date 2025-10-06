@@ -1,7 +1,8 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Heart, Flame, MessageCircle, Users, User } from "lucide-react";
+import { Heart, Flame, MessageCircle, Users, User, Rss, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { NotificationBell } from "./NotificationBell";
 
 interface LayoutProps {
   children: ReactNode;
@@ -14,6 +15,7 @@ export const Layout = ({ children }: LayoutProps) => {
   const navItems = [
     { icon: Flame, label: "Discover", path: "/discover" },
     { icon: Users, label: "Matches", path: "/matches" },
+    { icon: Rss, label: "Feed", path: "/feed" },
     { icon: MessageCircle, label: "Messages", path: "/messages" },
     { icon: User, label: "Profile", path: "/profile" },
   ];
@@ -32,6 +34,12 @@ export const Layout = ({ children }: LayoutProps) => {
             <Heart className="w-8 h-8 text-primary animate-glow" fill="currentColor" />
             <span className="text-2xl font-display gradient-text">DateWise</span>
           </Link>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <Link to="/settings">
+              <Settings className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -61,6 +69,11 @@ export const Layout = ({ children }: LayoutProps) => {
           </div>
         </div>
       </nav>
+      
+      {/* Watermark */}
+      <div className="fixed bottom-24 left-0 right-0 text-center pointer-events-none z-40">
+        <p className="text-xs text-muted-foreground/50">by Phil</p>
+      </div>
     </div>
   );
 };

@@ -1,0 +1,210 @@
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Layout } from "@/components/Layout";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { Loader2, Shield, Bell, Eye, Trash2 } from "lucide-react";
+
+const Settings = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+  const [photoVisibility, setPhotoVisibility] = useState("everyone");
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    fetchProfile();
+  }, [user, navigate]);
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user?.id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+      setPhotoVisibility(data.photo_visibility || "everyone");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ photo_visibility: photoVisibility })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Settings saved successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[calc(100vh-140px)]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <div className="space-y-6">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-bold gradient-text">Settings</h1>
+            <p className="text-muted-foreground">Manage your preferences</p>
+          </div>
+
+          {/* Privacy Settings */}
+          <Card className="glass-card p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <Shield className="w-6 h-6 text-primary" />
+              <h2 className="text-xl font-semibold">Privacy</h2>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="photo-visibility" className="flex items-center gap-2">
+                  <Eye className="w-4 h-4" />
+                  Who can view my photos
+                </Label>
+                <Select value={photoVisibility} onValueChange={setPhotoVisibility}>
+                  <SelectTrigger id="photo-visibility" className="glass">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="everyone">Everyone</SelectItem>
+                    <SelectItem value="matches">Matches Only</SelectItem>
+                    <SelectItem value="private">Private</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </Card>
+
+          {/* Notification Settings */}
+          <Card className="glass-card p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <Bell className="w-6 h-6 text-primary" />
+              <h2 className="text-xl font-semibold">Notifications</h2>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="font-medium">Push Notifications</p>
+                  <p className="text-sm text-muted-foreground">
+                    Receive notifications for matches and messages
+                  </p>
+                </div>
+                <Switch
+                  checked={notificationsEnabled}
+                  onCheckedChange={setNotificationsEnabled}
+                />
+              </div>
+
+              <Separator className="bg-border/50" />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="font-medium">Email Notifications</p>
+                  <p className="text-sm text-muted-foreground">Get updates via email</p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+            </div>
+          </Card>
+
+          {/* Account Actions */}
+          <Card className="glass-card p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <Trash2 className="w-6 h-6 text-destructive" />
+              <h2 className="text-xl font-semibold">Account</h2>
+            </div>
+
+            <div className="space-y-4">
+              <Button variant="outline" className="w-full glass border-destructive/20 hover:border-destructive/40">
+                Deactivate Account
+              </Button>
+              
+              <Button variant="outline" className="w-full glass border-destructive/50 hover:border-destructive text-destructive">
+                Delete Account
+              </Button>
+
+              <div className="space-y-2 text-center">
+                <p className="text-sm text-muted-foreground">
+                  <a href="#" className="text-primary hover:underline">Privacy Policy</a>
+                  {" • "}
+                  <a href="#" className="text-primary hover:underline">Terms of Service</a>
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Save Button */}
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full gradient-romantic text-white"
+            size="lg"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Settings"
+            )}
+          </Button>
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
+export default Settings;
