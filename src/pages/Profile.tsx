@@ -4,7 +4,7 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Loader2 } from "lucide-react";
+import { LogOut, Loader2, Image as ImageIcon, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -77,11 +77,23 @@ const Profile = () => {
               </div>
 
               <div className="pt-20 space-y-4">
-                <div>
-                  <h1 className="text-3xl font-bold">
-                    {profile?.name}, {profile?.age}
-                  </h1>
-                  <p className="text-muted-foreground">{profile?.city}</p>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-3xl font-bold">
+                        {profile?.name}, {profile?.age}
+                      </h1>
+                      {profile?.verified && (
+                        <CheckCircle className="w-6 h-6 text-primary fill-primary" />
+                      )}
+                    </div>
+                    <p className="text-muted-foreground">{profile?.city}</p>
+                  </div>
+                  {profile?.subscription_tier && profile.subscription_tier !== 'free' && (
+                    <Badge className="gradient-romantic text-white">
+                      {profile.subscription_tier.toUpperCase()}
+                    </Badge>
+                  )}
                 </div>
 
                 {profile?.bio && <p className="text-foreground/80">{profile.bio}</p>}

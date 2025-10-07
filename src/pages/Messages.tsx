@@ -5,16 +5,18 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Circle, CheckCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import defaultAvatar from "@/assets/default-avatar.jpg";
+import { formatDistanceToNow } from "date-fns";
 
 interface Message {
   id: string;
   sender_id: string;
   content: string;
   created_at: string;
+  is_read: boolean;
 }
 
 interface MatchInfo {
@@ -23,6 +25,8 @@ interface MatchInfo {
     id: string;
     name: string;
     avatar_url: string | null;
+    is_online: boolean;
+    last_seen: string;
   };
 }
 
@@ -47,11 +51,17 @@ const Messages = () => {
       return;
     }
     fetchMatches();
+    updateOnlineStatus(true);
+
+    return () => {
+      updateOnlineStatus(false);
+    };
   }, [user, navigate]);
 
   useEffect(() => {
     if (selectedMatch) {
       fetchMessages();
+      markMessagesAsRead();
       subscribeToMessages();
     }
   }, [selectedMatch]);
@@ -59,6 +69,28 @@ const Messages = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const updateOnlineStatus = async (isOnline: boolean) => {
+    if (!user) return;
+    await supabase
+      .from("profiles")
+      .update({
+        is_online: isOnline,
+        last_seen: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+  };
+
+  const markMessagesAsRead = async () => {
+    if (!selectedMatch || !user) return;
+
+    await supabase
+      .from("messages")
+      .update({ is_read: true })
+      .eq("match_id", selectedMatch)
+      .neq("sender_id", user.id)
+      .eq("is_read", false);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -79,7 +111,7 @@ const Messages = () => {
           
           const { data: profile } = await supabase
             .from("profiles")
-            .select("id, name, avatar_url")
+            .select("id, name, avatar_url, is_online, last_seen")
             .eq("id", otherUserId)
             .single();
 
@@ -138,6 +170,20 @@ const Messages = () => {
         },
         (payload) => {
           setMessages((prev) => [...prev, payload.new as Message]);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `match_id=eq.${selectedMatch}`,
+        },
+        (payload) => {
+          setMessages((prev) =>
+            prev.map((msg) => (msg.id === payload.new.id ? payload.new as Message : msg))
+          );
         }
       )
       .subscribe();
@@ -208,12 +254,24 @@ const Messages = () => {
                       selectedMatch === match.id ? "bg-muted/50" : ""
                     }`}
                   >
-                    <img
-                      src={match.profile.avatar_url || defaultAvatar}
-                      alt={match.profile.name}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <span className="font-medium">{match.profile.name}</span>
+                    <div className="relative">
+                      <img
+                        src={match.profile.avatar_url || defaultAvatar}
+                        alt={match.profile.name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                      {match.profile.is_online && (
+                        <Circle className="absolute bottom-0 right-0 w-3 h-3 fill-green-500 text-green-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <div className="font-medium">{match.profile.name}</div>
+                      {!match.profile.is_online && match.profile.last_seen && (
+                        <div className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(match.profile.last_seen), { addSuffix: true })}
+                        </div>
+                      )}
+                    </div>
                   </button>
                 ))
               )}
@@ -230,12 +288,28 @@ const Messages = () => {
               <>
                 {/* Chat Header */}
                 <div className="p-4 border-b border-border flex items-center gap-3">
-                  <img
-                    src={currentMatch?.profile.avatar_url || defaultAvatar}
-                    alt={currentMatch?.profile.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                  <span className="font-semibold">{currentMatch?.profile.name}</span>
+                  <div className="relative">
+                    <img
+                      src={currentMatch?.profile.avatar_url || defaultAvatar}
+                      alt={currentMatch?.profile.name}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    {currentMatch?.profile.is_online && (
+                      <Circle className="absolute bottom-0 right-0 w-2.5 h-2.5 fill-green-500 text-green-500" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-semibold">{currentMatch?.profile.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {currentMatch?.profile.is_online ? (
+                        "Online now"
+                      ) : currentMatch?.profile.last_seen ? (
+                        `Active ${formatDistanceToNow(new Date(currentMatch.profile.last_seen), { addSuffix: true })}`
+                      ) : (
+                        "Offline"
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Messages */}
@@ -255,12 +329,17 @@ const Messages = () => {
                           }`}
                         >
                           <p className="text-sm">{message.content}</p>
-                          <p className={`text-xs mt-1 ${isOwn ? "text-white/70" : "text-muted-foreground"}`}>
-                            {new Date(message.created_at).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
+                          <div className={`flex items-center gap-1 mt-1 text-xs ${isOwn ? "text-white/70" : "text-muted-foreground"}`}>
+                            <span>
+                              {new Date(message.created_at).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                            {isOwn && message.is_read && (
+                              <CheckCheck className="w-3 h-3" />
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
