@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Send, Loader2, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PostComments } from "@/components/PostComments";
 import { useNavigate } from "react-router-dom";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 import { formatDistanceToNow } from "date-fns";
@@ -35,6 +36,7 @@ const Feed = () => {
   const [loading, setLoading] = useState(true);
   const [newPost, setNewPost] = useState("");
   const [posting, setPosting] = useState(false);
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user) {
@@ -248,11 +250,24 @@ const Feed = () => {
                       <span className="text-sm">{post.likes_count}</span>
                     </button>
 
-                    <button className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                    <button 
+                      onClick={() => {
+                        const newExpanded = new Set(expandedComments);
+                        if (newExpanded.has(post.id)) {
+                          newExpanded.delete(post.id);
+                        } else {
+                          newExpanded.add(post.id);
+                        }
+                        setExpandedComments(newExpanded);
+                      }}
+                      className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
                       <MessageCircle className="w-5 h-5" />
                       <span className="text-sm">{post.comments_count}</span>
                     </button>
                   </div>
+
+                  {expandedComments.has(post.id) && <PostComments postId={post.id} />}
                 </div>
               </Card>
             ))}

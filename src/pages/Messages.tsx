@@ -5,11 +5,28 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, Circle, CheckCheck } from "lucide-react";
+import { Send, Loader2, Circle, CheckCheck, ArrowLeft, MoreVertical, Paperclip, User, Settings, AlertTriangle, Ban, Palette } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { ReportDialog } from "@/components/ReportDialog";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 import { formatDistanceToNow } from "date-fns";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 interface Message {
   id: string;
@@ -30,6 +47,14 @@ interface MatchInfo {
   };
 }
 
+const CHAT_THEMES = [
+  { name: "Romantic", gradient: "linear-gradient(135deg, hsl(330, 80%, 65%), hsl(280, 70%, 65%))" },
+  { name: "Ocean", gradient: "linear-gradient(135deg, hsl(200, 80%, 65%), hsl(240, 70%, 65%))" },
+  { name: "Sunset", gradient: "linear-gradient(135deg, hsl(30, 90%, 65%), hsl(350, 80%, 65%))" },
+  { name: "Forest", gradient: "linear-gradient(135deg, hsl(140, 60%, 55%), hsl(100, 50%, 45%))" },
+  { name: "Purple", gradient: "linear-gradient(135deg, hsl(270, 70%, 65%), hsl(290, 60%, 70%))" },
+];
+
 const Messages = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -43,7 +68,12 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [chatTheme, setChatTheme] = useState(CHAT_THEMES[0]);
+  const [muteNotifications, setMuteNotifications] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) {
@@ -219,6 +249,47 @@ const Messages = () => {
     }
   };
 
+  const handleBlockUser = async () => {
+    if (!currentMatch || !user) return;
+    
+    try {
+      const { error } = await supabase.from("blocked_users").insert({
+        blocker_id: user.id,
+        blocked_id: currentMatch.profile.id,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "User Blocked",
+        description: "You will no longer receive messages from this user.",
+      });
+      
+      setSelectedMatch(null);
+      fetchMatches();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedMatch || !user) return;
+
+    toast({
+      title: "File Upload",
+      description: "File upload functionality coming soon!",
+    });
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -234,145 +305,259 @@ const Messages = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-4 h-[calc(100vh-140px)]">
-        <div className="h-full max-w-4xl mx-auto flex gap-4">
-          {/* Matches List */}
-          <Card className="glass-card w-80 overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-border">
-              <h2 className="font-semibold">Messages</h2>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {matches.length === 0 ? (
-                <p className="p-4 text-center text-muted-foreground text-sm">
-                  No matches yet
-                </p>
+        <div className="h-full max-w-4xl mx-auto">
+          {/* Mobile: Show either list OR chat */}
+          <div className={`h-full ${selectedMatch ? 'hidden md:flex' : 'flex'} md:gap-4`}>
+            {/* Matches List */}
+            <Card className={`glass-card overflow-hidden flex flex-col ${selectedMatch ? 'hidden md:flex md:w-80' : 'w-full md:w-80'}`}>
+              <div className="p-4 border-b border-border">
+                <h2 className="font-semibold">Messages</h2>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {matches.length === 0 ? (
+                  <p className="p-4 text-center text-muted-foreground text-sm">
+                    No matches yet
+                  </p>
+                ) : (
+                  matches.map((match) => (
+                    <button
+                      key={match.id}
+                      onClick={() => setSelectedMatch(match.id)}
+                      className={`w-full p-4 flex items-center gap-3 hover:bg-muted/50 transition-colors ${
+                        selectedMatch === match.id ? "bg-muted/50" : ""
+                      }`}
+                    >
+                      <div className="relative">
+                        <img
+                          src={match.profile.avatar_url || defaultAvatar}
+                          alt={match.profile.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                        {match.profile.is_online && (
+                          <Circle className="absolute bottom-0 right-0 w-3 h-3 fill-green-500 text-green-500" />
+                        )}
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="font-medium">{match.profile.name}</div>
+                        {!match.profile.is_online && match.profile.last_seen && (
+                          <div className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(match.profile.last_seen), { addSuffix: true })}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </Card>
+
+            {/* Chat Area */}
+            <Card className={`glass-card overflow-hidden flex flex-col ${selectedMatch ? 'flex w-full md:flex-1' : 'hidden md:flex md:flex-1'}`}>
+              {!selectedMatch ? (
+                <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                  Select a match to start chatting
+                </div>
               ) : (
-                matches.map((match) => (
-                  <button
-                    key={match.id}
-                    onClick={() => setSelectedMatch(match.id)}
-                    className={`w-full p-4 flex items-center gap-3 hover:bg-muted/50 transition-colors ${
-                      selectedMatch === match.id ? "bg-muted/50" : ""
-                    }`}
-                  >
+                <>
+                  {/* Chat Header */}
+                  <div className="p-4 border-b border-border flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="md:hidden"
+                      onClick={() => setSelectedMatch(null)}
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                    
                     <div className="relative">
                       <img
-                        src={match.profile.avatar_url || defaultAvatar}
-                        alt={match.profile.name}
-                        className="w-12 h-12 rounded-full object-cover"
+                        src={currentMatch?.profile.avatar_url || defaultAvatar}
+                        alt={currentMatch?.profile.name}
+                        className="w-10 h-10 rounded-full object-cover"
                       />
-                      {match.profile.is_online && (
-                        <Circle className="absolute bottom-0 right-0 w-3 h-3 fill-green-500 text-green-500" />
+                      {currentMatch?.profile.is_online && (
+                        <Circle className="absolute bottom-0 right-0 w-2.5 h-2.5 fill-green-500 text-green-500" />
                       )}
                     </div>
-                    <div className="flex-1 text-left">
-                      <div className="font-medium">{match.profile.name}</div>
-                      {!match.profile.is_online && match.profile.last_seen && (
-                        <div className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(match.profile.last_seen), { addSuffix: true })}
-                        </div>
-                      )}
+                    <div className="flex-1">
+                      <div className="font-semibold">{currentMatch?.profile.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {currentMatch?.profile.is_online ? (
+                          "Online now"
+                        ) : currentMatch?.profile.last_seen ? (
+                          `Active ${formatDistanceToNow(new Date(currentMatch.profile.last_seen), { addSuffix: true })}`
+                        ) : (
+                          "Offline"
+                        )}
+                      </div>
                     </div>
-                  </button>
-                ))
-              )}
-            </div>
-          </Card>
 
-          {/* Chat Area */}
-          <Card className="glass-card flex-1 overflow-hidden flex flex-col">
-            {!selectedMatch ? (
-              <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                Select a match to start chatting
-              </div>
-            ) : (
-              <>
-                {/* Chat Header */}
-                <div className="p-4 border-b border-border flex items-center gap-3">
-                  <div className="relative">
-                    <img
-                      src={currentMatch?.profile.avatar_url || defaultAvatar}
-                      alt={currentMatch?.profile.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    {currentMatch?.profile.is_online && (
-                      <Circle className="absolute bottom-0 right-0 w-2.5 h-2.5 fill-green-500 text-green-500" />
-                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="w-5 h-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="glass">
+                        <DropdownMenuItem onClick={() => navigate(`/profile?user=${currentMatch?.profile.id}`)}>
+                          <User className="w-4 h-4 mr-2" />
+                          View Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setShowSettings(true)}>
+                          <Settings className="w-4 h-4 mr-2" />
+                          Chat Settings
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setShowReportDialog(true)}>
+                          <AlertTriangle className="w-4 h-4 mr-2" />
+                          Report User
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleBlockUser} className="text-destructive">
+                          <Ban className="w-4 h-4 mr-2" />
+                          Block User
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                  <div>
-                    <div className="font-semibold">{currentMatch?.profile.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {currentMatch?.profile.is_online ? (
-                        "Online now"
-                      ) : currentMatch?.profile.last_seen ? (
-                        `Active ${formatDistanceToNow(new Date(currentMatch.profile.last_seen), { addSuffix: true })}`
-                      ) : (
-                        "Offline"
-                      )}
-                    </div>
-                  </div>
-                </div>
 
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {messages.map((message) => {
-                    const isOwn = message.sender_id === user?.id;
-                    return (
-                      <div
-                        key={message.id}
-                        className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
-                      >
+                  {/* Messages */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {messages.map((message) => {
+                      const isOwn = message.sender_id === user?.id;
+                      return (
                         <div
-                          className={`max-w-[70%] px-4 py-2 rounded-2xl ${
-                            isOwn
-                              ? "gradient-romantic text-white"
-                              : "glass"
-                          }`}
+                          key={message.id}
+                          className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                         >
-                          <p className="text-sm">{message.content}</p>
-                          <div className={`flex items-center gap-1 mt-1 text-xs ${isOwn ? "text-white/70" : "text-muted-foreground"}`}>
-                            <span>
-                              {new Date(message.created_at).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </span>
-                            {isOwn && message.is_read && (
-                              <CheckCheck className="w-3 h-3" />
-                            )}
+                          <div
+                            className={`max-w-[70%] px-4 py-2 rounded-2xl ${
+                              isOwn
+                                ? "text-white"
+                                : "glass"
+                            }`}
+                            style={isOwn ? { background: chatTheme.gradient } : {}}
+                          >
+                            <p className="text-sm">{message.content}</p>
+                            <div className={`flex items-center gap-1 mt-1 text-xs ${isOwn ? "text-white/70" : "text-muted-foreground"}`}>
+                              <span>
+                                {new Date(message.created_at).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                              {isOwn && message.is_read && (
+                                <CheckCheck className="w-3 h-3" />
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                  <div ref={messagesEndRef} />
-                </div>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
+                  </div>
 
-                {/* Input */}
-                <form onSubmit={handleSend} className="p-4 border-t border-border flex gap-2">
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type a message..."
-                    className="glass flex-1"
-                    disabled={sending}
-                  />
-                  <Button
-                    type="submit"
-                    className="gradient-romantic text-white"
-                    disabled={sending || !newMessage.trim()}
-                  >
-                    {sending ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Send className="w-5 h-5" />
-                    )}
-                  </Button>
-                </form>
-              </>
-            )}
-          </Card>
+                  {/* Input */}
+                  <form onSubmit={handleSend} className="p-4 border-t border-border flex gap-2">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="hidden"
+                      accept="image/*,application/pdf,.doc,.docx"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleFileUpload}
+                    >
+                      <Paperclip className="w-5 h-5" />
+                    </Button>
+                    <Input
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Type a message..."
+                      className="glass flex-1"
+                      disabled={sending}
+                    />
+                    <Button
+                      type="submit"
+                      className="text-white"
+                      style={{ background: chatTheme.gradient }}
+                      disabled={sending || !newMessage.trim()}
+                    >
+                      {sending ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Send className="w-5 h-5" />
+                      )}
+                    </Button>
+                  </form>
+                </>
+              )}
+            </Card>
+          </div>
         </div>
       </div>
+
+      {/* Chat Settings Dialog */}
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="glass-card">
+          <DialogHeader>
+            <DialogTitle>Chat Settings</DialogTitle>
+            <DialogDescription>Customize your chat experience</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Mute Notifications</Label>
+                <p className="text-sm text-muted-foreground">
+                  Don't receive notifications from this chat
+                </p>
+              </div>
+              <Switch
+                checked={muteNotifications}
+                onCheckedChange={setMuteNotifications}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Palette className="w-4 h-4" />
+                Chat Theme
+              </Label>
+              <div className="grid grid-cols-3 gap-3">
+                {CHAT_THEMES.map((theme) => (
+                  <button
+                    key={theme.name}
+                    onClick={() => setChatTheme(theme)}
+                    className={`h-12 rounded-lg border-2 transition-all ${
+                      chatTheme.name === theme.name
+                        ? "border-primary scale-105"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    style={{ background: theme.gradient }}
+                  >
+                    <span className="text-xs text-white font-medium drop-shadow-md">
+                      {theme.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Dialog */}
+      {currentMatch && showReportDialog && (
+        <ReportDialog
+          reportedUserId={currentMatch.profile.id}
+          reportedUserName={currentMatch.profile.name}
+        />
+      )}
     </Layout>
   );
 };
