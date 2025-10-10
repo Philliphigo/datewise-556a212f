@@ -4,6 +4,7 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,6 +23,11 @@ const Settings = () => {
   const [profile, setProfile] = useState<any>(null);
   const [photoVisibility, setPhotoVisibility] = useState("everyone");
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [name, setName] = useState("");
+  const [age, setAge] = useState<number | ''>('');
+  const [gender, setGender] = useState("");
+  const [city, setCity] = useState("");
+  const [bio, setBio] = useState("");
 
   useEffect(() => {
     if (!user) {
@@ -42,6 +48,11 @@ const Settings = () => {
       if (error) throw error;
       setProfile(data);
       setPhotoVisibility(data.photo_visibility || "everyone");
+      setName(data.name || "");
+      setAge(typeof data.age === 'number' ? data.age : '');
+      setGender(data.gender || "");
+      setCity(data.city || "");
+      setBio(data.bio || "");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -60,7 +71,14 @@ const Settings = () => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ photo_visibility: photoVisibility })
+        .update({ 
+          photo_visibility: photoVisibility,
+          name,
+          age: age === '' ? null : Number(age),
+          gender,
+          city,
+          bio,
+        })
         .eq("id", user.id);
 
       if (error) throw error;
@@ -98,6 +116,36 @@ const Settings = () => {
             <h1 className="text-3xl font-bold gradient-text">Settings</h1>
             <p className="text-muted-foreground">Manage your preferences</p>
           </div>
+
+          {/* Edit Profile */}
+          <Card className="glass-card p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">📝</span>
+              <h2 className="text-xl font-semibold">Edit Profile</h2>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input id="name" value={name} onChange={(e)=>setName(e.target.value)} className="glass" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="age">Age</Label>
+                <Input id="age" type="number" value={age} onChange={(e)=>setAge(e.target.value ? Number(e.target.value) : '')} className="glass" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender</Label>
+                <Input id="gender" value={gender} onChange={(e)=>setGender(e.target.value)} className="glass" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input id="city" value={city} onChange={(e)=>setCity(e.target.value)} className="glass" />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea id="bio" value={bio} onChange={(e)=>setBio(e.target.value)} rows={4} className="glass" />
+              </div>
+            </div>
+          </Card>
 
           {/* Privacy Settings */}
           <Card className="glass-card p-6 space-y-6">

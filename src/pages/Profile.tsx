@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { LogOut, Loader2, Image as ImageIcon, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 
 const Profile = () => {
@@ -16,6 +16,8 @@ const Profile = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [searchParams] = useSearchParams();
+  const viewedId = searchParams.get("user");
 
   useEffect(() => {
     if (!user) {
@@ -30,7 +32,7 @@ const Profile = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", user?.id)
+        .eq("id", viewedId || user?.id)
         .single();
 
       if (error) throw error;
@@ -114,14 +116,16 @@ const Profile = () => {
                   </div>
                 )}
 
-                <Button
-                  onClick={handleSignOut}
-                  variant="outline"
-                  className="w-full glass border-destructive/20 hover:border-destructive/40"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </Button>
+                {(!viewedId || viewedId === user?.id) && (
+                  <Button
+                    onClick={handleSignOut}
+                    variant="outline"
+                    className="w-full glass border-destructive/20 hover:border-destructive/40"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                )}
               </div>
             </div>
           </Card>

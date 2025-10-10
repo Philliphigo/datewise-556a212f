@@ -68,6 +68,7 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [chatTheme, setChatTheme] = useState(CHAT_THEMES[0]);
@@ -284,10 +285,34 @@ const Messages = () => {
     const file = e.target.files?.[0];
     if (!file || !selectedMatch || !user) return;
 
-    toast({
-      title: "File Upload",
-      description: "File upload functionality coming soon!",
-    });
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const filePath = `${user.id}/${selectedMatch}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('chat-attachments')
+        .upload(filePath, file, { upsert: false });
+      if (uploadError) throw uploadError;
+
+      const { data: publicData } = supabase.storage
+        .from('chat-attachments')
+        .getPublicUrl(filePath);
+      const url = publicData.publicUrl;
+
+      const { error: insertError } = await supabase.from('messages').insert({
+        match_id: selectedMatch,
+        sender_id: user.id,
+        content: url,
+      });
+      if (insertError) throw insertError;
+
+      toast({ title: 'File sent', description: file.name });
+    } catch (error: any) {
+      toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   if (loading) {
@@ -307,7 +332,7 @@ const Messages = () => {
       <div className="container mx-auto px-4 py-4 h-[calc(100vh-140px)]">
         <div className="h-full max-w-4xl mx-auto">
           {/* Mobile: Show either list OR chat */}
-          <div className={`h-full ${selectedMatch ? 'hidden md:flex' : 'flex'} md:gap-4`}>
+          <div className="h-full flex md:gap-4">
             {/* Matches List */}
             <Card className={`glass-card overflow-hidden flex flex-col ${selectedMatch ? 'hidden md:flex md:w-80' : 'w-full md:w-80'}`}>
               <div className="p-4 border-b border-border">
@@ -438,7 +463,19 @@ const Messages = () => {
                             }`}
                             style={isOwn ? { background: chatTheme.gradient } : {}}
                           >
-                            <p className="text-sm">{message.content}</p>
+                            {/^https?:\/\//.test(message.content) ? (
+                              /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(message.content) ? (
+                                <a href={message.content} target="_blank" rel="noopener noreferrer">
+                                  <img src={message.content} alt="Attachment" className="rounded-lg max-h-60 object-cover" loading="lazy" />
+                                </a>
+                              ) : (
+                                <a href={message.content} target="_blank" rel="noopener noreferrer" className="underline break-all">
+                                  {message.content}
+                                </a>
+                              )
+                            ) : (
+                              <p className="text-sm">{message.content}</p>
+                            )}
                             <div className={`flex items-center gap-1 mt-1 text-xs ${isOwn ? "text-white/70" : "text-muted-foreground"}`}>
                               <span>
                                 {new Date(message.created_at).toLocaleTimeString([], {
@@ -485,7 +522,7 @@ const Messages = () => {
                       type="submit"
                       className="text-white"
                       style={{ background: chatTheme.gradient }}
-                      disabled={sending || !newMessage.trim()}
+                      disabled={sending || uploading || !newMessage.trim()}
                     >
                       {sending ? (
                         <Loader2 className="w-5 h-5 animate-spin" />

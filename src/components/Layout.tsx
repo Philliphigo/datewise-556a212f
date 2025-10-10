@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Heart, Flame, MessageCircle, Users, User, Rss, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationBell } from "./NotificationBell";
-
+import { Footer } from "./Footer";
 interface LayoutProps {
   children: ReactNode;
 }
@@ -44,6 +44,7 @@ export const Layout = ({ children }: LayoutProps) => {
       </header>
 
       <main className="flex-1 pt-16 pb-20">{children}</main>
+      <Footer />
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-border">
         <div className="container mx-auto px-4">
