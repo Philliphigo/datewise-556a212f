@@ -2,8 +2,10 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Bot } from "lucide-react";
 import { useState } from "react";
+import { PhilAIChat } from "@/components/PhilAIChat";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Help = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -59,57 +61,76 @@ const Help = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-12">
-        <div className="max-w-3xl mx-auto space-y-8">
+        <div className="max-w-4xl mx-auto space-y-8">
           <div className="text-center space-y-4">
             <h1 className="text-4xl md:text-5xl font-bold gradient-text">Help Center</h1>
             <p className="text-xl text-muted-foreground">
-              Find answers to common questions
+              Find answers or chat with PhilAI
             </p>
           </div>
 
-          <Card className="glass-card p-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                placeholder="Search for help..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 glass"
-              />
-            </div>
-          </Card>
+          <Tabs defaultValue="faq" className="space-y-6">
+            <TabsList className="grid grid-cols-2 glass w-full max-w-md mx-auto">
+              <TabsTrigger value="faq" className="flex items-center gap-2">
+                <Search className="w-4 h-4" />
+                FAQs
+              </TabsTrigger>
+              <TabsTrigger value="ai" className="flex items-center gap-2">
+                <Bot className="w-4 h-4" />
+                PhilAI Assistant
+              </TabsTrigger>
+            </TabsList>
 
-          <Card className="glass-card p-6">
-            <h2 className="text-2xl font-semibold mb-6">Frequently Asked Questions</h2>
-            <Accordion type="single" collapsible className="space-y-4">
-              {filteredFaqs.map((faq, index) => (
-                <AccordionItem key={index} value={`item-${index}`} className="border-border">
-                  <AccordionTrigger className="text-left hover:text-primary">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+            <TabsContent value="faq" className="space-y-6">
+              <Card className="glass-card p-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Search for help..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 glass"
+                  />
+                </div>
+              </Card>
 
-            {filteredFaqs.length === 0 && (
-              <p className="text-center text-muted-foreground py-8">
-                No results found. Try a different search term.
-              </p>
-            )}
-          </Card>
+              <Card className="glass-card p-6">
+                <h2 className="text-2xl font-semibold mb-6">Frequently Asked Questions</h2>
+                <Accordion type="single" collapsible className="space-y-4">
+                  {filteredFaqs.map((faq, index) => (
+                    <AccordionItem key={index} value={`item-${index}`} className="border-border">
+                      <AccordionTrigger className="text-left hover:text-primary">
+                        {faq.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground">
+                        {faq.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
 
-          <Card className="glass-card p-6 text-center">
-            <h3 className="font-semibold mb-2">Still need help?</h3>
-            <p className="text-muted-foreground mb-4">
-              Our support team is here to assist you
-            </p>
-            <a href="/contact" className="text-primary hover:underline">
-              Contact Support →
-            </a>
-          </Card>
+                {filteredFaqs.length === 0 && (
+                  <p className="text-center text-muted-foreground py-8">
+                    No results found. Try a different search term.
+                  </p>
+                )}
+              </Card>
+
+              <Card className="glass-card p-6 text-center">
+                <h3 className="font-semibold mb-2">Still need help?</h3>
+                <p className="text-muted-foreground mb-4">
+                  Our support team is here to assist you
+                </p>
+                <a href="/contact" className="text-primary hover:underline">
+                  Contact Support →
+                </a>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="ai">
+              <PhilAIChat />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </Layout>

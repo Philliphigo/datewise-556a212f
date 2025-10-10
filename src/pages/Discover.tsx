@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Heart, X, MapPin, Loader2, Filter, CheckCircle } from "lucide-react";
+import { Heart, X, MapPin, Loader2, Filter, CheckCircle, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ReportDialog } from "@/components/ReportDialog";
@@ -37,6 +37,7 @@ const Discover = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [ageFilter, setAgeFilter] = useState("all");
   const [genderFilter, setGenderFilter] = useState("all");
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -89,6 +90,7 @@ const Discover = () => {
     if (!currentProfile) return;
 
     setActionLoading(true);
+    setSwipeDirection('right');
 
     try {
       const { error } = await supabase.from("likes").insert({
@@ -103,20 +105,50 @@ const Discover = () => {
         description: `You liked ${currentProfile.name}`,
       });
 
-      nextProfile();
+      setTimeout(() => {
+        setSwipeDirection(null);
+        nextProfile();
+      }, 300);
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
+      setSwipeDirection(null);
     } finally {
       setActionLoading(false);
     }
   };
 
   const handlePass = () => {
-    nextProfile();
+    setSwipeDirection('left');
+    setTimeout(() => {
+      setSwipeDirection(null);
+      nextProfile();
+    }, 300);
+  };
+
+  const handleMessage = async () => {
+    if (!user) return;
+    const currentProfile = profiles[currentIndex];
+    if (!currentProfile) return;
+
+    // Check if already matched
+    const { data: existingMatch } = await supabase
+      .from("matches")
+      .select("*")
+      .or(`and(user1_id.eq.${user.id},user2_id.eq.${currentProfile.id}),and(user1_id.eq.${currentProfile.id},user2_id.eq.${user.id})`)
+      .single();
+
+    if (existingMatch) {
+      navigate(`/messages?match=${existingMatch.id}`);
+    } else {
+      toast({
+        title: "Not matched yet",
+        description: "You need to match with this person first to send a message",
+      });
+    }
   };
 
   const nextProfile = () => {
@@ -220,8 +252,10 @@ const Discover = () => {
             </Card>
           )}
 
-          <div>
-          <Card className="glass-card overflow-hidden animate-scale-in">
+          <Card className={`glass-card overflow-hidden animate-scale-in transition-transform duration-300 ${
+            swipeDirection === 'left' ? '-translate-x-full opacity-0' : 
+            swipeDirection === 'right' ? 'translate-x-full opacity-0' : ''
+          }`}>
             {/* Profile Image */}
             <div className="relative h-96 bg-gradient-to-b from-muted to-background">
               <img
@@ -287,7 +321,7 @@ const Discover = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="p-6 pt-0 flex gap-4 justify-center">
+            <div className="p-6 pt-0 flex gap-4 justify-center items-center">
               <Button
                 size="lg"
                 variant="outline"
@@ -296,6 +330,15 @@ const Discover = () => {
                 disabled={actionLoading}
               >
                 <X className="w-8 h-8 text-destructive" />
+              </Button>
+
+              <Button
+                size="lg"
+                variant="outline"
+                className="glass border-2 border-primary/20 hover:border-primary/40 rounded-full w-14 h-14 p-0"
+                onClick={handleMessage}
+              >
+                <MessageCircle className="w-6 h-6 text-primary" />
               </Button>
 
               <Button
@@ -312,11 +355,6 @@ const Discover = () => {
               </Button>
             </div>
           </Card>
-
-          <div className="text-center mt-4 text-sm text-muted-foreground">
-            {currentIndex + 1} of {profiles.length}
-          </div>
-          </div>
         </div>
       </div>
     </Layout>

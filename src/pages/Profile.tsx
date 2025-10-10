@@ -48,6 +48,44 @@ const Profile = () => {
     }
   };
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: data.publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Success",
+        description: "Profile picture updated successfully",
+      });
+
+      fetchProfile();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
   };
@@ -70,12 +108,25 @@ const Profile = () => {
             <div className="relative h-48 gradient-romantic" />
             
             <div className="relative px-6 pb-6">
-              <div className="absolute -top-16 left-6">
+              <div className="absolute -top-16 left-6 group">
                 <img
                   src={profile?.avatar_url || defaultAvatar}
                   alt={profile?.name}
                   className="w-32 h-32 rounded-full border-4 border-background object-cover"
                 />
+                {(!viewedId || viewedId === user?.id) && (
+                  <label className="absolute bottom-0 right-0 cursor-pointer">
+                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors">
+                      <ImageIcon className="w-5 h-5 text-primary-foreground" />
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarUpload}
+                    />
+                  </label>
+                )}
               </div>
 
               <div className="pt-20 space-y-4">

@@ -141,36 +141,35 @@ const Donate = () => {
 
                 {/* Mobile Money */}
                 <TabsContent value="mobile" className="space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <Card className="glass p-4 space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Smartphone className="w-5 h-5 text-primary" />
-                        <h3 className="font-semibold">Airtel Money</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">0994426162</p>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        placeholder="Enter your phone number"
+                        className="glass"
+                      />
+                    </div>
+                    
+                    <div className="grid sm:grid-cols-2 gap-4">
                       <Button
                         onClick={() => handlePayment("Airtel Money")}
                         disabled={processing}
                         className="w-full gradient-romantic text-white"
                       >
+                        <Smartphone className="w-4 h-4 mr-2" />
                         Pay with Airtel
                       </Button>
-                    </Card>
 
-                    <Card className="glass p-4 space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Smartphone className="w-5 h-5 text-primary" />
-                        <h3 className="font-semibold">TNM Mpamba</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">0889479863</p>
                       <Button
                         onClick={() => handlePayment("TNM Mpamba")}
                         disabled={processing}
                         className="w-full gradient-romantic text-white"
                       >
+                        <Smartphone className="w-4 h-4 mr-2" />
                         Pay with Mpamba
                       </Button>
-                    </Card>
+                    </div>
                   </div>
                 </TabsContent>
 
@@ -219,7 +218,7 @@ const Donate = () => {
                   <Card className="glass p-6 text-center space-y-4">
                     <DollarSign className="w-12 h-12 mx-auto text-primary" />
                     <p className="text-muted-foreground">
-                      Send payment to: <strong className="text-foreground">philipchinya@gmail.com</strong>
+                      You will be redirected to PayPal to complete your payment
                     </p>
                     <Button
                       onClick={() => handlePayment("PayPal")}

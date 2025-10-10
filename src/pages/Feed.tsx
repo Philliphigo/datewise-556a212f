@@ -37,6 +37,7 @@ const Feed = () => {
   const [newPost, setNewPost] = useState("");
   const [posting, setPosting] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -91,6 +92,36 @@ const Feed = () => {
     }
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      setUploadedImage(data.publicUrl);
+
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCreatePost = async () => {
     if (!user || !newPost.trim() || posting) return;
 
@@ -99,11 +130,13 @@ const Feed = () => {
       const { error } = await supabase.from("posts").insert({
         content: newPost,
         user_id: user.id,
+        image_url: uploadedImage,
       });
 
       if (error) throw error;
 
       setNewPost("");
+      setUploadedImage(null);
       toast({
         title: "Success",
         description: "Post created successfully!",
@@ -178,11 +211,34 @@ const Feed = () => {
               className="glass border-border/50 resize-none"
               rows={3}
             />
+            {uploadedImage && (
+              <div className="relative">
+                <img src={uploadedImage} alt="Upload preview" className="rounded-lg max-h-64 w-full object-cover" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 right-2 bg-background/80"
+                  onClick={() => setUploadedImage(null)}
+                >
+                  Remove
+                </Button>
+              </div>
+            )}
             <div className="flex justify-between items-center">
-              <Button variant="ghost" size="sm" className="glass">
-                <Image className="w-4 h-4 mr-2" />
-                Photo
-              </Button>
+              <label className="cursor-pointer">
+                <Button variant="ghost" size="sm" className="glass" asChild>
+                  <div>
+                    <Image className="w-4 h-4 mr-2" />
+                    Photo
+                  </div>
+                </Button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
+              </label>
               <Button
                 onClick={handleCreatePost}
                 disabled={!newPost.trim() || posting}
