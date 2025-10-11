@@ -23,7 +23,8 @@ const Donate = () => {
     {
       id: "supporter",
       name: "Supporter",
-      price: "$5/month",
+      price: "MWK 5,000/month",
+      priceUsd: "$5/month",
       icon: Heart,
       color: "text-pink-500",
       features: ["Support DateWise", "Special Badge", "Our Gratitude"],
@@ -31,7 +32,8 @@ const Donate = () => {
     {
       id: "premium",
       name: "Premium",
-      price: "$15/month",
+      price: "MWK 15,000/month",
+      priceUsd: "$15/month",
       icon: Star,
       color: "text-primary",
       features: [
@@ -45,7 +47,8 @@ const Donate = () => {
     {
       id: "vip",
       name: "VIP",
-      price: "$30/month",
+      price: "MWK 30,000/month",
+      priceUsd: "$30/month",
       icon: Crown,
       color: "text-yellow-500",
       features: [
@@ -58,13 +61,13 @@ const Donate = () => {
     },
   ];
 
-  const getTierAmount = (tierId: string) => {
-    const prices: { [key: string]: number } = {
-      supporter: 5,
-      premium: 15,
-      vip: 30,
+  const getTierAmount = (tierId: string, currency: 'MWK' | 'USD' = 'MWK') => {
+    const prices: { [key: string]: { MWK: number; USD: number } } = {
+      supporter: { MWK: 5000, USD: 5 },
+      premium: { MWK: 15000, USD: 15 },
+      vip: { MWK: 30000, USD: 30 },
     };
-    return prices[tierId] || 0;
+    return prices[tierId]?.[currency] || 0;
   };
 
   const handleMobileMoneyPayment = async (provider: "airtel" | "tnm") => {
@@ -91,7 +94,7 @@ const Donate = () => {
     try {
       const { data, error } = await supabase.functions.invoke("process-paychangu-payment", {
         body: {
-          amount: getTierAmount(selectedTier),
+          amount: getTierAmount(selectedTier, 'MWK'),
           currency: "MWK",
           phone: phoneNumber,
           tier: selectedTier,
@@ -141,7 +144,7 @@ const Donate = () => {
     try {
       const { data, error } = await supabase.functions.invoke("process-paypal-payment", {
         body: {
-          amount: getTierAmount(selectedTier),
+          amount: getTierAmount(selectedTier, 'USD'),
           tier: selectedTier,
         },
       });
@@ -186,7 +189,7 @@ const Donate = () => {
     try {
       const { data, error } = await supabase.functions.invoke("process-stripe-payment", {
         body: {
-          amount: getTierAmount(selectedTier),
+          amount: getTierAmount(selectedTier, 'USD'),
           currency: "USD",
           tier: selectedTier,
         },
@@ -253,6 +256,7 @@ const Donate = () => {
                     <div>
                       <h3 className="text-2xl font-bold">{tier.name}</h3>
                       <p className="text-3xl font-bold gradient-text mt-2">{tier.price}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{tier.priceUsd}</p>
                     </div>
 
                     <ul className="space-y-2">
@@ -288,35 +292,56 @@ const Donate = () => {
                 {/* Mobile Money */}
                 <TabsContent value="mobile" className="space-y-4">
                   <div className="space-y-4">
+                    <div className="glass p-4 rounded-lg bg-primary/5 border border-primary/20">
+                      <p className="text-sm font-semibold mb-2">Amount to Pay:</p>
+                      <p className="text-3xl font-bold gradient-text">
+                        MWK {getTierAmount(selectedTier, 'MWK').toLocaleString()}
+                      </p>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
                       <Input
                         id="phone"
+                        type="tel"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="Enter your phone number"
+                        placeholder="e.g., 0999123456 or 0888123456"
                         className="glass"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Enter your mobile money number (Airtel or TNM Mpamba)
+                      </p>
                     </div>
                     
                     <div className="grid sm:grid-cols-2 gap-4">
                       <Button
                         onClick={() => handleMobileMoneyPayment("airtel")}
-                        disabled={processing}
+                        disabled={processing || !phoneNumber}
                         className="w-full gradient-romantic text-white"
                       >
                         <Smartphone className="w-4 h-4 mr-2" />
-                        Pay with Airtel
+                        {processing ? "Processing..." : "Pay with Airtel Money"}
                       </Button>
 
                       <Button
                         onClick={() => handleMobileMoneyPayment("tnm")}
-                        disabled={processing}
+                        disabled={processing || !phoneNumber}
                         className="w-full gradient-romantic text-white"
                       >
                         <Smartphone className="w-4 h-4 mr-2" />
-                        Pay with Mpamba
+                        {processing ? "Processing..." : "Pay with TNM Mpamba"}
                       </Button>
+                    </div>
+
+                    <div className="glass p-3 rounded-lg text-xs text-muted-foreground">
+                      <p className="font-semibold mb-1">How it works:</p>
+                      <ol className="list-decimal list-inside space-y-1">
+                        <li>Enter your Airtel Money or TNM Mpamba number</li>
+                        <li>Click the payment button for your provider</li>
+                        <li>You'll receive a prompt on your phone to authorize the payment</li>
+                        <li>Enter your PIN to complete the transaction</li>
+                      </ol>
                     </div>
                   </div>
                 </TabsContent>
