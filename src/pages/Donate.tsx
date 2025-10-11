@@ -7,13 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Heart, CreditCard, Smartphone, DollarSign, Bitcoin, Check, Crown, Star, Zap } from "lucide-react";
 
 const Donate = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   const tiers = [
     {
@@ -54,17 +58,162 @@ const Donate = () => {
     },
   ];
 
-  const handlePayment = async (method: string) => {
+  const getTierAmount = (tierId: string) => {
+    const prices: { [key: string]: number } = {
+      supporter: 5,
+      premium: 15,
+      vip: 30,
+    };
+    return prices[tierId] || 0;
+  };
+
+  const handleMobileMoneyPayment = async (provider: "airtel" | "tnm") => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to make a payment",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedTier || !phoneNumber) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a tier and enter your phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setProcessing(true);
-    
-    // Simulate payment processing
-    setTimeout(() => {
+
+    try {
+      const { data, error } = await supabase.functions.invoke("process-paychangu-payment", {
+        body: {
+          amount: getTierAmount(selectedTier),
+          currency: "MWK",
+          phone: phoneNumber,
+          tier: selectedTier,
+          userId: user.id,
+          provider,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Payment Initiated",
+        description: `Please check your phone to complete the ${provider.toUpperCase()} payment`,
+      });
+    } catch (error: any) {
+      console.error("Mobile money payment error:", error);
+      toast({
+        title: "Payment Failed",
+        description: error.message || "Failed to process mobile money payment",
+        variant: "destructive",
+      });
+    } finally {
       setProcessing(false);
+    }
+  };
+
+  const handlePayPalPayment = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to make a payment",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedTier) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a tier",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setProcessing(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("process-paypal-payment", {
+        body: {
+          amount: getTierAmount(selectedTier),
+          tier: selectedTier,
+          userId: user.id,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.approvalUrl) {
+        window.location.href = data.approvalUrl;
+      }
+    } catch (error: any) {
+      console.error("PayPal payment error:", error);
+      toast({
+        title: "Payment Failed",
+        description: error.message || "Failed to initiate PayPal payment",
+        variant: "destructive",
+      });
+      setProcessing(false);
+    }
+  };
+
+  const handleStripePayment = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to make a payment",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedTier) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a tier",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setProcessing(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("process-stripe-payment", {
+        body: {
+          amount: getTierAmount(selectedTier),
+          currency: "USD",
+          tier: selectedTier,
+          userId: user.id,
+        },
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Payment Processing",
-        description: `Your ${method} payment is being processed. You'll receive a confirmation shortly.`,
+        description: "Redirecting to secure payment page...",
       });
-    }, 2000);
+      
+      // In production, you would redirect to Stripe checkout
+      console.log("Stripe payment intent:", data);
+    } catch (error: any) {
+      console.error("Stripe payment error:", error);
+      toast({
+        title: "Payment Failed",
+        description: error.message || "Failed to process card payment",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
+    }
   };
 
   return (
@@ -146,6 +295,8 @@ const Donate = () => {
                       <Label htmlFor="phone">Phone Number</Label>
                       <Input
                         id="phone"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
                         placeholder="Enter your phone number"
                         className="glass"
                       />
@@ -153,7 +304,7 @@ const Donate = () => {
                     
                     <div className="grid sm:grid-cols-2 gap-4">
                       <Button
-                        onClick={() => handlePayment("Airtel Money")}
+                        onClick={() => handleMobileMoneyPayment("airtel")}
                         disabled={processing}
                         className="w-full gradient-romantic text-white"
                       >
@@ -162,7 +313,7 @@ const Donate = () => {
                       </Button>
 
                       <Button
-                        onClick={() => handlePayment("TNM Mpamba")}
+                        onClick={() => handleMobileMoneyPayment("tnm")}
                         disabled={processing}
                         className="w-full gradient-romantic text-white"
                       >
@@ -175,42 +326,20 @@ const Donate = () => {
 
                 {/* Card Payment */}
                 <TabsContent value="card" className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="card-number">Card Number</Label>
-                      <Input
-                        id="card-number"
-                        placeholder="1234 5678 9012 3456"
-                        className="glass"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="expiry">Expiry</Label>
-                        <Input
-                          id="expiry"
-                          placeholder="MM/YY"
-                          className="glass"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="cvv">CVV</Label>
-                        <Input
-                          id="cvv"
-                          placeholder="123"
-                          className="glass"
-                        />
-                      </div>
-                    </div>
+                  <Card className="glass p-6 text-center space-y-4">
+                    <CreditCard className="w-12 h-12 mx-auto text-primary" />
+                    <p className="text-muted-foreground">
+                      Secure card payments powered by Stripe
+                    </p>
                     <Button
-                      onClick={() => handlePayment("Card")}
+                      onClick={handleStripePayment}
                       disabled={processing}
                       className="w-full gradient-romantic text-white"
                     >
                       <CreditCard className="w-4 h-4 mr-2" />
-                      Pay Securely
+                      Pay with Card
                     </Button>
-                  </div>
+                  </Card>
                 </TabsContent>
 
                 {/* PayPal */}
@@ -218,14 +347,14 @@ const Donate = () => {
                   <Card className="glass p-6 text-center space-y-4">
                     <DollarSign className="w-12 h-12 mx-auto text-primary" />
                     <p className="text-muted-foreground">
-                      You will be redirected to PayPal to complete your payment
+                      You will be redirected to PayPal to complete your payment securely
                     </p>
                     <Button
-                      onClick={() => handlePayment("PayPal")}
+                      onClick={handlePayPalPayment}
                       disabled={processing}
                       className="w-full gradient-romantic text-white"
                     >
-                      Continue with PayPal
+                      {processing ? "Processing..." : "Continue with PayPal"}
                     </Button>
                   </Card>
                 </TabsContent>
@@ -233,12 +362,15 @@ const Donate = () => {
                 {/* Crypto */}
                 <TabsContent value="crypto" className="space-y-4">
                   <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground text-center">
+                      Send crypto to the addresses below and verify your payment
+                    </p>
                     <Card className="glass p-4 space-y-2">
                       <div className="flex items-center gap-2">
                         <Bitcoin className="w-5 h-5 text-primary" />
                         <h3 className="font-semibold">Bitcoin (BTC)</h3>
                       </div>
-                      <code className="text-xs break-all text-muted-foreground block">
+                      <code className="text-xs break-all text-muted-foreground block select-all">
                         bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
                       </code>
                     </Card>
@@ -247,17 +379,13 @@ const Donate = () => {
                         <DollarSign className="w-5 h-5 text-primary" />
                         <h3 className="font-semibold">USDT (TRC20)</h3>
                       </div>
-                      <code className="text-xs break-all text-muted-foreground block">
+                      <code className="text-xs break-all text-muted-foreground block select-all">
                         TJRyWwFs9wTFGZg3JbrVriFbNfCug5tDeC
                       </code>
                     </Card>
-                    <Button
-                      onClick={() => handlePayment("Crypto")}
-                      disabled={processing}
-                      className="w-full gradient-romantic text-white"
-                    >
-                      I've Sent Payment
-                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      After sending payment, contact support with your transaction ID
+                    </p>
                   </div>
                 </TabsContent>
               </Tabs>
