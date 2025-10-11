@@ -95,7 +95,6 @@ const Donate = () => {
           currency: "MWK",
           phone: phoneNumber,
           tier: selectedTier,
-          userId: user.id,
           provider,
         },
       });
@@ -144,7 +143,6 @@ const Donate = () => {
         body: {
           amount: getTierAmount(selectedTier),
           tier: selectedTier,
-          userId: user.id,
         },
       });
 
@@ -191,7 +189,6 @@ const Donate = () => {
           amount: getTierAmount(selectedTier),
           currency: "USD",
           tier: selectedTier,
-          userId: user.id,
         },
       });
 

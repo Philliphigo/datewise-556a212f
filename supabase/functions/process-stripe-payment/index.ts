@@ -15,13 +15,56 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const SUBSCRIPTION_TIERS = {
+  supporter: { usd: 5 },
+  premium: { usd: 15 },
+  vip: { usd: 30 },
+} as const;
+
+function validatePayment(tier: string, amount: number, currency: string): void {
+  const tierPricing = SUBSCRIPTION_TIERS[tier as keyof typeof SUBSCRIPTION_TIERS];
+  if (!tierPricing) {
+    throw new Error('Invalid subscription tier');
+  }
+  
+  const expectedAmount = tierPricing[currency.toLowerCase() as keyof typeof tierPricing];
+  if (!expectedAmount || amount !== expectedAmount) {
+    throw new Error(`Invalid amount for ${tier}. Expected ${expectedAmount} ${currency}`);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { amount, currency, tier, userId } = await req.json();
+    // Get authenticated user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseClient = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { amount, currency = 'usd', tier } = await req.json();
+    const userId = user.id; // Use verified user ID from JWT
+    
+    // Validate payment amount matches tier
+    validatePayment(tier, amount, currency);
 
     console.log("Processing Stripe payment:", { amount, currency, tier, userId });
 
