@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
@@ -38,6 +38,9 @@ const Discover = () => {
   const [ageFilter, setAgeFilter] = useState("all");
   const [genderFilter, setGenderFilter] = useState("all");
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
 
   useEffect(() => {
     if (!user) {
@@ -162,6 +165,32 @@ const Discover = () => {
     }
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+    
+    if (isLeftSwipe) {
+      handlePass();
+    }
+    if (isRightSwipe) {
+      handleLike();
+    }
+    
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -252,10 +281,16 @@ const Discover = () => {
             </Card>
           )}
 
-          <Card className={`glass-card overflow-hidden animate-scale-in transition-transform duration-300 ${
-            swipeDirection === 'left' ? '-translate-x-full opacity-0' : 
-            swipeDirection === 'right' ? 'translate-x-full opacity-0' : ''
-          }`}>
+          <Card
+            ref={cardRef}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            className={`glass-card overflow-hidden animate-scale-in transition-transform duration-300 ${
+              swipeDirection === 'left' ? '-translate-x-full opacity-0' : 
+              swipeDirection === 'right' ? 'translate-x-full opacity-0' : ''
+            }`}
+          >
             {/* Profile Image */}
             <div className="relative h-96 bg-gradient-to-b from-muted to-background">
               <img

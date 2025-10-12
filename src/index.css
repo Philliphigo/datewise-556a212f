@@ -58,13 +58,13 @@
   }
 
   .dark {
-    --background: 280 30% 8%;
+    --background: 220 40% 5%;
     --foreground: 330 20% 95%;
 
-    --card: 280 25% 12%;
+    --card: 220 35% 8%;
     --card-foreground: 330 20% 95%;
 
-    --popover: 280 25% 12%;
+    --popover: 220 35% 8%;
     --popover-foreground: 330 20% 95%;
 
     --primary: 330 80% 60%;
@@ -77,19 +77,22 @@
     --accent: 170 60% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --muted: 280 20% 20%;
+    --muted: 220 30% 15%;
     --muted-foreground: 330 15% 60%;
 
     --destructive: 0 85% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 280 20% 20%;
-    --input: 280 20% 20%;
+    --border: 220 30% 18%;
+    --input: 220 30% 18%;
     --ring: 330 80% 60%;
 
-    --glass-bg: hsla(280, 30%, 12%, 0.6);
+    --glass-bg: hsla(220, 40%, 8%, 0.6);
     --glass-border: hsla(330, 80%, 60%, 0.2);
     --glass-shadow: 0 8px 32px 0 hsla(330, 80%, 60%, 0.2);
+    
+    /* Dark mode neon gradient */
+    --gradient-romantic: linear-gradient(135deg, hsl(220, 70%, 25%) 0%, hsl(240, 80%, 35%) 30%, hsl(260, 70%, 45%) 60%, hsl(330, 80%, 55%) 100%);
   }
 }
 
@@ -178,5 +181,23 @@
 
   .animate-pulse-soft {
     animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes liquid-bubble {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.02);
+    }
+  }
+
+  .animate-liquid-bubble {
+    animation: liquid-bubble 2s ease-in-out infinite;
+  }
+
+  /* Hide Lovable Badge */
+  #lovable-badge {
+    display: none !important;
   }
 }

@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { LiquidToggle } from "@/components/ui/liquid-toggle";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Shield, Bell, Eye, Trash2 } from "lucide-react";
+import { Loader2, Shield, Bell, Eye, Trash2, Moon, Sun } from "lucide-react";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -23,11 +23,19 @@ const Settings = () => {
   const [profile, setProfile] = useState<any>(null);
   const [photoVisibility, setPhotoVisibility] = useState("everyone");
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
   const [name, setName] = useState("");
   const [age, setAge] = useState<number | ''>('');
   const [gender, setGender] = useState("");
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
+
+  useEffect(() => {
+    // Check dark mode preference
+    const isDark = document.documentElement.classList.contains('dark');
+    setDarkMode(isDark);
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -95,6 +103,17 @@ const Settings = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const toggleDarkMode = (checked: boolean) => {
+    setDarkMode(checked);
+    if (checked) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
   };
 
@@ -174,6 +193,29 @@ const Settings = () => {
             </div>
           </Card>
 
+          {/* Appearance Settings */}
+          <Card className="glass-card p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              {darkMode ? <Moon className="w-6 h-6 text-primary" /> : <Sun className="w-6 h-6 text-primary" />}
+              <h2 className="text-xl font-semibold">Appearance</h2>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="font-medium">Dark Mode</p>
+                  <p className="text-sm text-muted-foreground">
+                    Enable dark neon gradient theme
+                  </p>
+                </div>
+                <LiquidToggle
+                  checked={darkMode}
+                  onCheckedChange={toggleDarkMode}
+                />
+              </div>
+            </div>
+          </Card>
+
           {/* Notification Settings */}
           <Card className="glass-card p-6 space-y-6">
             <div className="flex items-center gap-3">
@@ -186,10 +228,10 @@ const Settings = () => {
                 <div className="space-y-1">
                   <p className="font-medium">Push Notifications</p>
                   <p className="text-sm text-muted-foreground">
-                    Receive notifications for matches and messages
+                    Get alerts for matches and messages
                   </p>
                 </div>
-                <Switch
+                <LiquidToggle
                   checked={notificationsEnabled}
                   onCheckedChange={setNotificationsEnabled}
                 />
@@ -202,7 +244,10 @@ const Settings = () => {
                   <p className="font-medium">Email Notifications</p>
                   <p className="text-sm text-muted-foreground">Get updates via email</p>
                 </div>
-                <Switch defaultChecked />
+                <LiquidToggle
+                  checked={emailNotifications}
+                  onCheckedChange={setEmailNotifications}
+                />
               </div>
             </div>
           </Card>
