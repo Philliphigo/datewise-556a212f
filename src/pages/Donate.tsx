@@ -70,7 +70,7 @@ const Donate = () => {
     return prices[tierId]?.[currency] || 0;
   };
 
-  const handleMobileMoneyPayment = async (provider: "airtel" | "tnm") => {
+  const handleMobileMoneyPayment = async () => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -80,10 +80,10 @@ const Donate = () => {
       return;
     }
 
-    if (!selectedTier || !phoneNumber) {
+    if (!selectedTier) {
       toast({
         title: "Missing Information",
-        description: "Please select a tier and enter your phone number",
+        description: "Please select a tier",
         variant: "destructive",
       });
       return;
@@ -92,27 +92,37 @@ const Donate = () => {
     setProcessing(true);
 
     try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
       const { data, error } = await supabase.functions.invoke("process-paychangu-payment", {
         body: {
           amount: getTierAmount(selectedTier, 'MWK'),
           currency: "MWK",
-          phone: phoneNumber,
           tier: selectedTier,
-          provider,
+          email: user.email || "donor@example.com",
+          firstName: profile?.name?.split(" ")[0] || "Donor",
+          lastName: profile?.name?.split(" ").slice(1).join(" ") || "User",
         },
       });
 
       if (error) throw error;
 
-      toast({
-        title: "Payment Initiated",
-        description: `Please check your phone to complete the ${provider.toUpperCase()} payment`,
-      });
+      if (data.success && data.checkout_url) {
+        toast({
+          title: "Redirecting to Payment",
+          description: "You'll be redirected to complete your payment securely",
+        });
+        window.location.href = data.checkout_url;
+      }
     } catch (error: any) {
       console.error("Mobile money payment error:", error);
       toast({
         title: "Payment Failed",
-        description: error.message || "Failed to process mobile money payment",
+        description: error.message || "Failed to process payment",
         variant: "destructive",
       });
     } finally {
@@ -299,48 +309,36 @@ const Donate = () => {
                       </p>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="e.g., 0999123456 or 0888123456"
-                        className="glass"
-                      />
+                    <div className="glass p-4 rounded-lg space-y-2">
+                      <p className="text-sm font-medium">Secure Payment Gateway</p>
                       <p className="text-xs text-muted-foreground">
-                        Enter your mobile money number (Airtel or TNM Mpamba)
+                        You'll be redirected to a secure payment page where you can choose:
                       </p>
+                      <ul className="text-xs text-muted-foreground space-y-1 ml-4">
+                        <li>• Airtel Money</li>
+                        <li>• TNM Mpamba</li>
+                        <li>• Bank Transfer</li>
+                      </ul>
                     </div>
                     
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <Button
-                        onClick={() => handleMobileMoneyPayment("airtel")}
-                        disabled={processing || !phoneNumber}
-                        className="w-full gradient-romantic text-white"
-                      >
-                        <Smartphone className="w-4 h-4 mr-2" />
-                        {processing ? "Processing..." : "Pay with Airtel Money"}
-                      </Button>
-
-                      <Button
-                        onClick={() => handleMobileMoneyPayment("tnm")}
-                        disabled={processing || !phoneNumber}
-                        className="w-full gradient-romantic text-white"
-                      >
-                        <Smartphone className="w-4 h-4 mr-2" />
-                        {processing ? "Processing..." : "Pay with TNM Mpamba"}
-                      </Button>
-                    </div>
+                    <Button
+                      onClick={handleMobileMoneyPayment}
+                      disabled={processing}
+                      className="w-full gradient-romantic text-white"
+                      size="lg"
+                    >
+                      <Smartphone className="w-5 h-5 mr-2" />
+                      {processing ? "Redirecting..." : "Proceed to Payment"}
+                    </Button>
 
                     <div className="glass p-3 rounded-lg text-xs text-muted-foreground">
                       <p className="font-semibold mb-1">How it works:</p>
                       <ol className="list-decimal list-inside space-y-1">
-                        <li>Enter your Airtel Money or TNM Mpamba number</li>
-                        <li>Click the payment button for your provider</li>
-                        <li>You'll receive a prompt on your phone to authorize the payment</li>
-                        <li>Enter your PIN to complete the transaction</li>
+                        <li>Click "Proceed to Payment" button</li>
+                        <li>You'll be redirected to PayChangu's secure checkout</li>
+                        <li>Select your payment method (Airtel, TNM, or Bank)</li>
+                        <li>Complete the payment on your phone or online</li>
+                        <li>Return to DateWise after successful payment</li>
                       </ol>
                     </div>
                   </div>

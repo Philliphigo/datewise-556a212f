@@ -56,49 +56,52 @@ serve(async (req) => {
       );
     }
 
-    const { amount, currency = 'MWK', phone, tier, provider } = await req.json();
+    const { amount, currency = 'MWK', tier, email, firstName, lastName } = await req.json();
     const userId = user.id; // Use verified user ID from JWT
     
     // Validate payment amount matches tier
     validatePayment(tier, amount, currency);
 
-    console.log("Processing PayChangu payment:", { amount, currency, phone, tier, userId, provider });
+    // Generate unique transaction reference
+    const txRef = `DONATION-${userId}-${Date.now()}`;
 
-    // Create PayChangu payment request
+    console.log("Processing PayChangu payment:", { amount, currency, tier, userId, txRef });
+
+    // Create PayChangu hosted checkout session
     const paymentResponse = await fetch("https://api.paychangu.com/payment", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${payChanguSecretKey}`,
+        "Accept": "application/json",
       },
       body: JSON.stringify({
+        secret_key: payChanguSecretKey,
         amount,
-        currency: currency || "MWK",
-        phone_number: phone,
-        provider, // airtel or tnm
+        currency,
+        tx_ref: txRef,
+        email,
+        first_name: firstName,
+        last_name: lastName,
         callback_url: `${supabaseUrl}/functions/v1/paychangu-webhook`,
-        metadata: {
-          tier,
-          userId,
-        },
+        return_url: `${supabaseUrl.replace('supabase.co', 'lovable.app')}/donate?status=success`,
       }),
     });
 
     const paymentData = await paymentResponse.json();
 
-    if (!paymentResponse.ok) {
-      throw new Error(paymentData.message || "PayChangu payment failed");
+    if (!paymentResponse.ok || paymentData.status !== "success") {
+      throw new Error(paymentData.message || "PayChangu payment session creation failed");
     }
 
-    // Record payment in database
+    // Record payment in database with pending status
     const { error: paymentError } = await supabase.from("payments").insert({
       user_id: userId,
       amount,
-      currency: currency || "MWK",
-      payment_method: `paychangu_${provider}`,
-      transaction_id: paymentData.transaction_id,
+      currency,
+      payment_method: "paychangu",
+      transaction_id: txRef,
       status: "pending",
-      metadata: { tier, phone },
+      metadata: { tier, email, mode: paymentData.data?.mode || "live" },
     });
 
     if (paymentError) {
@@ -109,8 +112,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        transaction_id: paymentData.transaction_id,
-        status: paymentData.status,
+        checkout_url: paymentData.data.checkout_url,
+        tx_ref: txRef,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

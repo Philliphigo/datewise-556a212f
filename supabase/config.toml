@@ -3,6 +3,9 @@ project_id = "uvovskdrgagnbiwcxtlg"
 [functions.philai-chat]
 verify_jwt = false
 
+[functions.paychangu-webhook]
+verify_jwt = false
+
 [functions.process-paychangu-payment]
 verify_jwt = true
 
