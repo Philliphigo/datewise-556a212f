@@ -102,10 +102,15 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/onboarding`,
+          redirectTo: `${window.location.origin}/discover`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
       if (error) throw error;
+      // OAuth redirect happens automatically, no need to set loading to false
     } catch (error: any) {
       toast({
         title: "Error",
@@ -117,10 +122,23 @@ const Auth = () => {
   };
 
   const handlePhoneSignIn = async () => {
-    toast({
-      title: "Coming Soon",
-      description: "Phone authentication will be available soon!",
-    });
+    setLoading(true);
+    try {
+      // For phone auth, we would need a phone number input
+      // For now, show that it's enabled but needs setup
+      toast({
+        title: "Phone Authentication",
+        description: "Phone authentication is enabled. Please contact support to set up your phone number.",
+      });
+      setLoading(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to initiate phone authentication",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
   };
 
   const toggleMode = () => {

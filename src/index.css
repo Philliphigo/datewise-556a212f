@@ -197,7 +197,20 @@
   }
 
   /* Hide Lovable Badge */
-  #lovable-badge {
-    display: none !important;
+#lovable-badge {
+  display: none !important;
+}
+
+@keyframes liquid-squeeze {
+  0%, 100% {
+    transform: scale(1, 1);
   }
+  50% {
+    transform: scale(1.1, 0.9);
+  }
+}
+
+.animate-liquid-bubble {
+  animation: liquid-squeeze 0.4s ease-in-out;
+}
 }
