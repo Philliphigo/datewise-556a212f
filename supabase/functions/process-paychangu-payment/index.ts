@@ -68,6 +68,11 @@ serve(async (req) => {
     console.log("Processing PayChangu payment:", { amount, currency, tier, userId, txRef });
 
     // Create PayChangu hosted checkout session
+    // Validate secret key is configured
+    if (!payChanguSecretKey) {
+      throw new Error("PayChangu secret key not configured");
+    }
+
     const paymentResponse = await fetch("https://api.paychangu.com/payment", {
       method: "POST",
       headers: {
@@ -83,7 +88,7 @@ serve(async (req) => {
         first_name: firstName,
         last_name: lastName,
         callback_url: `${supabaseUrl}/functions/v1/paychangu-webhook`,
-        return_url: "https://71e40171-5c72-416f-9ebc-45a72cf89c0d.lovableproject.com/donate?status=success",
+        return_url: `${window.location.origin}/donate?status=success`,
       }),
     });
 

@@ -8,12 +8,16 @@ const LiquidToggle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SwitchPrimitives.Root
     className={cn(
-      "peer inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full transition-all duration-300 ease-in-out",
+      // iOS 16 style base
+      "peer inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer items-center rounded-full",
+      "transition-all duration-200 ease-out",
       "disabled:cursor-not-allowed disabled:opacity-50",
-      "relative overflow-visible",
+      "relative overflow-hidden",
+      // Background colors matching iOS 16
       "data-[state=checked]:bg-primary",
-      "data-[state=unchecked]:bg-input",
-      "shadow-inner",
+      "data-[state=unchecked]:bg-input/60",
+      // iOS-style subtle inner shadow
+      "shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)]",
       className
     )}
     {...props}
@@ -21,24 +25,27 @@ const LiquidToggle = React.forwardRef<
   >
     <SwitchPrimitives.Thumb
       className={cn(
-        "pointer-events-none block h-7 w-7 rounded-full transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
-        "data-[state=checked]:translate-x-[26px] data-[state=unchecked]:translate-x-[2px]",
-        "relative overflow-visible",
-        // White bubble base
-        "bg-white shadow-lg",
-        // Liquid glass effect with multiple gradients
+        // iOS 16 thumb dimensions and positioning
+        "pointer-events-none block h-[27px] w-[27px] rounded-full",
+        // Smooth spring animation matching iOS
+        "transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]",
+        "data-[state=checked]:translate-x-[22px] data-[state=unchecked]:translate-x-[2px]",
+        "relative overflow-hidden",
+        // Pure white bubble
+        "bg-white",
+        // iOS-style shadow - subtle and realistic
+        "shadow-[0_2px_4px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.12)]",
+        // Glossy glass highlight effect
         "before:absolute before:inset-0 before:rounded-full",
-        "before:bg-gradient-to-br before:from-white/90 before:via-white/50 before:to-transparent",
-        "before:transition-all before:duration-300",
-        // Glossy shine on top
-        "after:absolute after:top-[2px] after:left-[2px] after:right-[2px] after:h-[45%] after:rounded-full",
-        "after:bg-gradient-to-b after:from-white/80 after:to-transparent",
-        "after:transition-all after:duration-300",
-        // Scale effect on toggle
-        "data-[state=checked]:scale-[1.05] data-[state=unchecked]:scale-100",
-        // Subtle shadow that changes with state
-        "data-[state=checked]:shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_2px_rgba(255,255,255,0.8)]",
-        "data-[state=unchecked]:shadow-[0_2px_6px_rgba(0,0,0,0.12),inset_0_1px_2px_rgba(255,255,255,0.8)]"
+        "before:bg-gradient-to-br before:from-white/40 before:via-transparent before:to-transparent",
+        "before:opacity-70",
+        // Top shine highlight
+        "after:absolute after:top-[1px] after:left-[20%] after:right-[20%] after:h-[30%] after:rounded-full",
+        "after:bg-gradient-to-b after:from-white/90 after:to-transparent",
+        "after:blur-[1px]",
+        // Micro scale on toggle for tactile feel
+        "data-[state=checked]:scale-[0.98]",
+        "active:scale-[0.94] active:shadow-[0_1px_2px_rgba(0,0,0,0.2)]"
       )}
     />
   </SwitchPrimitives.Root>
