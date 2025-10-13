@@ -223,7 +223,7 @@ const Discover = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-md mx-auto space-y-4">
+        <div className="max-w-sm mx-auto space-y-4 px-2">
           {/* Filter Button */}
           <div className="flex justify-end">
             <Button
@@ -287,13 +287,13 @@ const Discover = () => {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            className={`overflow-hidden animate-scale-in transition-transform duration-300 rounded-3xl shadow-2xl ${
+            className={`overflow-hidden animate-scale-in transition-transform duration-300 rounded-[32px] shadow-[0_20px_60px_rgba(219,39,119,0.3)] ${
               swipeDirection === 'left' ? '-translate-x-full opacity-0' : 
               swipeDirection === 'right' ? 'translate-x-full opacity-0' : ''
             }`}
           >
             {/* Profile Image with Overlay */}
-            <div className="relative h-[600px]">
+            <div className="relative h-[520px]">
               <img
                 src={currentProfile.avatar_url || defaultAvatar}
                 alt={currentProfile.name}
@@ -301,15 +301,15 @@ const Discover = () => {
               />
               
               {/* Top Menu Icon */}
-              <div className="absolute top-4 left-4 z-10">
+              <div className="absolute top-5 left-5 z-10">
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="w-10 h-10 rounded-full glass hover:bg-white/20 backdrop-blur-lg"
+                      className="w-12 h-12 rounded-2xl bg-white/90 hover:bg-white backdrop-blur-md shadow-lg"
                     >
-                      <MoreVertical className="w-5 h-5 text-white" />
+                      <MoreVertical className="w-5 h-5 text-gray-700" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-48 p-2 glass-card" align="start">
@@ -329,73 +329,68 @@ const Discover = () => {
               </div>
 
               {/* Gradient Overlay at Bottom */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#2D1B3D] via-[#4A2F5A]/60 to-transparent pointer-events-none" />
               
               {/* Profile Info at Bottom */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 text-white space-y-3">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-4xl font-bold drop-shadow-lg">
+              <div className="absolute bottom-0 left-0 right-0 p-8 text-white space-y-4">
+                <div>
+                  <h2 className="text-5xl font-bold drop-shadow-2xl mb-2">
                     {currentProfile.name}, {currentProfile.age}
                   </h2>
-                  {currentProfile.verified && (
-                    <CheckCircle className="w-7 h-7 text-primary drop-shadow-lg" fill="currentColor" />
+                  
+                  {currentProfile.looking_for && (
+                    <p className="text-white/95 text-xl drop-shadow-md font-light">
+                      Looking for {currentProfile.looking_for.toLowerCase()}
+                    </p>
                   )}
                 </div>
-                
-                {currentProfile.looking_for && (
-                  <p className="text-white/90 text-base drop-shadow-md">
-                    Looking for: {currentProfile.looking_for}
-                  </p>
-                )}
 
-                <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-6 text-base">
                   {currentProfile.city && (
-                    <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full">
-                      <MapPin className="w-4 h-4" />
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-5 h-5" />
                       <span>{currentProfile.city}</span>
                     </div>
                   )}
-                  {currentProfile.interests && currentProfile.interests.length > 0 && (
-                    <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full">
-                      <Heart className="w-4 h-4" />
-                      <span>{currentProfile.interests[0]}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">💰</span>
+                    <span>CEO,000,000</span>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="p-6 flex gap-4 justify-center items-center bg-background/50 backdrop-blur-sm">
+            <div className="p-8 flex gap-6 justify-center items-center bg-gradient-to-t from-[#2D1B3D] to-[#2D1B3D]/80">
               <Button
                 size="lg"
                 variant="ghost"
-                className="rounded-full w-16 h-16 p-0 bg-white hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all"
+                className="rounded-full w-20 h-20 p-0 bg-gradient-to-br from-pink-400 to-pink-600 hover:from-pink-500 hover:to-pink-700 shadow-[0_8px_24px_rgba(236,72,153,0.4)] hover:shadow-[0_12px_32px_rgba(236,72,153,0.6)] transition-all hover:scale-105"
                 onClick={handlePass}
                 disabled={actionLoading}
               >
-                <X className="w-8 h-8 text-red-500" />
+                <X className="w-10 h-10 text-white" strokeWidth={3} />
               </Button>
 
               <Button
                 size="lg"
                 variant="ghost"
-                className="rounded-full w-14 h-14 p-0 bg-white hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all"
+                className="rounded-full w-20 h-20 p-0 bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 shadow-[0_8px_24px_rgba(168,85,247,0.4)] hover:shadow-[0_12px_32px_rgba(168,85,247,0.6)] transition-all hover:scale-105"
                 onClick={handleMessage}
               >
-                <MessageCircle className="w-6 h-6 text-blue-500" />
+                <MessageCircle className="w-9 h-9 text-white" fill="white" strokeWidth={0} />
               </Button>
 
               <Button
                 size="lg"
-                className="gradient-romantic rounded-full w-16 h-16 p-0 shadow-lg glow-primary hover:scale-110 transition-all"
+                className="rounded-full w-20 h-20 p-0 bg-gradient-to-br from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700 shadow-[0_8px_24px_rgba(192,132,252,0.4)] hover:shadow-[0_12px_32px_rgba(192,132,252,0.6)] transition-all hover:scale-105"
                 onClick={handleLike}
                 disabled={actionLoading}
               >
                 {actionLoading ? (
-                  <Loader2 className="w-8 h-8 animate-spin text-white" />
+                  <Loader2 className="w-10 h-10 animate-spin text-white" />
                 ) : (
-                  <Heart className="w-8 h-8 text-white" fill="currentColor" />
+                  <Heart className="w-10 h-10 text-white" fill="white" strokeWidth={0} />
                 )}
               </Button>
             </div>
