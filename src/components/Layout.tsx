@@ -70,11 +70,6 @@ export const Layout = ({ children }: LayoutProps) => {
           </div>
         </div>
       </nav>
-      
-      {/* Watermark */}
-      <div className="fixed bottom-24 left-0 right-0 text-center pointer-events-none z-40">
-        <p className="text-xs text-muted-foreground/50">by Phil</p>
-      </div>
     </div>
   );
 };

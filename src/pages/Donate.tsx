@@ -412,10 +412,6 @@ const Donate = () => {
             </Card>
           )}
 
-          {/* Watermark */}
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">by Phil</p>
-          </div>
         </div>
       </div>
     </Layout>

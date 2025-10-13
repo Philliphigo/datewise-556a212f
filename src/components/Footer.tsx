@@ -101,7 +101,7 @@ export const Footer = () => {
 
         <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-2 text-sm text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} DateWise. All rights reserved.</p>
-          <p className="text-xs">Built by Phil</p>
+          <p className="text-xs">by phil</p>
         </div>
       </div>
     </footer>
