@@ -88,7 +88,7 @@ serve(async (req) => {
         first_name: firstName,
         last_name: lastName,
         callback_url: `${supabaseUrl}/functions/v1/paychangu-webhook`,
-        return_url: `${window.location.origin}/donate?status=success`,
+        return_url: `${req.headers.get('origin') || supabaseUrl.replace('.supabase.co', '.lovable.app')}/donate?status=success`,
       }),
     });
 
