@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
-import Onboarding from "./pages/Onboarding";
+import OnboardingWrapper from "./pages/OnboardingWrapper";
 import Discover from "./pages/Discover";
 import Matches from "./pages/Matches";
 import Messages from "./pages/Messages";
@@ -15,6 +15,8 @@ import Feed from "./pages/Feed";
 import Settings from "./pages/Settings";
 import Donate from "./pages/Donate";
 import AdminDashboard from "./pages/AdminDashboard";
+import DiscoverySettings from "./pages/DiscoverySettings";
+import FeedPost from "./pages/FeedPost";
 import NotFound from "./pages/NotFound";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -34,7 +36,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/onboarding" element={<OnboardingWrapper />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/matches" element={<Matches />} />
           <Route path="/feed" element={<Feed />} />
@@ -43,6 +45,8 @@ const App = () => (
           <Route path="/settings" element={<Settings />} />
           <Route path="/donate" element={<Donate />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/discovery-settings" element={<DiscoverySettings />} />
+          <Route path="/post/:postId" element={<FeedPost />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/help" element={<Help />} />

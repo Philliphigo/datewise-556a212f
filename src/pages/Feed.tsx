@@ -6,10 +6,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar } from "@/components/ui/avatar";
-import { Heart, MessageCircle, Send, Loader2, Image } from "lucide-react";
+import { Heart, MessageCircle, Send, Loader2, Image, MoreVertical, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PostComments } from "@/components/PostComments";
+import { PostReactions } from "@/components/PostReactions";
 import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 import { formatDistanceToNow } from "date-fns";
 
@@ -153,7 +160,7 @@ const Feed = () => {
     }
   };
 
-  const handleLike = async (postId: string) => {
+  const handleLike = async (postId: string, reaction: string = "like") => {
     if (!user) return;
 
     const post = posts.find((p) => p.id === postId);
@@ -173,6 +180,26 @@ const Feed = () => {
         });
       }
 
+      fetchPosts();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    try {
+      const { error } = await supabase.from("posts").delete().eq("id", postId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Post Deleted",
+        description: "Your post has been removed",
+      });
       fetchPosts();
     } catch (error: any) {
       toast({
@@ -264,20 +291,40 @@ const Feed = () => {
               >
                 <div className="p-4 space-y-4">
                   {/* Post Header */}
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-10 h-10 border-2 border-primary/20">
-                      <img
-                        src={post.profile?.avatar_url || defaultAvatar}
-                        alt={post.profile?.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold">{post.profile?.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10 border-2 border-primary/20">
+                        <img
+                          src={post.profile?.avatar_url || defaultAvatar}
+                          alt={post.profile?.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold">{post.profile?.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                        </p>
+                      </div>
                     </div>
+                    {post.user_id === user?.id && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="w-5 h-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="glass">
+                          <DropdownMenuItem
+                            onClick={() => handleDeletePost(post.id)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete Post
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
 
                   {/* Post Content */}
@@ -293,29 +340,14 @@ const Feed = () => {
 
                   {/* Post Actions */}
                   <div className="flex items-center gap-6 pt-2 border-t border-border/50">
-                    <button
-                      onClick={() => handleLike(post.id)}
-                      className={`flex items-center gap-2 transition-colors ${
-                        post.userLiked ? "text-primary" : "text-muted-foreground hover:text-primary"
-                      }`}
-                    >
-                      <Heart
-                        className="w-5 h-5"
-                        fill={post.userLiked ? "currentColor" : "none"}
-                      />
-                      <span className="text-sm">{post.likes_count}</span>
-                    </button>
+                    <PostReactions
+                      onReact={(type) => handleLike(post.id, type)}
+                      userReaction={post.userLiked ? "like" : undefined}
+                      count={post.likes_count}
+                    />
 
                     <button 
-                      onClick={() => {
-                        const newExpanded = new Set(expandedComments);
-                        if (newExpanded.has(post.id)) {
-                          newExpanded.delete(post.id);
-                        } else {
-                          newExpanded.add(post.id);
-                        }
-                        setExpandedComments(newExpanded);
-                      }}
+                      onClick={() => navigate(`/post/${post.id}`)}
                       className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <MessageCircle className="w-5 h-5" />
@@ -323,7 +355,6 @@ const Feed = () => {
                     </button>
                   </div>
 
-                  {expandedComments.has(post.id) && <PostComments postId={post.id} />}
                 </div>
               </Card>
             ))}

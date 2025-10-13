@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Contact = () => {
   const { toast } = useToast();
@@ -17,13 +18,20 @@ const Contact = () => {
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [sending, setSending] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Message Sent!",
-      description: "We'll get back to you within 24 hours.",
-    });
-    setFormData({ name: "", email: "", subject: "", message: "" });
+    setSending(true);
+    
+    setTimeout(() => {
+      toast({
+        title: "Message Sent!",
+        description: "We'll get back to you at datewiseapp@gmail.com within 24 hours.",
+      });
+      setFormData({ name: "", email: "", subject: "", message: "" });
+      setSending(false);
+    }, 1000);
   };
 
   return (
@@ -88,8 +96,8 @@ const Contact = () => {
                   />
                 </div>
 
-                <Button type="submit" className="w-full gradient-romantic text-white">
-                  Send Message
+                <Button type="submit" disabled={sending} className="w-full gradient-romantic text-white">
+                  {sending ? "Sending..." : "Send Message"}
                 </Button>
               </form>
             </Card>
@@ -102,7 +110,7 @@ const Contact = () => {
                     <Mail className="w-5 h-5 text-primary flex-shrink-0" />
                     <div>
                       <p className="font-medium">Email</p>
-                      <p className="text-sm text-muted-foreground">support@datewise.com</p>
+                      <p className="text-sm text-muted-foreground">datewiseapp@gmail.com</p>
                     </div>
                   </div>
 
@@ -119,8 +127,8 @@ const Contact = () => {
                     <div>
                       <p className="font-medium">Address</p>
                       <p className="text-sm text-muted-foreground">
-                        123 Love Street<br />
-                        San Francisco, CA 94102
+                        DateWise HQ<br />
+                        Lilongwe, Malawi
                       </p>
                     </div>
                   </div>

@@ -99,8 +99,9 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-border text-center text-sm text-muted-foreground">
+        <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-2 text-sm text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} DateWise. All rights reserved.</p>
+          <p className="text-xs">Built by Phil</p>
         </div>
       </div>
     </footer>

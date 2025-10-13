@@ -18,7 +18,7 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const systemPrompt = `You are PhilAI, an intelligent assistant for DateWise - a modern dating application. You are knowledgeable about all aspects of the app and can help users with:
+    const systemPrompt = `You are PhilAI, an intelligent assistant for DateWise - a modern dating application based in Lilongwe, Malawi. For support inquiries, provide the official contact email: datewiseapp@gmail.com. You are knowledgeable about all aspects of the app and can help users with:
 
 - Creating and managing their profiles
 - Understanding the matching algorithm and how to get better matches

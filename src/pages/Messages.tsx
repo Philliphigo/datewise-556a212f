@@ -56,6 +56,18 @@ const CHAT_THEMES = [
 ];
 
 const Messages = () => {
+  useEffect(() => {
+    // Add Google AdSense script to head
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8299009369780520';
+    script.crossOrigin = 'anonymous';
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();

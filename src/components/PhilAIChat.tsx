@@ -6,21 +6,38 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Send, Bot, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { QuestionSuggestions } from "./QuestionSuggestions";
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
 
+const STARTUP_QUESTIONS = [
+  "How does DateWise matching work?",
+  "How can I stay safe while dating online?",
+  "What payment methods do you accept?",
+  "How do I contact support?",
+];
+
+const FOLLOWUP_QUESTIONS = [
+  "Tell me more about that",
+  "What are the pricing options?",
+  "How can I report someone?",
+  "What if I need help?",
+];
+
 export const PhilAIChat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hello! I'm PhilAI, your DateWise assistant. How can I help you today?"
+      content: "Hello! I'm PhilAI, your DateWise assistant. How can I help you today? For support, email us at datewiseapp@gmail.com"
     }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showStartupQuestions, setShowStartupQuestions] = useState(true);
+  const [showFollowupQuestions, setShowFollowupQuestions] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -30,13 +47,15 @@ export const PhilAIChat = () => {
     }
   }, [messages]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+  const sendMessage = async (messageText?: string) => {
+    const textToSend = messageText || input;
+    if (!textToSend.trim() || isLoading) return;
 
-    const userMessage: Message = { role: 'user', content: input };
+    const userMessage: Message = { role: 'user', content: textToSend };
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+    setShowStartupQuestions(false);
 
     try {
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/philai-chat`;
@@ -103,6 +122,7 @@ export const PhilAIChat = () => {
           content: "I'm here to help! Could you please rephrase your question?"
         }]);
       }
+      setShowFollowupQuestions(true);
     } catch (error) {
       console.error('Chat error:', error);
       toast({
@@ -167,7 +187,21 @@ export const PhilAIChat = () => {
         </div>
       </ScrollArea>
 
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border space-y-3">
+        {showStartupQuestions && messages.length === 1 && (
+          <QuestionSuggestions
+            suggestions={STARTUP_QUESTIONS}
+            onSelect={sendMessage}
+            variant="startup"
+          />
+        )}
+        {showFollowupQuestions && !isLoading && messages.length > 1 && (
+          <QuestionSuggestions
+            suggestions={FOLLOWUP_QUESTIONS}
+            onSelect={sendMessage}
+            variant="followup"
+          />
+        )}
         <div className="flex gap-2">
           <Input
             value={input}
@@ -178,7 +212,7 @@ export const PhilAIChat = () => {
             disabled={isLoading}
           />
           <Button
-            onClick={sendMessage}
+            onClick={() => sendMessage()}
             disabled={isLoading || !input.trim()}
             className="gradient-romantic text-white"
           >
