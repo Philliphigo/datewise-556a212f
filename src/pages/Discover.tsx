@@ -331,68 +331,73 @@ const Discover = () => {
               {/* Gradient Overlay at Bottom */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#2D1B3D] via-[#4A2F5A]/60 to-transparent pointer-events-none" />
               
-              {/* Profile Info at Bottom */}
-              <div className="absolute bottom-0 left-0 right-0 p-8 text-white space-y-4">
-                <div>
-                  <h2 className="text-5xl font-bold drop-shadow-2xl mb-2">
-                    {currentProfile.name}, {currentProfile.age}
-                  </h2>
-                  
-                  {currentProfile.looking_for && (
-                    <p className="text-white/95 text-xl drop-shadow-md font-light">
-                      Looking for {currentProfile.looking_for.toLowerCase()}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-6 text-base">
-                  {currentProfile.city && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5" />
-                      <span>{currentProfile.city}</span>
+              {/* Profile Info and Action Buttons - All Inside Card */}
+              <div className="absolute bottom-0 left-0 right-0">
+                {/* Glassmorphism Background for Text and Buttons */}
+                <div className="backdrop-blur-2xl bg-gradient-to-t from-black/70 via-black/50 to-transparent p-8">
+                  <div className="text-white space-y-4">
+                    <div>
+                      <h2 className="text-5xl font-bold drop-shadow-2xl mb-2">
+                        {currentProfile.name}, {currentProfile.age}
+                      </h2>
+                      
+                      {currentProfile.looking_for && (
+                        <p className="text-white/95 text-xl drop-shadow-md font-light">
+                          Looking for {currentProfile.looking_for.toLowerCase()}
+                        </p>
+                      )}
                     </div>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">💰</span>
-                    <span>CEO,000,000</span>
+
+                    <div className="flex items-center gap-6 text-base">
+                      {currentProfile.city && (
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-5 h-5" />
+                          <span>{currentProfile.city}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">💰</span>
+                        <span>CEO,000,000</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons Inside Card */}
+                  <div className="flex gap-6 justify-center items-center pt-6">
+                    <Button
+                      size="lg"
+                      variant="ghost"
+                      className="rounded-full w-20 h-20 p-0 bg-gradient-to-br from-pink-400 to-pink-600 hover:from-pink-500 hover:to-pink-700 shadow-[0_8px_24px_rgba(236,72,153,0.4)] hover:shadow-[0_12px_32px_rgba(236,72,153,0.6)] transition-all hover:scale-105"
+                      onClick={handlePass}
+                      disabled={actionLoading}
+                    >
+                      <X className="w-10 h-10 text-white" strokeWidth={3} />
+                    </Button>
+
+                    <Button
+                      size="lg"
+                      variant="ghost"
+                      className="rounded-full w-20 h-20 p-0 bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 shadow-[0_8px_24px_rgba(168,85,247,0.4)] hover:shadow-[0_12px_32px_rgba(168,85,247,0.6)] transition-all hover:scale-105"
+                      onClick={handleMessage}
+                    >
+                      <MessageCircle className="w-9 h-9 text-white" fill="white" strokeWidth={0} />
+                    </Button>
+
+                    <Button
+                      size="lg"
+                      className="rounded-full w-20 h-20 p-0 bg-gradient-to-br from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700 shadow-[0_8px_24px_rgba(192,132,252,0.4)] hover:shadow-[0_12px_32px_rgba(192,132,252,0.6)] transition-all hover:scale-105"
+                      onClick={handleLike}
+                      disabled={actionLoading}
+                    >
+                      {actionLoading ? (
+                        <Loader2 className="w-10 h-10 animate-spin text-white" />
+                      ) : (
+                        <Heart className="w-10 h-10 text-white" fill="white" strokeWidth={0} />
+                      )}
+                    </Button>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="p-8 flex gap-6 justify-center items-center bg-gradient-to-t from-[#2D1B3D] to-[#2D1B3D]/80">
-              <Button
-                size="lg"
-                variant="ghost"
-                className="rounded-full w-20 h-20 p-0 bg-gradient-to-br from-pink-400 to-pink-600 hover:from-pink-500 hover:to-pink-700 shadow-[0_8px_24px_rgba(236,72,153,0.4)] hover:shadow-[0_12px_32px_rgba(236,72,153,0.6)] transition-all hover:scale-105"
-                onClick={handlePass}
-                disabled={actionLoading}
-              >
-                <X className="w-10 h-10 text-white" strokeWidth={3} />
-              </Button>
-
-              <Button
-                size="lg"
-                variant="ghost"
-                className="rounded-full w-20 h-20 p-0 bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 shadow-[0_8px_24px_rgba(168,85,247,0.4)] hover:shadow-[0_12px_32px_rgba(168,85,247,0.6)] transition-all hover:scale-105"
-                onClick={handleMessage}
-              >
-                <MessageCircle className="w-9 h-9 text-white" fill="white" strokeWidth={0} />
-              </Button>
-
-              <Button
-                size="lg"
-                className="rounded-full w-20 h-20 p-0 bg-gradient-to-br from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700 shadow-[0_8px_24px_rgba(192,132,252,0.4)] hover:shadow-[0_12px_32px_rgba(192,132,252,0.6)] transition-all hover:scale-105"
-                onClick={handleLike}
-                disabled={actionLoading}
-              >
-                {actionLoading ? (
-                  <Loader2 className="w-10 h-10 animate-spin text-white" />
-                ) : (
-                  <Heart className="w-10 h-10 text-white" fill="white" strokeWidth={0} />
-                )}
-              </Button>
             </div>
           </Card>
         </div>
