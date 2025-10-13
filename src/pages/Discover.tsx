@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Heart, X, MapPin, Loader2, Filter, CheckCircle, MessageCircle, MoreVertical, Flag, Ban } from "lucide-react";
+import { Heart, X, MapPin, Loader2, Filter, CheckCircle, MessageCircle, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ReportDialog } from "@/components/ReportDialog";
@@ -300,108 +300,90 @@ const Discover = () => {
                 className="w-full h-full object-cover"
               />
               
-              {/* Top Menu Icon */}
-              <div className="absolute top-5 left-5 z-10">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="w-12 h-12 rounded-2xl bg-white/90 hover:bg-white backdrop-blur-md shadow-lg"
-                    >
-                      <MoreVertical className="w-5 h-5 text-gray-700" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48 p-2 glass-card" align="start">
-                    <div className="space-y-1">
-                      <ReportDialog
-                        reportedUserId={currentProfile.id}
-                        reportedUserName={currentProfile.name}
-                      />
-                      <BlockButton
-                        blockedUserId={currentProfile.id}
-                        blockedUserName={currentProfile.name}
-                        onBlock={nextProfile}
-                      />
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
 
               {/* Gradient Overlay at Bottom */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
               
               {/* Profile Info - All Inside Card */}
               <div className="absolute bottom-0 left-0 right-0 p-6">
-                {/* Glassmorphism Background for Text */}
-                <div className="backdrop-blur-xl bg-black/60 rounded-3xl p-6 space-y-4">
-                  {/* Name and Verified Badge */}
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-3xl font-bold text-white">
-                      {currentProfile.name}
-                    </h2>
-                    {currentProfile.verified && (
-                      <CheckCircle className="w-6 h-6 text-blue-500 fill-blue-500" />
-                    )}
-                  </div>
-                  
-                  {/* Bio */}
-                  {currentProfile.bio && (
-                    <p className="text-white/90 text-sm leading-relaxed">
-                      {currentProfile.bio}
-                    </p>
+                {/* Name and Verified Badge */}
+                <div className="flex items-center gap-2 mb-3">
+                  <h2 className="text-3xl font-bold text-white">
+                    {currentProfile.name}, {currentProfile.age}
+                  </h2>
+                  {currentProfile.verified && (
+                    <CheckCircle className="w-6 h-6 text-blue-500 fill-blue-500" />
                   )}
-                  
-                  {/* Stats Row */}
-                  <div className="flex items-center justify-between text-white">
-                    <div className="flex flex-col items-center">
-                      <div className="flex items-center gap-1">
-                        <span className="text-xl">⭐</span>
-                        <span className="text-lg font-semibold">4.8</span>
+                </div>
+                
+                {/* Bio */}
+                {currentProfile.bio && (
+                  <p className="text-white/90 text-sm leading-relaxed mb-12">
+                    {currentProfile.bio}
+                  </p>
+                )}
+                
+                {/* Info Icon */}
+                <div className="absolute bottom-32 right-6">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm"
+                      >
+                        <Info className="w-5 h-5 text-white" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-2 glass-card" align="end">
+                      <div className="space-y-1">
+                        <ReportDialog
+                          reportedUserId={currentProfile.id}
+                          reportedUserName={currentProfile.name}
+                        />
+                        <BlockButton
+                          blockedUserId={currentProfile.id}
+                          blockedUserName={currentProfile.name}
+                          onBlock={nextProfile}
+                        />
                       </div>
-                      <span className="text-xs text-white/70">Rating</span>
-                    </div>
-                    
-                    <div className="w-px h-8 bg-white/30" />
-                    
-                    <div className="flex flex-col items-center">
-                      <span className="text-lg font-semibold">$45k+</span>
-                      <span className="text-xs text-white/70">Earned</span>
-                    </div>
-                    
-                    <div className="w-px h-8 bg-white/30" />
-                    
-                    <div className="flex flex-col items-center">
-                      <span className="text-lg font-semibold">$50/hr</span>
-                      <span className="text-xs text-white/70">Rate</span>
-                    </div>
-                  </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex items-center justify-center gap-6 pt-4">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-16 h-16 rounded-full border-2 border-pink-500 hover:bg-pink-500/20 text-pink-500"
+                    onClick={handlePass}
+                  >
+                    <X className="w-6 h-6" />
+                  </Button>
                   
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 pt-2">
-                    <Button
-                      variant="outline"
-                      className="flex-1 h-12 rounded-full bg-white hover:bg-white/90 text-black border-none font-medium"
-                      onClick={handleMessage}
-                    >
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      Get In Touch
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm"
-                      onClick={handleLike}
-                      disabled={actionLoading}
-                    >
-                      {actionLoading ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <Heart className="w-5 h-5" />
-                      )}
-                    </Button>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-16 h-16 rounded-full border-2 border-white/50 hover:bg-white/10 text-white"
+                    onClick={handleMessage}
+                  >
+                    <MessageCircle className="w-6 h-6" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-16 h-16 rounded-full border-2 border-cyan-400 hover:bg-cyan-400/20 text-cyan-400"
+                    onClick={handleLike}
+                    disabled={actionLoading}
+                  >
+                    {actionLoading ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <Heart className="w-6 h-6" />
+                    )}
+                  </Button>
                 </div>
               </div>
             </div>
