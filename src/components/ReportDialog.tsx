@@ -65,7 +65,7 @@ export const ReportDialog = ({ reportedUserId, reportedUserName }: ReportDialogP
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="glass border-destructive/20 hover:border-destructive/40">
+        <Button variant="ghost" size="sm" className="w-full justify-start text-left hover:bg-accent/50">
           <AlertTriangle className="w-4 h-4 mr-2" />
           Report
         </Button>

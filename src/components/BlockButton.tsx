@@ -60,9 +60,9 @@ export const BlockButton = ({ blockedUserId, blockedUserName, onBlock }: BlockBu
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="glass border-destructive/20 hover:border-destructive/40"
+          className="w-full justify-start text-left hover:bg-accent/50"
           disabled={blocking}
         >
           {blocking ? (
