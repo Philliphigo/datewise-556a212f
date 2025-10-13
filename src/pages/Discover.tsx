@@ -329,70 +329,76 @@ const Discover = () => {
               </div>
 
               {/* Gradient Overlay at Bottom */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#2D1B3D] via-[#4A2F5A]/60 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
               
-              {/* Profile Info and Action Buttons - All Inside Card */}
-              <div className="absolute bottom-0 left-0 right-0">
-                {/* Glassmorphism Background for Text and Buttons */}
-                <div className="backdrop-blur-2xl bg-gradient-to-t from-black/70 via-black/50 to-transparent p-8">
-                  <div className="text-white space-y-4">
-                    <div>
-                      <h2 className="text-5xl font-bold drop-shadow-2xl mb-2">
-                        {currentProfile.name}, {currentProfile.age}
-                      </h2>
-                      
-                      {currentProfile.looking_for && (
-                        <p className="text-white/95 text-xl drop-shadow-md font-light">
-                          Looking for {currentProfile.looking_for.toLowerCase()}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-6 text-base">
-                      {currentProfile.city && (
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-5 h-5" />
-                          <span>{currentProfile.city}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">💰</span>
-                        <span>CEO,000,000</span>
+              {/* Profile Info - All Inside Card */}
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                {/* Glassmorphism Background for Text */}
+                <div className="backdrop-blur-xl bg-black/60 rounded-3xl p-6 space-y-4">
+                  {/* Name and Verified Badge */}
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-3xl font-bold text-white">
+                      {currentProfile.name}
+                    </h2>
+                    {currentProfile.verified && (
+                      <CheckCircle className="w-6 h-6 text-blue-500 fill-blue-500" />
+                    )}
+                  </div>
+                  
+                  {/* Bio */}
+                  {currentProfile.bio && (
+                    <p className="text-white/90 text-sm leading-relaxed">
+                      {currentProfile.bio}
+                    </p>
+                  )}
+                  
+                  {/* Stats Row */}
+                  <div className="flex items-center justify-between text-white">
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center gap-1">
+                        <span className="text-xl">⭐</span>
+                        <span className="text-lg font-semibold">4.8</span>
                       </div>
+                      <span className="text-xs text-white/70">Rating</span>
+                    </div>
+                    
+                    <div className="w-px h-8 bg-white/30" />
+                    
+                    <div className="flex flex-col items-center">
+                      <span className="text-lg font-semibold">$45k+</span>
+                      <span className="text-xs text-white/70">Earned</span>
+                    </div>
+                    
+                    <div className="w-px h-8 bg-white/30" />
+                    
+                    <div className="flex flex-col items-center">
+                      <span className="text-lg font-semibold">$50/hr</span>
+                      <span className="text-xs text-white/70">Rate</span>
                     </div>
                   </div>
-
-                  {/* Action Buttons Inside Card */}
-                  <div className="flex gap-6 justify-center items-center pt-6">
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-2">
                     <Button
-                      size="lg"
-                      variant="ghost"
-                      className="rounded-full w-20 h-20 p-0 bg-gradient-to-br from-pink-400 to-pink-600 hover:from-pink-500 hover:to-pink-700 shadow-[0_8px_24px_rgba(236,72,153,0.4)] hover:shadow-[0_12px_32px_rgba(236,72,153,0.6)] transition-all hover:scale-105"
-                      onClick={handlePass}
-                      disabled={actionLoading}
-                    >
-                      <X className="w-10 h-10 text-white" strokeWidth={3} />
-                    </Button>
-
-                    <Button
-                      size="lg"
-                      variant="ghost"
-                      className="rounded-full w-20 h-20 p-0 bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 shadow-[0_8px_24px_rgba(168,85,247,0.4)] hover:shadow-[0_12px_32px_rgba(168,85,247,0.6)] transition-all hover:scale-105"
+                      variant="outline"
+                      className="flex-1 h-12 rounded-full bg-white hover:bg-white/90 text-black border-none font-medium"
                       onClick={handleMessage}
                     >
-                      <MessageCircle className="w-9 h-9 text-white" fill="white" strokeWidth={0} />
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Get In Touch
                     </Button>
-
+                    
                     <Button
-                      size="lg"
-                      className="rounded-full w-20 h-20 p-0 bg-gradient-to-br from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700 shadow-[0_8px_24px_rgba(192,132,252,0.4)] hover:shadow-[0_12px_32px_rgba(192,132,252,0.6)] transition-all hover:scale-105"
+                      variant="ghost"
+                      size="icon"
+                      className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm"
                       onClick={handleLike}
                       disabled={actionLoading}
                     >
                       {actionLoading ? (
-                        <Loader2 className="w-10 h-10 animate-spin text-white" />
+                        <Loader2 className="w-5 h-5 animate-spin" />
                       ) : (
-                        <Heart className="w-10 h-10 text-white" fill="white" strokeWidth={0} />
+                        <Heart className="w-5 h-5" />
                       )}
                     </Button>
                   </div>
