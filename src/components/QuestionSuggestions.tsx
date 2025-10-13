@@ -16,17 +16,19 @@ export const QuestionSuggestions = ({ suggestions, onSelect, variant = "startup"
           <span>Suggested questions to get started:</span>
         </div>
       )}
-      <div className="grid gap-2">
-        {suggestions.map((suggestion, index) => (
-          <Button
-            key={index}
-            variant="outline"
-            className="glass justify-start text-left h-auto py-3 px-4 hover:bg-primary/10"
-            onClick={() => onSelect(suggestion)}
-          >
-            <span className="text-sm">{suggestion}</span>
-          </Button>
-        ))}
+      <div className="overflow-x-auto pb-2 -mx-2 px-2">
+        <div className="flex gap-2 min-w-max">
+          {suggestions.map((suggestion, index) => (
+            <Button
+              key={index}
+              variant="outline"
+              className="glass justify-start text-left h-auto py-3 px-4 hover:bg-primary/10 whitespace-nowrap flex-shrink-0"
+              onClick={() => onSelect(suggestion)}
+            >
+              <span className="text-sm">{suggestion}</span>
+            </Button>
+          ))}
+        </div>
       </div>
     </div>
   );
