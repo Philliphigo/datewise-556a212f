@@ -6,6 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, Loader2, Mail, Phone } from "lucide-react";
 import { z } from "zod";
@@ -21,6 +30,11 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -119,22 +133,75 @@ const Auth = () => {
   };
 
   const handlePhoneSignIn = async () => {
-    setLoading(true);
-    try {
-      // For phone auth, we would need a phone number input
-      // For now, show that it's enabled but needs setup
+    // Open the phone auth dialog to gather phone and OTP
+    setPhoneDialogOpen(true);
+  };
+
+  const sendOtp = async () => {
+    if (!phoneNumber) {
       toast({
-        title: "Phone Authentication",
-        description: "Phone authentication is enabled. Please contact support to set up your phone number.",
-      });
-      setLoading(false);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to initiate phone authentication",
+        title: "Phone required",
+        description: "Enter your phone number including country code (e.g. +265...)",
         variant: "destructive",
       });
-      setLoading(false);
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: phoneNumber,
+        options: { channel: "sms" },
+      });
+      if (error) throw error;
+      setOtpSent(true);
+      toast({
+        title: "Code sent",
+        description: "Check your phone for the 6-digit code.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "SMS error",
+        description:
+          error?.message ||
+          "Could not send OTP. Ensure SMS provider is configured in Supabase.",
+        variant: "destructive",
+      });
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    if (!otpCode || otpCode.length < 6) {
+      toast({
+        title: "Invalid code",
+        description: "Enter the 6-digit code you received.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: phoneNumber,
+        token: otpCode,
+        type: "sms",
+      });
+      if (error) throw error;
+      // If user is new, they'll be redirected to onboarding route by app logic
+      toast({ title: "Signed in" });
+      setPhoneDialogOpen(false);
+      setOtpCode("");
+      setPhoneNumber("");
+      navigate("/onboarding");
+    } catch (error: any) {
+      toast({
+        title: "Verification failed",
+        description: error?.message || "The code is incorrect or expired.",
+        variant: "destructive",
+      });
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -281,6 +348,72 @@ const Auth = () => {
           </button>
         </div>
       </Card>
+
+      {/* Phone authentication dialog */}
+      <Dialog open={phoneDialogOpen} onOpenChange={setPhoneDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sign in with Phone</DialogTitle>
+            <DialogDescription>
+              Enter your phone number with country code. We'll text you a code.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!otpSent ? (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="e.g. +265 991 234 567"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="glass"
+                />
+              </div>
+              <DialogFooter>
+                <Button onClick={sendOtp} disabled={otpLoading} className="w-full">
+                  {otpLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
+                    </>
+                  ) : (
+                    "Send Code"
+                  )}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp">Enter 6-digit code</Label>
+                <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+              <DialogFooter>
+                <Button onClick={verifyOtp} disabled={otpLoading || otpCode.length < 6} className="w-full">
+                  {otpLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying...
+                    </>
+                  ) : (
+                    "Verify & Continue"
+                  )}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
