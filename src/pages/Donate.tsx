@@ -219,13 +219,15 @@ const Donate = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Payment Processing",
-        description: "Redirecting to secure payment page...",
-      });
-      
-      // In production, you would redirect to Stripe checkout
-      console.log("Stripe payment intent:", data);
+      if (data?.success && data?.checkout_url) {
+        toast({
+          title: "Payment Processing",
+          description: "Redirecting to secure payment page...",
+        });
+        window.location.href = data.checkout_url as string;
+      } else {
+        throw new Error("Failed to create checkout session");
+      }
     } catch (error: any) {
       console.error("Stripe payment error:", error);
       toast({
