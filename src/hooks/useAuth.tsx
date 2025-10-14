@@ -26,6 +26,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // If a user is signed in, ensure their profile is active
+      const currentUserId = session?.user?.id;
+      if (currentUserId && event !== "SIGNED_OUT") {
+        // Best-effort, ignore errors
+        supabase
+          .from("profiles")
+          .update({ is_active: true, deactivated_at: null })
+          .eq("id", currentUserId)
+          .then(() => {})
+          .catch(() => {});
+      }
     });
 
     // Check for existing session
@@ -33,6 +45,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      const currentUserId = session?.user?.id;
+      if (currentUserId) {
+        supabase
+          .from("profiles")
+          .update({ is_active: true, deactivated_at: null })
+          .eq("id", currentUserId)
+          .then(() => {})
+          .catch(() => {});
+      }
     });
 
     return () => subscription.unsubscribe();

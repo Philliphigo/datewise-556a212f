@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, Loader2, Mail, Phone } from "lucide-react";
+import { Heart, Loader2, Mail, Phone, KeyRound } from "lucide-react";
 import { z } from "zod";
 
 const authSchema = z.object({
@@ -30,6 +30,9 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otpCode, setOtpCode] = useState("");
@@ -132,6 +135,28 @@ const Auth = () => {
     }
   };
 
+  const sendMagicLink = async () => {
+    if (!email) {
+      toast({ title: "Email required", description: "Enter your email to receive a sign-in link.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/discover`,
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Check your inbox", description: "We sent you a sign-in link." });
+    } catch (error: any) {
+      toast({ title: "Magic link failed", description: error?.message || "Could not send link.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handlePhoneSignIn = async () => {
     // Open the phone auth dialog to gather phone and OTP
     setPhoneDialogOpen(true);
@@ -207,6 +232,77 @@ const Auth = () => {
 
   const toggleMode = () => {
     setSearchParams({ mode: mode === "signin" ? "signup" : "signin" });
+  };
+
+  const openResetDialog = () => {
+    setResetEmail(email);
+    setResetDialogOpen(true);
+  };
+
+  const sendPasswordReset = async () => {
+    if (!resetEmail) {
+      toast({ title: "Email required", description: "Enter your account email.", variant: "destructive" });
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth?mode=reset`,
+      });
+      if (error) throw error;
+      toast({
+        title: "Check your email",
+        description: "We sent a secure link to reset your password.",
+      });
+      setResetDialogOpen(false);
+    } catch (error: any) {
+      toast({ title: "Reset failed", description: error?.message || "Unable to send reset email.", variant: "destructive" });
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  // Handle Supabase password recovery session update
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        // Show a dialog to set a new password
+        setResetDialogOpen(true);
+      }
+      if (event === "SIGNED_IN" && mode === "reset") {
+        // If redirected via magic link, allow password update
+        setResetDialogOpen(true);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [mode]);
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const updatePassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast({ title: "Weak password", description: "Use at least 6 characters.", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Passwords do not match", description: "Re-enter the same password.", variant: "destructive" });
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: "Password updated", description: "You can now sign in with the new password." });
+      setResetDialogOpen(false);
+      setNewPassword("");
+      setConfirmPassword("");
+      if (mode !== "signin") setSearchParams({ mode: "signin" });
+    } catch (error: any) {
+      toast({ title: "Update failed", description: error?.message || "Unable to update password.", variant: "destructive" });
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   return (
@@ -287,6 +383,14 @@ const Auth = () => {
           </Button>
         </form>
 
+        {mode === "signin" && (
+          <div className="text-right -mt-2">
+            <button type="button" onClick={openResetDialog} className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+              <KeyRound className="w-3 h-3" /> Forgot password?
+            </button>
+          </div>
+        )}
+
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <Separator />
@@ -296,7 +400,7 @@ const Auth = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <Button
             type="button"
             variant="outline"
@@ -335,6 +439,17 @@ const Auth = () => {
             <Phone className="mr-2 h-4 w-4" />
             Phone
           </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={sendMagicLink}
+            disabled={loading}
+            className="glass"
+          >
+            <Mail className="mr-2 h-4 w-4" />
+            Magic Link
+          </Button>
         </div>
 
         <div className="text-center text-sm">
@@ -348,6 +463,48 @@ const Auth = () => {
           </button>
         </div>
       </Card>
+
+      {/* Password reset / recovery dialog */}
+      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Password recovery</DialogTitle>
+            <DialogDescription>
+              {mode === "reset" ? "Set a new password for your account." : "Enter your email to receive a reset link."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {mode === "reset" ? (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New password</Label>
+                <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="glass" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm new password</Label>
+                <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="glass" />
+              </div>
+              <DialogFooter>
+                <Button onClick={updatePassword} disabled={resetLoading} className="w-full">
+                  {resetLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...</>) : "Update Password"}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email address</Label>
+                <Input id="reset-email" type="email" placeholder="you@example.com" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} className="glass" />
+              </div>
+              <DialogFooter>
+                <Button onClick={sendPasswordReset} disabled={resetLoading} className="w-full">
+                  {resetLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>) : "Send Reset Link"}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Phone authentication dialog */}
       <Dialog open={phoneDialogOpen} onOpenChange={setPhoneDialogOpen}>
