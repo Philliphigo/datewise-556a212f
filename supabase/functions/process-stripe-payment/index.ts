@@ -68,13 +68,39 @@ serve(async (req) => {
 
     console.log("Processing Stripe payment:", { amount, currency, tier, userId });
 
-    // Create a payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency: currency || "usd",
+    // Determine return URLs
+    const origin = req.headers.get('origin') || supabaseUrl.replace('.supabase.co', '.lovable.app');
+    const successUrl = `${origin}/donate?status=success&session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${origin}/donate?status=cancelled`;
+
+    // Create a Stripe Checkout Session (one-time payment)
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: (currency || "usd").toLowerCase(),
+            product_data: {
+              name: `DateWise ${tier} Subscription`,
+            },
+            unit_amount: Math.round(amount * 100),
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      client_reference_id: userId,
       metadata: {
         tier,
         userId,
+      },
+      payment_intent_data: {
+        metadata: {
+          tier,
+          userId,
+        },
       },
     });
 
@@ -82,9 +108,9 @@ serve(async (req) => {
     const { error: paymentError } = await supabase.from("payments").insert({
       user_id: userId,
       amount,
-      currency: currency || "USD",
+      currency: (currency || "USD").toUpperCase(),
       payment_method: "stripe",
-      transaction_id: paymentIntent.id,
+      transaction_id: session.id,
       status: "pending",
       metadata: { tier },
     });
@@ -96,8 +122,9 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        clientSecret: paymentIntent.client_secret,
-        paymentIntentId: paymentIntent.id,
+        success: true,
+        checkout_url: session.url,
+        sessionId: session.id,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
