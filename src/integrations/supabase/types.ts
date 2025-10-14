@@ -327,9 +327,11 @@ export type Database = {
           age: number
           avatar_url: string | null
           bio: string | null
+          deactivated_at: string | null
           city: string | null
           created_at: string | null
           gender: string
+          is_active: boolean | null
           id: string
           interests: string[] | null
           is_online: boolean | null
@@ -346,9 +348,11 @@ export type Database = {
           age: number
           avatar_url?: string | null
           bio?: string | null
+          deactivated_at?: string | null
           city?: string | null
           created_at?: string | null
           gender: string
+          is_active?: boolean | null
           id: string
           interests?: string[] | null
           is_online?: boolean | null
@@ -365,9 +369,11 @@ export type Database = {
           age?: number
           avatar_url?: string | null
           bio?: string | null
+          deactivated_at?: string | null
           city?: string | null
           created_at?: string | null
           gender?: string
+          is_active?: boolean | null
           id?: string
           interests?: string[] | null
           is_online?: boolean | null

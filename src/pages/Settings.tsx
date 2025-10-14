@@ -12,7 +12,18 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Shield, Bell, Eye, Trash2, Moon, Sun } from "lucide-react";
+import { Loader2, Shield, Bell, Eye, Trash2, Moon, Sun, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -30,6 +41,9 @@ const Settings = () => {
   const [gender, setGender] = useState("");
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [dangerLoading, setDangerLoading] = useState(false);
 
   useEffect(() => {
     // Check dark mode preference
@@ -260,13 +274,80 @@ const Settings = () => {
             </div>
 
             <div className="space-y-4">
-              <Button variant="outline" className="w-full glass border-destructive/20 hover:border-destructive/40">
-                Deactivate Account
-              </Button>
-              
-              <Button variant="outline" className="w-full glass border-destructive/50 hover:border-destructive text-destructive">
-                Delete Account
-              </Button>
+              <AlertDialog open={deactivateOpen} onOpenChange={setDeactivateOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="w-full glass border-destructive/20 hover:border-destructive/40">
+                    Deactivate Account
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-amber-500"/> Temporarily deactivate your account?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Deactivation hides your profile, stops matches and messages, and sets your status to inactive. You can reactivate anytime by signing back in.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={async () => {
+                      if (!user) return;
+                      setDangerLoading(true);
+                      try {
+                        const { error } = await supabase
+                          .from("profiles")
+                          .update({ is_active: false, deactivated_at: new Date().toISOString() })
+                          .eq("id", user.id);
+                        if (error) throw error;
+                        toast({ title: "Account deactivated", description: "You can restore access by signing in again." });
+                        setDeactivateOpen(false);
+                        await supabase.auth.signOut();
+                        navigate("/auth");
+                      } catch (e: any) {
+                        toast({ title: "Action failed", description: e?.message || "Could not deactivate account.", variant: "destructive" });
+                      } finally {
+                        setDangerLoading(false);
+                      }
+                    }} disabled={dangerLoading}>
+                      {dangerLoading ? "Working..." : "Deactivate"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="w-full glass border-destructive/50 hover:border-destructive text-destructive">
+                    Delete Account
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2 text-destructive"><Trash2 className="w-5 h-5"/> Permanently delete your account?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently remove your account, profile, matches, messages, and media. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={async () => {
+                      setDangerLoading(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke("delete-account", { body: {} });
+                        if (error) throw error;
+                        toast({ title: "Account deleted" });
+                        setDeleteOpen(false);
+                        navigate("/");
+                      } catch (e: any) {
+                        toast({ title: "Deletion failed", description: e?.message || "Could not delete account.", variant: "destructive" });
+                      } finally {
+                        setDangerLoading(false);
+                      }
+                    }} disabled={dangerLoading} className="bg-destructive text-destructive-foreground hover:opacity-90">
+                      {dangerLoading ? "Deleting..." : "Yes, delete permanently"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
 
               <div className="space-y-2 text-center">
                 <p className="text-sm text-muted-foreground">
