@@ -16,18 +16,19 @@
     --popover: 0 0% 100%;
     --popover-foreground: 330 20% 15%;
 
-    /* Brand - Pink to Purple gradient */
-    --primary: 330 80% 55%;
+    /* Brand - Pink palette */
+    --primary: 330 90% 60%;
     --primary-foreground: 0 0% 100%;
-    --primary-soft: 330 70% 65%;
+    --primary-soft: 330 80% 70%;
     
-    --secondary: 280 60% 65%;
+    /* Keep secondary complementary but within pink family */
+    --secondary: 330 60% 85%;
     --secondary-foreground: 0 0% 100%;
 
-    --accent: 170 60% 65%;
+    --accent: 345 70% 70%;
     --accent-foreground: 330 20% 15%;
 
-    --muted: 330 20% 95%;
+    --muted: 330 20% 96%;
     --muted-foreground: 330 15% 45%;
 
     --destructive: 0 85% 60%;
@@ -35,22 +36,22 @@
 
     --border: 330 20% 90%;
     --input: 330 20% 90%;
-    --ring: 330 80% 55%;
+    --ring: 330 90% 60%;
 
     --radius: 1.5rem;
 
     /* Glass Effects */
     --glass-bg: hsla(0, 0%, 100%, 0.7);
     --glass-border: hsla(0, 0%, 100%, 0.3);
-    --glass-shadow: 0 8px 32px 0 hsla(330, 80%, 55%, 0.15);
+    --glass-shadow: 0 8px 32px 0 hsla(330, 90%, 60%, 0.15);
     
-    /* Romantic Gradient */
-    --gradient-romantic: linear-gradient(135deg, hsl(330, 80%, 65%) 0%, hsl(280, 70%, 65%) 50%, hsl(170, 60%, 70%) 100%);
-    --gradient-overlay: linear-gradient(135deg, hsla(330, 80%, 65%, 0.1) 0%, hsla(280, 70%, 65%, 0.1) 100%);
+    /* Romantic Gradient - pink-only */
+    --gradient-romantic: linear-gradient(135deg, hsl(330, 90%, 68%) 0%, hsl(340, 85%, 64%) 50%, hsl(350, 80%, 62%) 100%);
+    --gradient-overlay: linear-gradient(135deg, hsla(330, 90%, 68%, 0.12) 0%, hsla(340, 85%, 64%, 0.12) 100%);
     
     /* Glow Effects */
-    --glow-primary: 0 0 30px hsla(330, 80%, 65%, 0.4);
-    --glow-secondary: 0 0 30px hsla(280, 70%, 65%, 0.4);
+    --glow-primary: 0 0 30px hsla(330, 90%, 68%, 0.4);
+    --glow-secondary: 0 0 30px hsla(340, 85%, 64%, 0.35);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -67,14 +68,14 @@
     --popover: 220 35% 8%;
     --popover-foreground: 330 20% 95%;
 
-    --primary: 330 80% 60%;
+    --primary: 330 90% 65%;
     --primary-foreground: 0 0% 100%;
-    --primary-soft: 330 70% 70%;
+    --primary-soft: 330 85% 72%;
 
-    --secondary: 280 60% 60%;
+    --secondary: 330 60% 25%;
     --secondary-foreground: 0 0% 100%;
 
-    --accent: 170 60% 60%;
+    --accent: 345 70% 60%;
     --accent-foreground: 0 0% 100%;
 
     --muted: 220 30% 15%;
@@ -85,14 +86,14 @@
 
     --border: 220 30% 18%;
     --input: 220 30% 18%;
-    --ring: 330 80% 60%;
+    --ring: 330 90% 65%;
 
     --glass-bg: hsla(220, 40%, 8%, 0.6);
-    --glass-border: hsla(330, 80%, 60%, 0.2);
-    --glass-shadow: 0 8px 32px 0 hsla(330, 80%, 60%, 0.2);
+    --glass-border: hsla(330, 90%, 65%, 0.2);
+    --glass-shadow: 0 8px 32px 0 hsla(330, 90%, 65%, 0.2);
     
-    /* Dark mode neon gradient */
-    --gradient-romantic: linear-gradient(135deg, hsl(220, 70%, 25%) 0%, hsl(240, 80%, 35%) 30%, hsl(260, 70%, 45%) 60%, hsl(330, 80%, 55%) 100%);
+    /* Dark mode pink neon gradient */
+    --gradient-romantic: linear-gradient(135deg, hsl(330, 60%, 22%) 0%, hsl(335, 70%, 32%) 40%, hsl(345, 80%, 45%) 70%, hsl(330, 90%, 65%) 100%);
   }
 }
 
@@ -161,10 +162,10 @@
 
   @keyframes glow {
     from {
-      filter: drop-shadow(0 0 5px hsla(330, 80%, 65%, 0.3));
+      filter: drop-shadow(0 0 5px hsla(330, 90%, 68%, 0.35));
     }
     to {
-      filter: drop-shadow(0 0 20px hsla(330, 80%, 65%, 0.6));
+      filter: drop-shadow(0 0 20px hsla(330, 90%, 68%, 0.6));
     }
   }
 
