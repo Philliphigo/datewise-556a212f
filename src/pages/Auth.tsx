@@ -306,14 +306,27 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 gradient-romantic opacity-10" />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
+      {/* Animated blurred background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-muted/20 to-background" />
+        <div 
+          className="absolute inset-0 opacity-30"
+          style={{
+            background: `radial-gradient(circle at 20% 50%, hsl(var(--primary) / 0.1) 0%, transparent 50%),
+                         radial-gradient(circle at 80% 80%, hsl(var(--primary) / 0.15) 0%, transparent 50%),
+                         radial-gradient(circle at 40% 20%, hsl(var(--primary) / 0.08) 0%, transparent 50%)`,
+            filter: 'blur(60px)',
+            animation: 'pulse 8s ease-in-out infinite',
+          }}
+        />
+      </div>
       
       <div className="absolute inset-0 pointer-events-none">
         {[...Array(8)].map((_, i) => (
           <Heart
             key={i}
-            className="absolute text-primary/10 animate-float"
+            className="absolute text-primary/5 animate-float"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -325,16 +338,16 @@ const Auth = () => {
         ))}
       </div>
 
-      <Card className="w-full max-w-md glass-card p-8 space-y-6 relative z-10 animate-scale-in">
-        <div className="text-center space-y-2">
-          <Heart className="w-12 h-12 mx-auto text-primary animate-glow" fill="currentColor" />
-          <h1 className="text-3xl font-display gradient-text">
+      <Card className="w-full max-w-md floating-card p-8 space-y-6 relative z-10 animate-scale-in">
+        <div className="text-center space-y-3">
+          <Heart className="w-14 h-14 mx-auto text-primary" fill="currentColor" />
+          <h1 className="text-3xl font-bold">
             {mode === "signin" ? "Welcome Back" : "Join DateWise"}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {mode === "signin"
               ? "Sign in to continue your journey"
-              : "Create your account to find your match"}
+              : "Create your account to find meaningful connections"}
           </p>
         </div>
 
@@ -367,7 +380,7 @@ const Auth = () => {
 
           <Button
             type="submit"
-            className="w-full gradient-romantic text-white border-0 hover:opacity-90 transition-all"
+            className="w-full shadow-elegant-md hover:shadow-elegant-lg transition-all"
             disabled={loading}
           >
             {loading ? (
@@ -406,7 +419,7 @@ const Auth = () => {
             variant="outline"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="glass"
+            className="shadow-elegant-sm hover:shadow-elegant-md transition-all"
           >
             <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
               <path
@@ -434,7 +447,7 @@ const Auth = () => {
             variant="outline"
             onClick={handlePhoneSignIn}
             disabled={loading}
-            className="glass"
+            className="shadow-elegant-sm hover:shadow-elegant-md transition-all"
           >
             <Phone className="mr-2 h-4 w-4" />
             Phone
@@ -445,7 +458,7 @@ const Auth = () => {
             variant="outline"
             onClick={sendMagicLink}
             disabled={loading}
-            className="glass"
+            className="shadow-elegant-sm hover:shadow-elegant-md transition-all"
           >
             <Mail className="mr-2 h-4 w-4" />
             Magic Link

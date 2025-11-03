@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Heart, Flame, MessageCircle, Users, User, Rss, Settings } from "lucide-react";
+import { Heart, Flame, MessageCircle, Users, User, Rss, Settings, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationBell } from "./NotificationBell";
 import { Footer } from "./Footer";
@@ -31,13 +31,16 @@ export const Layout = ({ children }: LayoutProps) => {
       <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/discover" className="flex items-center gap-2">
-            <Heart className="w-8 h-8 text-primary animate-glow" fill="currentColor" />
-            <span className="text-2xl font-display gradient-text">DateWise</span>
+            <Heart className="w-8 h-8 text-primary" fill="currentColor" />
+            <span className="text-2xl font-display">DateWise</span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <NotificationBell />
             <Link to="/settings">
               <Settings className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+            </Link>
+            <Link to="/admin" className="opacity-0 hover:opacity-100 transition-opacity">
+              <Shield className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors" />
             </Link>
           </div>
         </div>

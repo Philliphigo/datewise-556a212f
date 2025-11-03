@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,13 +11,25 @@ import { useNavigate } from "react-router-dom";
 import {
   Users,
   DollarSign,
-  AlertTriangle,
+  AlertCircle,
   CheckCircle,
   XCircle,
   Shield,
   TrendingUp,
   Loader2,
+  MessageSquare,
+  Ban,
+  Heart,
 } from "lucide-react";
+
+interface DashboardStats {
+  totalUsers: number;
+  totalMatches: number;
+  totalRevenue: number;
+  pendingReports: number;
+  totalPosts: number;
+  totalMessages: number;
+}
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -25,12 +37,13 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
-    activeUsers: 0,
     totalMatches: 0,
     totalRevenue: 0,
     pendingReports: 0,
+    totalPosts: 0,
+    totalMessages: 0,
   });
   const [users, setUsers] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
@@ -58,7 +71,7 @@ const AdminDashboard = () => {
       if (!data) {
         toast({
           title: "Access Denied",
-          description: "You don't have admin privileges",
+          description: "You don't have admin privileges to access this dashboard.",
           variant: "destructive",
         });
         navigate("/discover");
@@ -88,6 +101,14 @@ const AdminDashboard = () => {
         .from("matches")
         .select("*", { count: "exact", head: true });
 
+      const { count: postCount } = await supabase
+        .from("posts")
+        .select("*", { count: "exact", head: true });
+
+      const { count: messageCount } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true });
+
       const { count: reportCount } = await supabase
         .from("reports")
         .select("*", { count: "exact", head: true })
@@ -102,18 +123,19 @@ const AdminDashboard = () => {
 
       setStats({
         totalUsers: userCount || 0,
-        activeUsers: userCount || 0,
         totalMatches: matchCount || 0,
         totalRevenue,
         pendingReports: reportCount || 0,
+        totalPosts: postCount || 0,
+        totalMessages: messageCount || 0,
       });
 
       // Fetch recent users
       const { data: usersData } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, name, verified, created_at, subscription_tier, is_active, age, city")
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(20);
 
       setUsers(usersData || []);
 
@@ -168,6 +190,29 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleBanUser = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_active: false, deactivated_at: new Date().toISOString() })
+        .eq("id", userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "User has been banned successfully",
+      });
+      fetchDashboardData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleResolveReport = async (reportId: string, status: string) => {
     try {
       const { error } = await supabase
@@ -183,7 +228,7 @@ const AdminDashboard = () => {
 
       toast({
         title: "Success",
-        description: `Report ${status}`,
+        description: `Report ${status} successfully`,
       });
       fetchDashboardData();
     } catch (error: any) {
@@ -212,66 +257,87 @@ const AdminDashboard = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Header */}
-          <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold gradient-text">Admin Dashboard</h1>
+          <div>
+            <h1 className="text-4xl font-bold flex items-center gap-3 mb-2">
+              <Shield className="w-10 h-10 text-primary" />
+              Admin Dashboard
+            </h1>
+            <p className="text-muted-foreground">Complete platform management and monitoring</p>
           </div>
 
           {/* Stats Grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="glass-card p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-full bg-primary/10">
-                  <Users className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Users</p>
-                  <p className="text-2xl font-bold">{stats.totalUsers}</p>
-                </div>
-              </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <Card className="floating-card">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Users</CardTitle>
+                <Users className="h-5 w-5 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stats.totalUsers}</div>
+                <p className="text-xs text-muted-foreground mt-1">Total accounts</p>
+              </CardContent>
             </Card>
 
-            <Card className="glass-card p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-full bg-green-500/10">
-                  <TrendingUp className="w-6 h-6 text-green-500" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Matches</p>
-                  <p className="text-2xl font-bold">{stats.totalMatches}</p>
-                </div>
-              </div>
+            <Card className="floating-card">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Matches</CardTitle>
+                <Heart className="h-5 w-5 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stats.totalMatches}</div>
+                <p className="text-xs text-muted-foreground mt-1">Connections</p>
+              </CardContent>
             </Card>
 
-            <Card className="glass-card p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-full bg-yellow-500/10">
-                  <DollarSign className="w-6 h-6 text-yellow-500" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Revenue</p>
-                  <p className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</p>
-                </div>
-              </div>
+            <Card className="floating-card">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+                <DollarSign className="h-5 w-5 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">${stats.totalRevenue.toFixed(2)}</div>
+                <p className="text-xs text-muted-foreground mt-1">Total earnings</p>
+              </CardContent>
             </Card>
 
-            <Card className="glass-card p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-full bg-red-500/10">
-                  <AlertTriangle className="w-6 h-6 text-red-500" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Pending Reports</p>
-                  <p className="text-2xl font-bold">{stats.pendingReports}</p>
-                </div>
-              </div>
+            <Card className="floating-card">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Reports</CardTitle>
+                <AlertCircle className="h-5 w-5 text-destructive" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stats.pendingReports}</div>
+                <p className="text-xs text-muted-foreground mt-1">Pending</p>
+              </CardContent>
+            </Card>
+
+            <Card className="floating-card">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Posts</CardTitle>
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stats.totalPosts}</div>
+                <p className="text-xs text-muted-foreground mt-1">Community</p>
+              </CardContent>
+            </Card>
+
+            <Card className="floating-card">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Messages</CardTitle>
+                <MessageSquare className="h-5 w-5 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stats.totalMessages}</div>
+                <p className="text-xs text-muted-foreground mt-1">Total sent</p>
+              </CardContent>
             </Card>
           </div>
 
           {/* Content Tabs */}
-          <Tabs defaultValue="users" className="space-y-4">
+          <Tabs defaultValue="users" className="space-y-6">
             <TabsList className="glass">
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="reports">Reports</TabsTrigger>
@@ -279,109 +345,182 @@ const AdminDashboard = () => {
             </TabsList>
 
             {/* Users Tab */}
-            <TabsContent value="users" className="space-y-4">
-              {users.map((user) => (
-                <Card key={user.id} className="glass-card p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold">{user.name}</p>
-                        {user.verified && (
-                          <Badge variant="secondary" className="glass">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Verified
+            <TabsContent value="users" className="space-y-3">
+              <Card className="floating-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    User Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {users.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center justify-between p-4 rounded-lg border border-border hover:border-primary/30 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold">{user.name || "Anonymous"}</p>
+                          {user.verified && (
+                            <Badge variant="secondary" className="text-xs">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Verified
+                            </Badge>
+                          )}
+                          {!user.is_active && (
+                            <Badge variant="destructive" className="text-xs">
+                              <Ban className="w-3 h-3 mr-1" />
+                              Banned
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <p className="text-xs text-muted-foreground">
+                            {user.age} • {user.city || "Unknown"} • Joined {new Date(user.created_at).toLocaleDateString()}
+                          </p>
+                          <Badge variant="outline" className="text-xs">
+                            {user.subscription_tier || "free"}
                           </Badge>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {!user.verified && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleVerifyUser(user.id)}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Verify
+                          </Button>
+                        )}
+                        {user.is_active && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleBanUser(user.id)}
+                          >
+                            <Ban className="w-4 h-4 mr-1" />
+                            Ban
+                          </Button>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {user.age} • {user.city} • {user.subscription_tier || "free"}
-                      </p>
                     </div>
-                    {!user.verified && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleVerifyUser(user.id)}
-                        className="gradient-romantic text-white"
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Verify
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              ))}
+                  ))}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Reports Tab */}
-            <TabsContent value="reports" className="space-y-4">
-              {reports.map((report) => (
-                <Card key={report.id} className="glass-card p-4">
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <Badge
-                          variant={
-                            report.status === "pending"
-                              ? "destructive"
-                              : report.status === "resolved"
-                              ? "default"
-                              : "secondary"
-                          }
-                          className="glass"
-                        >
-                          {report.status}
-                        </Badge>
-                        <p className="font-semibold">{report.reason}</p>
-                        <p className="text-sm text-muted-foreground">{report.description}</p>
+            <TabsContent value="reports" className="space-y-3">
+              <Card className="floating-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" />
+                    User Reports
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {reports.map((report) => (
+                    <div
+                      key={report.id}
+                      className="p-4 rounded-lg border border-border hover:border-primary/30 transition-colors space-y-3"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <p className="font-semibold">{report.reason}</p>
+                            <Badge
+                              variant={
+                                report.status === "pending"
+                                  ? "default"
+                                  : report.status === "resolved"
+                                  ? "secondary"
+                                  : "outline"
+                              }
+                              className="text-xs"
+                            >
+                              {report.status}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {report.description || "No additional details"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {new Date(report.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        {report.status === "pending" && (
+                          <div className="flex gap-2 ml-4">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleResolveReport(report.id, "resolved")}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Resolve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleResolveReport(report.id, "dismissed")}
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Dismiss
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    {report.status === "pending" && (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleResolveReport(report.id, "resolved")}
-                          variant="outline"
-                          className="glass border-green-500/20 hover:border-green-500/40"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Resolve
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleResolveReport(report.id, "dismissed")}
-                          variant="outline"
-                          className="glass border-red-500/20 hover:border-red-500/40"
-                        >
-                          <XCircle className="w-4 h-4 mr-2" />
-                          Dismiss
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              ))}
+                  ))}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Payments Tab */}
-            <TabsContent value="payments" className="space-y-4">
-              {payments.map((payment) => (
-                <Card key={payment.id} className="glass-card p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="font-semibold">${Number(payment.amount).toFixed(2)}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {payment.payment_method} • {payment.currency}
-                      </p>
-                    </div>
-                    <Badge
-                      variant={payment.status === "completed" ? "default" : "secondary"}
-                      className="glass"
+            <TabsContent value="payments" className="space-y-3">
+              <Card className="floating-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="w-5 h-5" />
+                    Payment History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {payments.map((payment) => (
+                    <div
+                      key={payment.id}
+                      className="flex items-center justify-between p-4 rounded-lg border border-border hover:border-primary/30 transition-colors"
                     >
-                      {payment.status}
-                    </Badge>
-                  </div>
-                </Card>
-              ))}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold text-lg">${Number(payment.amount).toFixed(2)}</p>
+                          <Badge
+                            variant={payment.status === "completed" ? "secondary" : "outline"}
+                            className="text-xs"
+                          >
+                            {payment.status}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <p className="text-sm text-muted-foreground">
+                            {payment.payment_method.toUpperCase()} • {payment.currency}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(payment.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        {payment.transaction_id && (
+                          <p className="text-xs text-muted-foreground mt-1 font-mono">
+                            TX: {payment.transaction_id}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>
