@@ -19,6 +19,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Helper function to update profile status
+    const updateProfileStatus = async (userId: string) => {
+      try {
+        await supabase
+          .from("profiles")
+          .update({ is_active: true, deactivated_at: null })
+          .eq("id", userId);
+      } catch (error) {
+        // Best-effort, ignore errors
+      }
+    };
+
     // Set up auth state listener
     const {
       data: { subscription },
@@ -30,13 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // If a user is signed in, ensure their profile is active
       const currentUserId = session?.user?.id;
       if (currentUserId && event !== "SIGNED_OUT") {
-        // Best-effort, ignore errors
-        supabase
-          .from("profiles")
-          .update({ is_active: true, deactivated_at: null })
-          .eq("id", currentUserId)
-          .then(() => {})
-          .catch(() => {});
+        updateProfileStatus(currentUserId);
       }
     });
 
@@ -48,12 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const currentUserId = session?.user?.id;
       if (currentUserId) {
-        supabase
-          .from("profiles")
-          .update({ is_active: true, deactivated_at: null })
-          .eq("id", currentUserId)
-          .then(() => {})
-          .catch(() => {});
+        updateProfileStatus(currentUserId);
       }
     });
 

@@ -6,93 +6,118 @@
 
 @layer base {
   :root {
-    /* Glassmorphic Dating App Theme */
-    --background: 330 30% 98%;
-    --foreground: 330 20% 15%;
+    /* Monochrome Liquid Glass Theme - iOS 16 Inspired */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 330 20% 15%;
+    --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 330 20% 15%;
+    --popover-foreground: 0 0% 10%;
 
-    /* Brand - Pink to Purple gradient */
-    --primary: 330 80% 55%;
+    /* Monochrome Brand */
+    --primary: 0 0% 15%;
     --primary-foreground: 0 0% 100%;
-    --primary-soft: 330 70% 65%;
+    --primary-soft: 0 0% 25%;
     
-    --secondary: 280 60% 65%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 90%;
+    --secondary-foreground: 0 0% 10%;
 
-    --accent: 170 60% 65%;
-    --accent-foreground: 330 20% 15%;
+    --accent: 0 0% 95%;
+    --accent-foreground: 0 0% 10%;
 
-    --muted: 330 20% 95%;
-    --muted-foreground: 330 15% 45%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --destructive: 0 85% 60%;
+    --destructive: 0 0% 20%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 330 20% 90%;
-    --input: 330 20% 90%;
-    --ring: 330 80% 55%;
+    --border: 0 0% 90%;
+    --input: 0 0% 95%;
+    --ring: 0 0% 20%;
 
-    --radius: 1.5rem;
+    --radius: 1.25rem;
 
-    /* Glass Effects */
-    --glass-bg: hsla(0, 0%, 100%, 0.7);
-    --glass-border: hsla(0, 0%, 100%, 0.3);
-    --glass-shadow: 0 8px 32px 0 hsla(330, 80%, 55%, 0.15);
+    /* iOS 16 Liquid Glass Effects */
+    --glass-bg: hsla(0, 0%, 100%, 0.75);
+    --glass-border: hsla(0, 0%, 100%, 0.5);
+    --glass-shadow: 0 8px 32px 0 hsla(0, 0%, 0%, 0.08);
+    --glass-inner-shadow: inset 0 1px 0 0 hsla(0, 0%, 100%, 0.8);
     
-    /* Romantic Gradient */
-    --gradient-romantic: linear-gradient(135deg, hsl(330, 80%, 65%) 0%, hsl(280, 70%, 65%) 50%, hsl(170, 60%, 70%) 100%);
-    --gradient-overlay: linear-gradient(135deg, hsla(330, 80%, 65%, 0.1) 0%, hsla(280, 70%, 65%, 0.1) 100%);
+    /* Liquid Shimmer Overlay */
+    --shimmer-gradient: linear-gradient(135deg, 
+      hsla(0, 0%, 100%, 0.0) 0%, 
+      hsla(0, 0%, 100%, 0.4) 45%,
+      hsla(0, 0%, 100%, 0.6) 50%,
+      hsla(0, 0%, 100%, 0.4) 55%,
+      hsla(0, 0%, 100%, 0.0) 100%);
     
-    /* Glow Effects */
-    --glow-primary: 0 0 30px hsla(330, 80%, 65%, 0.4);
-    --glow-secondary: 0 0 30px hsla(280, 70%, 65%, 0.4);
+    /* Elegant Shadows */
+    --shadow-sm: 0 2px 8px 0 hsla(0, 0%, 0%, 0.04);
+    --shadow-md: 0 4px 16px 0 hsla(0, 0%, 0%, 0.08), 0 2px 4px 0 hsla(0, 0%, 0%, 0.04);
+    --shadow-lg: 0 8px 32px 0 hsla(0, 0%, 0%, 0.12), 0 4px 8px 0 hsla(0, 0%, 0%, 0.06);
+    --shadow-xl: 0 16px 48px 0 hsla(0, 0%, 0%, 0.16), 0 8px 16px 0 hsla(0, 0%, 0%, 0.08);
+    
+    /* Floating Effect */
+    --float-shadow: 0 12px 40px 0 hsla(0, 0%, 0%, 0.10), 0 6px 12px 0 hsla(0, 0%, 0%, 0.06);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-spring: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    --transition-liquid: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
   }
 
   .dark {
-    --background: 220 40% 5%;
-    --foreground: 330 20% 95%;
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
 
-    --card: 220 35% 8%;
-    --card-foreground: 330 20% 95%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 220 35% 8%;
-    --popover-foreground: 330 20% 95%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 330 80% 60%;
-    --primary-foreground: 0 0% 100%;
-    --primary-soft: 330 70% 70%;
+    --primary: 0 0% 90%;
+    --primary-foreground: 0 0% 10%;
+    --primary-soft: 0 0% 80%;
 
-    --secondary: 280 60% 60%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 95%;
 
-    --accent: 170 60% 60%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 95%;
 
-    --muted: 220 30% 15%;
-    --muted-foreground: 330 15% 60%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
 
-    --destructive: 0 85% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 0% 85%;
+    --destructive-foreground: 0 0% 10%;
 
-    --border: 220 30% 18%;
-    --input: 220 30% 18%;
-    --ring: 330 80% 60%;
+    --border: 0 0% 20%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 80%;
 
-    --glass-bg: hsla(220, 40%, 8%, 0.6);
-    --glass-border: hsla(330, 80%, 60%, 0.2);
-    --glass-shadow: 0 8px 32px 0 hsla(330, 80%, 60%, 0.2);
+    /* Dark Mode Liquid Glass */
+    --glass-bg: hsla(0, 0%, 12%, 0.7);
+    --glass-border: hsla(0, 0%, 100%, 0.1);
+    --glass-shadow: 0 8px 32px 0 hsla(0, 0%, 0%, 0.3);
+    --glass-inner-shadow: inset 0 1px 0 0 hsla(0, 0%, 100%, 0.1);
     
-    /* Dark mode neon gradient */
-    --gradient-romantic: linear-gradient(135deg, hsl(220, 70%, 25%) 0%, hsl(240, 80%, 35%) 30%, hsl(260, 70%, 45%) 60%, hsl(330, 80%, 55%) 100%);
+    /* Dark Mode Shimmer */
+    --shimmer-gradient: linear-gradient(135deg, 
+      hsla(0, 0%, 100%, 0.0) 0%, 
+      hsla(0, 0%, 100%, 0.05) 45%,
+      hsla(0, 0%, 100%, 0.1) 50%,
+      hsla(0, 0%, 100%, 0.05) 55%,
+      hsla(0, 0%, 100%, 0.0) 100%);
+    
+    /* Dark Mode Shadows */
+    --shadow-sm: 0 2px 8px 0 hsla(0, 0%, 0%, 0.2);
+    --shadow-md: 0 4px 16px 0 hsla(0, 0%, 0%, 0.3), 0 2px 4px 0 hsla(0, 0%, 0%, 0.15);
+    --shadow-lg: 0 8px 32px 0 hsla(0, 0%, 0%, 0.4), 0 4px 8px 0 hsla(0, 0%, 0%, 0.2);
+    --shadow-xl: 0 16px 48px 0 hsla(0, 0%, 0%, 0.5), 0 8px 16px 0 hsla(0, 0%, 0%, 0.25);
+    --float-shadow: 0 12px 40px 0 hsla(0, 0%, 0%, 0.35), 0 6px 12px 0 hsla(0, 0%, 0%, 0.2);
   }
 }
 
@@ -112,34 +137,111 @@
 }
 
 @layer utilities {
+  /* iOS 16 Liquid Glass Effect */
   .glass {
     background: var(--glass-bg);
-    backdrop-filter: blur(16px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
+    box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--shimmer-gradient);
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+  }
+
+  .glass:hover::before {
+    opacity: 1;
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%) translateY(-100%) rotate(30deg);
+    }
+    100% {
+      transform: translateX(100%) translateY(100%) rotate(30deg);
+    }
   }
 
   .glass-card {
-    @apply glass rounded-3xl;
+    @apply glass rounded-2xl;
   }
 
+  /* Elegant Floating Cards */
+  .floating-card {
+    @apply glass-card;
+    box-shadow: var(--float-shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .floating-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* Monochrome Utility Classes */
+  .shadow-elegant-sm {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .shadow-elegant-md {
+    box-shadow: var(--shadow-md);
+  }
+
+  .shadow-elegant-lg {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .shadow-elegant-xl {
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* Remove colored gradients - replace with subtle grayscale */
   .gradient-romantic {
-    background: var(--gradient-romantic);
+    background: linear-gradient(135deg, hsl(0, 0%, 95%) 0%, hsl(0, 0%, 98%) 100%);
+  }
+
+  .dark .gradient-romantic {
+    background: linear-gradient(135deg, hsl(0, 0%, 12%) 0%, hsl(0, 0%, 15%) 100%);
   }
 
   .gradient-text {
-    background: var(--gradient-romantic);
+    background: linear-gradient(135deg, hsl(0, 0%, 20%) 0%, hsl(0, 0%, 40%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
+  .dark .gradient-text {
+    background: linear-gradient(135deg, hsl(0, 0%, 85%) 0%, hsl(0, 0%, 95%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Subtle Glow Effects - Monochrome */
   .glow-primary {
-    box-shadow: var(--glow-primary);
+    box-shadow: 0 0 20px hsla(0, 0%, 0%, 0.1);
+  }
+
+  .dark .glow-primary {
+    box-shadow: 0 0 30px hsla(0, 0%, 100%, 0.15);
   }
 
   .glow-secondary {
-    box-shadow: var(--glow-secondary);
+    box-shadow: 0 0 16px hsla(0, 0%, 0%, 0.08);
+  }
+
+  .dark .glow-secondary {
+    box-shadow: 0 0 24px hsla(0, 0%, 100%, 0.12);
   }
 
   .animate-float {
