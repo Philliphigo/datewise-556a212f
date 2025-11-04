@@ -309,39 +309,43 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
       {/* Animated blurred background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-muted/20 to-background" />
         <div 
-          className="absolute inset-0 opacity-30"
+          className="absolute w-[500px] h-[500px] rounded-full blur-[100px] opacity-20 animate-float"
           style={{
-            background: `radial-gradient(circle at 20% 50%, hsl(var(--primary) / 0.1) 0%, transparent 50%),
-                         radial-gradient(circle at 80% 80%, hsl(var(--primary) / 0.15) 0%, transparent 50%),
-                         radial-gradient(circle at 40% 20%, hsl(var(--primary) / 0.08) 0%, transparent 50%)`,
-            filter: 'blur(60px)',
-            animation: 'pulse 8s ease-in-out infinite',
+            background: 'radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)',
+            top: '10%',
+            left: '10%',
+            animationDuration: '8s',
+          }}
+        />
+        <div 
+          className="absolute w-[400px] h-[400px] rounded-full blur-[100px] opacity-15 animate-float"
+          style={{
+            background: 'radial-gradient(circle, hsl(var(--muted-foreground)) 0%, transparent 70%)',
+            bottom: '10%',
+            right: '15%',
+            animationDuration: '10s',
+            animationDelay: '2s',
+          }}
+        />
+        <div 
+          className="absolute w-[350px] h-[350px] rounded-full blur-[100px] opacity-10 animate-float"
+          style={{
+            background: 'radial-gradient(circle, hsl(var(--foreground)) 0%, transparent 70%)',
+            top: '50%',
+            right: '10%',
+            animationDuration: '12s',
+            animationDelay: '4s',
           }}
         />
       </div>
-      
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(8)].map((_, i) => (
-          <Heart
-            key={i}
-            className="absolute text-primary/5 animate-float"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${i * 0.7}s`,
-              fontSize: `${Math.random() * 30 + 15}px`,
-            }}
-            fill="currentColor"
-          />
-        ))}
-      </div>
 
-      <Card className="w-full max-w-md floating-card p-8 space-y-6 relative z-10 animate-scale-in">
+      <Card className="w-full max-w-md p-8 space-y-6 relative z-10 animate-scale-in shadow-elegant-xl rounded-3xl border-2 border-border/50 bg-card/95 backdrop-blur-xl">
         <div className="text-center space-y-3">
-          <Heart className="w-14 h-14 mx-auto text-primary" fill="currentColor" />
-          <h1 className="text-3xl font-bold">
+          <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center shadow-elegant-md">
+            <Heart className="w-8 h-8 text-primary" fill="currentColor" />
+          </div>
+          <h1 className="text-3xl font-bold text-foreground">
             {mode === "signin" ? "Welcome Back" : "Join DateWise"}
           </h1>
           <p className="text-muted-foreground text-sm">
@@ -413,15 +417,15 @@ const Auth = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="flex flex-col gap-3">
           <Button
             type="button"
             variant="outline"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="shadow-elegant-sm hover:shadow-elegant-md transition-all"
+            className="w-full h-12 rounded-2xl shadow-elegant-sm hover:shadow-elegant-md transition-all border-2 border-border/50 bg-background/50 backdrop-blur-sm"
           >
-            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+            <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
               <path
                 fill="currentColor"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -439,7 +443,7 @@ const Auth = () => {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Google
+            <span className="font-medium">Continue with Google</span>
           </Button>
 
           <Button
@@ -447,10 +451,10 @@ const Auth = () => {
             variant="outline"
             onClick={handlePhoneSignIn}
             disabled={loading}
-            className="shadow-elegant-sm hover:shadow-elegant-md transition-all"
+            className="w-full h-12 rounded-2xl shadow-elegant-sm hover:shadow-elegant-md transition-all border-2 border-border/50 bg-background/50 backdrop-blur-sm"
           >
-            <Phone className="mr-2 h-4 w-4" />
-            Phone
+            <Phone className="mr-2 h-5 w-5" />
+            <span className="font-medium">Continue with Phone</span>
           </Button>
 
           <Button
@@ -458,10 +462,10 @@ const Auth = () => {
             variant="outline"
             onClick={sendMagicLink}
             disabled={loading}
-            className="shadow-elegant-sm hover:shadow-elegant-md transition-all"
+            className="w-full h-12 rounded-2xl shadow-elegant-sm hover:shadow-elegant-md transition-all border-2 border-border/50 bg-background/50 backdrop-blur-sm"
           >
-            <Mail className="mr-2 h-4 w-4" />
-            Magic Link
+            <Mail className="mr-2 h-5 w-5" />
+            <span className="font-medium">Continue with Magic Link</span>
           </Button>
         </div>
 

@@ -1,9 +1,21 @@
-import { ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Heart, Flame, MessageCircle, Users, User, Rss, Settings, Shield } from "lucide-react";
+import { ReactNode, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Heart, Flame, MessageCircle, Users, User, Rss, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationBell } from "./NotificationBell";
 import { Footer } from "./Footer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
 interface LayoutProps {
   children: ReactNode;
 }
@@ -11,6 +23,12 @@ interface LayoutProps {
 export const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [clickCount, setClickCount] = useState(0);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false);
 
   const navItems = [
     { icon: Flame, label: "Discover", path: "/discover" },
@@ -22,56 +40,143 @@ export const Layout = ({ children }: LayoutProps) => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const handleAdminClick = () => {
+    setClickCount(prev => prev + 1);
+    
+    setTimeout(() => setClickCount(0), 500);
+    
+    if (clickCount + 1 === 2) {
+      setShowPasswordDialog(true);
+      setClickCount(0);
+    }
+  };
+
+  const handleAdminAccess = async () => {
+    if (!user) return;
+    
+    setIsCheckingAuth(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setShowPasswordDialog(false);
+        setAdminPassword("");
+        navigate('/admin');
+      } else {
+        toast({
+          title: "Access Denied",
+          description: "You don't have admin privileges",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingAuth(false);
+    }
+  };
+
   if (!user) {
     return <>{children}</>;
   }
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-border">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-elegant-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/discover" className="flex items-center gap-2">
-            <Heart className="w-8 h-8 text-primary" fill="currentColor" />
-            <span className="text-2xl font-display">DateWise</span>
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Heart className="w-6 h-6 text-primary" fill="currentColor" />
+            </div>
+            <span className="text-xl font-semibold text-foreground">DateWise</span>
           </Link>
+          
+          {/* Invisible admin button in center */}
+          <div 
+            className="absolute left-1/2 transform -translate-x-1/2 w-20 h-12 cursor-default"
+            onClick={handleAdminClick}
+          />
+          
           <div className="flex items-center gap-4">
             <NotificationBell />
             <Link to="/settings">
-              <Settings className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
-            </Link>
-            <Link to="/admin" className="opacity-0 hover:opacity-100 transition-opacity">
-              <Shield className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors" />
+              <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors">
+                <Settings className="w-5 h-5 text-foreground" />
+              </div>
             </Link>
           </div>
         </div>
       </header>
 
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent className="rounded-3xl border-2 border-border/50">
+          <DialogHeader>
+            <DialogTitle>Admin Access</DialogTitle>
+            <DialogDescription>
+              This area is restricted to administrators only.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input
+              type="password"
+              placeholder="Enter admin password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAdminAccess()}
+              className="rounded-2xl border-2"
+            />
+            <Button
+              onClick={handleAdminAccess}
+              disabled={isCheckingAuth}
+              className="w-full rounded-2xl h-12"
+            >
+              {isCheckingAuth ? "Verifying..." : "Access Dashboard"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <main className="flex-1 pt-16 pb-20">{children}</main>
       <Footer />
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-border" style={{ position: 'fixed' }}>
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-around h-20">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex flex-col items-center justify-center gap-1 transition-all ${
-                    active
-                      ? "text-primary scale-110"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                >
-                  <Icon className={`w-6 h-6 ${active ? "animate-pulse-soft" : ""}`} />
-                  <span className="text-xs font-medium">{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
+      <nav className="fixed bottom-4 left-4 right-4 z-50 bg-background/80 backdrop-blur-xl border-2 border-border/50 rounded-3xl shadow-elegant-lg mx-auto max-w-md">
+        <div className="flex items-center justify-around h-20 px-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className="flex flex-col items-center justify-center gap-1 transition-all group"
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              >
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
+                  active
+                    ? "bg-primary text-primary-foreground shadow-elegant-md scale-110"
+                    : "bg-transparent text-muted-foreground group-hover:bg-muted group-hover:text-foreground"
+                }`}>
+                  <Icon className="w-6 h-6" />
+                </div>
+                <span className={`text-xs font-medium transition-colors ${
+                  active ? "text-primary" : "text-muted-foreground"
+                }`}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </nav>
     </div>

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Heart, X, MapPin, Loader2, Filter, CheckCircle, MessageCircle, Info } from "lucide-react";
+import { Heart, X, MapPin, Loader2, Filter, CheckCircle, MessageCircle, Info, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ReportDialog } from "@/components/ReportDialog";
@@ -304,6 +304,42 @@ const Discover = () => {
               {/* Gradient Overlay at Bottom */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
               
+              {/* Info Icon - Top Left */}
+              <div className="absolute top-6 left-6 z-10">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm"
+                    >
+                      <Info className="w-5 h-5 text-white" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-52 p-2 glass-card rounded-2xl border-2" align="start">
+                    <div className="space-y-1">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start rounded-xl"
+                        onClick={() => navigate(`/profile?user=${currentProfile.id}`)}
+                      >
+                        <User className="w-4 h-4 mr-2" />
+                        View Profile
+                      </Button>
+                      <ReportDialog
+                        reportedUserId={currentProfile.id}
+                        reportedUserName={currentProfile.name}
+                      />
+                      <BlockButton
+                        blockedUserId={currentProfile.id}
+                        blockedUserName={currentProfile.name}
+                        onBlock={nextProfile}
+                      />
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
               {/* Profile Info - All Inside Card */}
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 {/* Name and Verified Badge */}
@@ -322,34 +358,6 @@ const Discover = () => {
                     {currentProfile.bio}
                   </p>
                 )}
-                
-                {/* Info Icon */}
-                <div className="absolute bottom-32 right-6">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm"
-                      >
-                        <Info className="w-5 h-5 text-white" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-48 p-2 glass-card" align="end">
-                      <div className="space-y-1">
-                        <ReportDialog
-                          reportedUserId={currentProfile.id}
-                          reportedUserName={currentProfile.name}
-                        />
-                        <BlockButton
-                          blockedUserId={currentProfile.id}
-                          blockedUserName={currentProfile.name}
-                          onBlock={nextProfile}
-                        />
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
                 
                 {/* Action Buttons */}
                 <div className="flex items-center justify-center gap-6 pt-4">

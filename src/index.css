@@ -137,38 +137,12 @@
 }
 
 @layer utilities {
-  /* iOS 16 Liquid Glass Effect */
+  /* Elegant Glass Effect - No Shimmer */
   .glass {
     background: var(--glass-bg);
     backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .glass::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--shimmer-gradient);
-    opacity: 0;
-    transition: opacity 0.6s ease;
-    pointer-events: none;
-  }
-
-  .glass:hover::before {
-    opacity: 1;
-    animation: shimmer 2s ease-in-out infinite;
-  }
-
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%) translateY(-100%) rotate(30deg);
-    }
-    100% {
-      transform: translateX(100%) translateY(100%) rotate(30deg);
-    }
   }
 
   .glass-card {
