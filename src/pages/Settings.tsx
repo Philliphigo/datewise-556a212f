@@ -295,7 +295,7 @@ const Settings = () => {
                       try {
                         const { error } = await supabase
                           .from("profiles")
-                          .update({ is_active: false, deactivated_at: new Date().toISOString() })
+                          .update({ is_active: false })
                           .eq("id", user.id);
                         if (error) throw error;
                         toast({ title: "Account deactivated", description: "You can restore access by signing in again." });

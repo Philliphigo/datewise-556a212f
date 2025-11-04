@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         await supabase
           .from("profiles")
-          .update({ is_active: true, deactivated_at: null })
+          .update({ is_active: true })
           .eq("id", userId);
       } catch (error) {
         // Best-effort, ignore errors

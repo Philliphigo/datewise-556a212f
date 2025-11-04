@@ -28,25 +28,26 @@ const Landing = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-hidden relative bg-background">
+      {/* Animated Blur Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-20 w-96 h-96 bg-pink-500/30 rounded-full animate-float" style={{ filter: 'blur(80px)', animationDelay: '0s', animationDuration: '8s' }} />
+        <div className="absolute top-40 right-32 w-80 h-80 bg-purple-500/20 rounded-full animate-float" style={{ filter: 'blur(70px)', animationDelay: '2s', animationDuration: '10s' }} />
+        <div className="absolute bottom-32 left-40 w-72 h-72 bg-pink-400/25 rounded-full animate-float" style={{ filter: 'blur(90px)', animationDelay: '4s', animationDuration: '12s' }} />
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-rose-500/20 rounded-full animate-float" style={{ filter: 'blur(85px)', animationDelay: '1s', animationDuration: '9s' }} />
+      </div>
+
       {/* Hero Section */}
-      <section
-        className="relative min-h-screen flex items-center justify-center overflow-hidden"
-        style={{
-          backgroundImage: `url(${heroBg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/50 to-background/80" />
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-background/40" />
         
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-8 animate-fade-in">
             <div className="flex items-center justify-center gap-3 mb-4">
-              <Heart className="w-16 h-16 text-primary animate-glow" fill="currentColor" />
+              <Heart className="w-16 h-16 text-pink-500 animate-glow" fill="currentColor" />
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-display gradient-text animate-float">
+            <h1 className="text-5xl md:text-7xl font-bold text-foreground animate-float">
               DateWise
             </h1>
             
@@ -58,7 +59,7 @@ const Landing = () => {
               <Link to="/auth?mode=signup">
                 <Button
                   size="lg"
-                  className="gradient-romantic text-white border-0 hover:opacity-90 transition-all transform hover:scale-105 px-8 py-6 text-lg rounded-full glow-primary"
+                  className="bg-pink-500 hover:bg-pink-600 text-white border-0 transition-all transform hover:scale-105 px-8 py-6 text-lg rounded-full shadow-lg shadow-pink-500/30"
                 >
                   Join Now
                 </Button>
@@ -67,7 +68,7 @@ const Landing = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="glass border-2 border-primary/20 hover:border-primary/40 px-8 py-6 text-lg rounded-full"
+                  className="floating-card border-2 border-border hover:border-pink-500/40 px-8 py-6 text-lg rounded-full"
                 >
                   Sign In
                 </Button>
@@ -81,7 +82,7 @@ const Landing = () => {
           {[...Array(6)].map((_, i) => (
             <Heart
               key={i}
-              className="absolute text-primary/20 animate-float"
+              className="absolute text-pink-500/20 animate-float"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
@@ -96,10 +97,8 @@ const Landing = () => {
 
       {/* Features Section */}
       <section className="py-24 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-background to-muted/20" />
-        
         <div className="container mx-auto px-4 relative z-10">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 gradient-text">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-foreground">
             Why DateWise?
           </h2>
 
@@ -109,11 +108,11 @@ const Landing = () => {
               return (
                 <div
                   key={index}
-                  className="glass-card p-8 text-center space-y-4 hover:scale-105 transition-transform animate-scale-in"
+                  className="floating-card p-8 text-center space-y-4 hover:scale-105 transition-transform animate-scale-in"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <div className="w-16 h-16 mx-auto gradient-romantic rounded-full flex items-center justify-center">
-                    <Icon className="w-8 h-8 text-white" />
+                  <div className="w-16 h-16 mx-auto bg-pink-500/10 rounded-full flex items-center justify-center">
+                    <Icon className="w-8 h-8 text-pink-500" />
                   </div>
                   <h3 className="text-xl font-semibold">{feature.title}</h3>
                   <p className="text-muted-foreground">{feature.description}</p>
@@ -126,10 +125,8 @@ const Landing = () => {
 
       {/* CTA Section */}
       <section className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0 gradient-romantic opacity-10" />
-        
         <div className="container mx-auto px-4 relative z-10 text-center space-y-8">
-          <h2 className="text-4xl md:text-5xl font-bold gradient-text">
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
             Ready to Find Your Match?
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -138,7 +135,7 @@ const Landing = () => {
           <Link to="/auth?mode=signup">
             <Button
               size="lg"
-              className="gradient-romantic text-white border-0 hover:opacity-90 transition-all transform hover:scale-105 px-12 py-8 text-xl rounded-full glow-primary"
+              className="bg-pink-500 hover:bg-pink-600 text-white border-0 transition-all transform hover:scale-105 px-12 py-8 text-xl rounded-full shadow-lg shadow-pink-500/30"
             >
               Get Started Free
             </Button>

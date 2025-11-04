@@ -16,10 +16,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 10%;
 
-    /* Monochrome Brand */
-    --primary: 0 0% 15%;
+    /* Pink Dating App Brand */
+    --primary: 330 81% 60%;
     --primary-foreground: 0 0% 100%;
-    --primary-soft: 0 0% 25%;
+    --primary-soft: 330 81% 70%;
     
     --secondary: 0 0% 90%;
     --secondary-foreground: 0 0% 10%;
@@ -78,9 +78,9 @@
     --popover: 0 0% 12%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 0 0% 90%;
-    --primary-foreground: 0 0% 10%;
-    --primary-soft: 0 0% 80%;
+    --primary: 330 81% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 330 81% 70%;
 
     --secondary: 0 0% 18%;
     --secondary-foreground: 0 0% 95%;

@@ -194,7 +194,7 @@ const AdminDashboard = () => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ is_active: false, deactivated_at: new Date().toISOString() })
+        .update({ is_active: false })
         .eq("id", userId);
 
       if (error) throw error;
