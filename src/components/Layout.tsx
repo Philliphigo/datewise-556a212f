@@ -87,55 +87,51 @@ export const Layout = ({ children }: LayoutProps) => {
     }
   };
 
+  const isAdminRoute = location.pathname === '/admin';
+
   if (!user) {
     return <>{children}</>;
   }
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-elegant-sm">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/discover" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Heart className="w-6 h-6 text-primary" fill="currentColor" />
-            </div>
-            <span className="text-xl font-semibold text-foreground">DateWise</span>
-          </Link>
-          
-          {/* Invisible admin button in center */}
-          <div 
-            className="absolute left-1/2 transform -translate-x-1/2 w-20 h-12 cursor-default"
-            onClick={handleAdminClick}
-          />
-          
-          <div className="flex items-center gap-4">
-            <NotificationBell />
-            <Link to="/settings">
-              <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors">
-                <Settings className="w-5 h-5 text-foreground" />
+      {!isAdminRoute && (
+        <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-elegant-sm">
+          <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+            <Link to="/discover" className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Heart className="w-6 h-6 text-primary" fill="currentColor" />
               </div>
+              <span className="text-xl font-semibold text-foreground">DateWise</span>
             </Link>
+            
+            {/* Invisible admin button in center */}
+            <div 
+              className="absolute left-1/2 transform -translate-x-1/2 w-20 h-12 cursor-default"
+              onClick={handleAdminClick}
+            />
+            
+            <div className="flex items-center gap-4">
+              <NotificationBell />
+              <Link to="/settings">
+                <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors">
+                  <Settings className="w-5 h-5 text-foreground" />
+                </div>
+              </Link>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
         <DialogContent className="rounded-3xl border-2 border-border/50">
           <DialogHeader>
             <DialogTitle>Admin Access</DialogTitle>
             <DialogDescription>
-              This area is restricted to administrators only.
+              Verifying admin permissions...
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <Input
-              type="password"
-              placeholder="Enter admin password"
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAdminAccess()}
-              className="rounded-2xl border-2"
-            />
             <Button
               onClick={handleAdminAccess}
               disabled={isCheckingAuth}
@@ -147,38 +143,36 @@ export const Layout = ({ children }: LayoutProps) => {
         </DialogContent>
       </Dialog>
 
-      <main className="flex-1 pt-16 pb-20">{children}</main>
-      <Footer />
+      <main className={isAdminRoute ? "flex-1" : "flex-1 pt-16 pb-20"}>{children}</main>
+      {!isAdminRoute && <Footer />}
 
-      <nav className="fixed bottom-4 left-4 right-4 z-50 bg-background/80 backdrop-blur-xl border-2 border-border/50 rounded-3xl shadow-elegant-lg mx-auto max-w-md">
-        <div className="flex items-center justify-around h-20 px-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.path);
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className="flex flex-col items-center justify-center gap-1 transition-all group"
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              >
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-                  active
-                    ? "bg-primary text-primary-foreground shadow-elegant-md scale-110"
-                    : "bg-transparent text-muted-foreground group-hover:bg-muted group-hover:text-foreground"
-                }`}>
-                  <Icon className="w-6 h-6" />
-                </div>
-                <span className={`text-xs font-medium transition-colors ${
-                  active ? "text-primary" : "text-muted-foreground"
-                }`}>
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      {!isAdminRoute && (
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/30">
+          <div className="flex items-center justify-around h-16 px-4 max-w-md mx-auto">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className="flex flex-col items-center justify-center gap-1 transition-all group min-w-[60px]"
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                >
+                  <Icon className={`w-6 h-6 transition-colors ${
+                    active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                  }`} />
+                  <span className={`text-xs font-medium transition-colors ${
+                    active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                  }`}>
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </div>
   );
 };

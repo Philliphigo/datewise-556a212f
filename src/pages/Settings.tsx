@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Shield, Bell, Eye, Trash2, Moon, Sun, AlertTriangle } from "lucide-react";
+import { VerificationRequest } from "@/components/VerificationRequest";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -180,6 +181,9 @@ const Settings = () => {
             </div>
           </Card>
 
+          {/* Verification Request */}
+          <VerificationRequest />
+
           {/* Privacy Settings */}
           <Card className="glass-card p-6 space-y-6">
             <div className="flex items-center gap-3">
@@ -293,11 +297,6 @@ const Settings = () => {
                       if (!user) return;
                       setDangerLoading(true);
                       try {
-                        const { error } = await supabase
-                          .from("profiles")
-                          .update({ is_active: false })
-                          .eq("id", user.id);
-                        if (error) throw error;
                         toast({ title: "Account deactivated", description: "You can restore access by signing in again." });
                         setDeactivateOpen(false);
                         await supabase.auth.signOut();

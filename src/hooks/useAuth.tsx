@@ -19,18 +19,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Helper function to update profile status
-    const updateProfileStatus = async (userId: string) => {
-      try {
-        await supabase
-          .from("profiles")
-          .update({ is_active: true })
-          .eq("id", userId);
-      } catch (error) {
-        // Best-effort, ignore errors
-      }
-    };
-
     // Set up auth state listener
     const {
       data: { subscription },
@@ -38,12 +26,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-
-      // If a user is signed in, ensure their profile is active
-      const currentUserId = session?.user?.id;
-      if (currentUserId && event !== "SIGNED_OUT") {
-        updateProfileStatus(currentUserId);
-      }
     });
 
     // Check for existing session
@@ -51,11 +33,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-
-      const currentUserId = session?.user?.id;
-      if (currentUserId) {
-        updateProfileStatus(currentUserId);
-      }
     });
 
     return () => subscription.unsubscribe();

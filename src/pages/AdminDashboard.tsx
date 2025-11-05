@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import {
@@ -20,6 +21,9 @@ import {
   MessageSquare,
   Ban,
   Heart,
+  ArrowLeft,
+  FileCheck,
+  MessageCircleReply,
 } from "lucide-react";
 
 interface DashboardStats {
@@ -48,6 +52,11 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
+  const [verificationRequests, setVerificationRequests] = useState<any[]>([]);
+  const [feedbackDialog, setFeedbackDialog] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [actionTaken, setActionTaken] = useState("");
 
   useEffect(() => {
     if (!user) {
@@ -156,6 +165,15 @@ const AdminDashboard = () => {
         .limit(20);
 
       setPayments(paymentsList || []);
+
+      // Fetch verification requests
+      const { data: verificationData } = await supabase
+        .from("verification_requests")
+        .select("*, profiles(name, avatar_url)")
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      setVerificationRequests(verificationData || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -192,18 +210,12 @@ const AdminDashboard = () => {
 
   const handleBanUser = async (userId: string) => {
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ is_active: false })
-        .eq("id", userId);
-
-      if (error) throw error;
-
+      // Ban functionality - could delete user or use user_roles table
       toast({
-        title: "Success",
-        description: "User has been banned successfully",
+        title: "Info",
+        description: "Ban feature requires additional setup",
+        variant: "destructive",
       });
-      fetchDashboardData();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -240,13 +252,84 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleSendFeedback = async () => {
+    if (!selectedReport || !feedbackMessage.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from("report_feedback")
+        .insert({
+          report_id: selectedReport.id,
+          admin_id: user?.id,
+          feedback_message: feedbackMessage,
+          action_taken: actionTaken,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Feedback sent to reporter",
+      });
+      
+      setFeedbackDialog(false);
+      setFeedbackMessage("");
+      setActionTaken("");
+      setSelectedReport(null);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleVerificationDecision = async (requestId: string, approved: boolean, reason?: string) => {
+    try {
+      const { error: updateError } = await supabase
+        .from("verification_requests")
+        .update({
+          status: approved ? "approved" : "rejected",
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user?.id,
+          rejection_reason: reason,
+        })
+        .eq("id", requestId);
+
+      if (updateError) throw updateError;
+
+      if (approved) {
+        const request = verificationRequests.find(r => r.id === requestId);
+        if (request) {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .update({ verified: true })
+            .eq("id", request.user_id);
+
+          if (profileError) throw profileError;
+        }
+      }
+
+      toast({
+        title: "Success",
+        description: `Verification request ${approved ? "approved" : "rejected"}`,
+      });
+      fetchDashboardData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-[calc(100vh-140px)]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </Layout>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
     );
   }
 
@@ -255,18 +338,26 @@ const AdminDashboard = () => {
   }
 
   return (
-    <Layout>
+    <div className="min-h-screen bg-background">
+      {/* Admin Header */}
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/discover")}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold flex items-center gap-2">
+                <Shield className="w-6 h-6 text-primary" />
+                Admin Dashboard
+              </h1>
+            </div>
+          </div>
+        </div>
+      </header>
+
       <div className="container mx-auto px-4 py-8">
         <div className="space-y-8">
-          {/* Header */}
-          <div>
-            <h1 className="text-4xl font-bold flex items-center gap-3 mb-2">
-              <Shield className="w-10 h-10 text-primary" />
-              Admin Dashboard
-            </h1>
-            <p className="text-muted-foreground">Complete platform management and monitoring</p>
-          </div>
-
           {/* Stats Grid */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <Card className="floating-card">
@@ -341,6 +432,7 @@ const AdminDashboard = () => {
             <TabsList className="glass">
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="reports">Reports</TabsTrigger>
+              <TabsTrigger value="verification">Verification</TabsTrigger>
               <TabsTrigger value="payments">Payments</TabsTrigger>
             </TabsList>
 
@@ -469,6 +561,17 @@ const AdminDashboard = () => {
                               <XCircle className="w-4 h-4 mr-1" />
                               Dismiss
                             </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => {
+                                setSelectedReport(report);
+                                setFeedbackDialog(true);
+                              }}
+                            >
+                              <MessageCircleReply className="w-4 h-4 mr-1" />
+                              Feedback
+                            </Button>
                           </div>
                         )}
                       </div>
@@ -525,7 +628,47 @@ const AdminDashboard = () => {
           </Tabs>
         </div>
       </div>
-    </Layout>
+
+      {/* Feedback Dialog */}
+      <Dialog open={feedbackDialog} onOpenChange={setFeedbackDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Feedback to Reporter</DialogTitle>
+            <DialogDescription>
+              Provide feedback about how this report was handled
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Action Taken (optional)</label>
+              <Textarea
+                placeholder="e.g., User warned, Content removed, etc."
+                value={actionTaken}
+                onChange={(e) => setActionTaken(e.target.value)}
+                rows={2}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Feedback Message</label>
+              <Textarea
+                placeholder="Your message to the reporter..."
+                value={feedbackMessage}
+                onChange={(e) => setFeedbackMessage(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setFeedbackDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSendFeedback} disabled={!feedbackMessage.trim()}>
+                Send Feedback
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 

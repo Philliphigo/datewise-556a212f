@@ -327,11 +327,9 @@ export type Database = {
           age: number
           avatar_url: string | null
           bio: string | null
-          deactivated_at: string | null
           city: string | null
           created_at: string | null
           gender: string
-          is_active: boolean | null
           id: string
           interests: string[] | null
           is_online: boolean | null
@@ -348,11 +346,9 @@ export type Database = {
           age: number
           avatar_url?: string | null
           bio?: string | null
-          deactivated_at?: string | null
           city?: string | null
           created_at?: string | null
           gender: string
-          is_active?: boolean | null
           id: string
           interests?: string[] | null
           is_online?: boolean | null
@@ -369,11 +365,9 @@ export type Database = {
           age?: number
           avatar_url?: string | null
           bio?: string | null
-          deactivated_at?: string | null
           city?: string | null
           created_at?: string | null
           gender?: string
-          is_active?: boolean | null
           id?: string
           interests?: string[] | null
           is_online?: boolean | null
@@ -387,6 +381,41 @@ export type Database = {
           verified?: boolean | null
         }
         Relationships: []
+      }
+      report_feedback: {
+        Row: {
+          action_taken: string | null
+          admin_id: string
+          created_at: string
+          feedback_message: string
+          id: string
+          report_id: string
+        }
+        Insert: {
+          action_taken?: string | null
+          admin_id: string
+          created_at?: string
+          feedback_message: string
+          id?: string
+          report_id: string
+        }
+        Update: {
+          action_taken?: string | null
+          admin_id?: string
+          created_at?: string
+          feedback_message?: string
+          id?: string
+          report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_feedback_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reports: {
         Row: {
@@ -474,6 +503,39 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      verification_requests: {
+        Row: {
+          created_at: string
+          document_url: string | null
+          id: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_url?: string | null
+          id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_url?: string | null
+          id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           user_id?: string
         }
         Relationships: []

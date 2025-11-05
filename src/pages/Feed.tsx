@@ -10,6 +10,7 @@ import { Heart, MessageCircle, Send, Loader2, Image, MoreVertical, Trash2 } from
 import { useToast } from "@/hooks/use-toast";
 import { PostComments } from "@/components/PostComments";
 import { PostReactions } from "@/components/PostReactions";
+import { FeedCategories } from "@/components/FeedCategories";
 import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -45,6 +46,7 @@ const Feed = () => {
   const [posting, setPosting] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   useEffect(() => {
     if (!user) {
@@ -222,25 +224,109 @@ const Feed = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <div className="space-y-6">
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold gradient-text">Connect</h1>
-            <p className="text-muted-foreground">Share your moments</p>
-          </div>
+      <div className="container mx-auto px-4 py-8 max-w-2xl space-y-6 pb-96">
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold gradient-text">Connect</h1>
+          <p className="text-muted-foreground">Share your moments</p>
+        </div>
 
-          {/* Create Post */}
-          <Card className="glass-card p-4 space-y-3">
+        {/* Categories */}
+        <FeedCategories 
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+        />
+
+        {/* Posts Feed */}
+        <div className="space-y-4">
+          {posts.map((post, index) => (
+            <Card
+              key={post.id}
+              className="glass-card overflow-hidden animate-fade-in"
+              style={{ animationDelay: `${index * 0.05}s` }}
+            >
+              <div className="p-4 space-y-4">
+                {/* Post Header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10 border-2 border-primary/20">
+                      <img
+                        src={post.profile?.avatar_url || defaultAvatar}
+                        alt={post.profile?.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold">{post.profile?.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                      </p>
+                    </div>
+                  </div>
+                  {post.user_id === user?.id && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="w-5 h-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="glass">
+                        <DropdownMenuItem
+                          onClick={() => handleDeletePost(post.id)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete Post
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
+
+                {/* Post Content */}
+                <p className="text-foreground/90">{post.content}</p>
+
+                {post.image_url && (
+                  <img
+                    src={post.image_url}
+                    alt="Post"
+                    className="w-full rounded-lg max-h-96 object-cover"
+                  />
+                )}
+
+                {/* Post Actions */}
+                <div className="flex items-center gap-6 pt-2 border-t border-border/50">
+                  <PostReactions
+                    onReact={(type) => handleLike(post.id, type)}
+                    userReaction={post.userLiked ? "like" : undefined}
+                    count={post.likes_count}
+                  />
+
+                  <button 
+                    onClick={() => navigate(`/post/${post.id}`)}
+                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    <span className="text-sm">{post.comments_count}</span>
+                  </button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {/* Create Post - Fixed at bottom */}
+        <div className="fixed bottom-20 left-0 right-0 z-40 px-4 pb-4">
+          <Card className="glass-card p-4 space-y-3 max-w-2xl mx-auto shadow-2xl border-2">
             <Textarea
               placeholder="What's on your mind?"
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
               className="glass border-border/50 resize-none"
-              rows={3}
+              rows={2}
             />
             {uploadedImage && (
               <div className="relative">
-                <img src={uploadedImage} alt="Upload preview" className="rounded-lg max-h-64 w-full object-cover" />
+                <img src={uploadedImage} alt="Upload preview" className="rounded-lg max-h-32 w-full object-cover" />
                 <Button
                   variant="ghost"
                   size="sm"
@@ -280,85 +366,6 @@ const Feed = () => {
               </Button>
             </div>
           </Card>
-
-          {/* Posts Feed */}
-          <div className="space-y-4">
-            {posts.map((post, index) => (
-              <Card
-                key={post.id}
-                className="glass-card overflow-hidden animate-fade-in"
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                <div className="p-4 space-y-4">
-                  {/* Post Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10 border-2 border-primary/20">
-                        <img
-                          src={post.profile?.avatar_url || defaultAvatar}
-                          alt={post.profile?.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold">{post.profile?.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                        </p>
-                      </div>
-                    </div>
-                    {post.user_id === user?.id && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="w-5 h-5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="glass">
-                          <DropdownMenuItem
-                            onClick={() => handleDeletePost(post.id)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete Post
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-
-                  {/* Post Content */}
-                  <p className="text-foreground/90">{post.content}</p>
-
-                  {post.image_url && (
-                    <img
-                      src={post.image_url}
-                      alt="Post"
-                      className="w-full rounded-lg max-h-96 object-cover"
-                    />
-                  )}
-
-                  {/* Post Actions */}
-                  <div className="flex items-center gap-6 pt-2 border-t border-border/50">
-                    <PostReactions
-                      onReact={(type) => handleLike(post.id, type)}
-                      userReaction={post.userLiked ? "like" : undefined}
-                      count={post.likes_count}
-                    />
-
-                    <button 
-                      onClick={() => navigate(`/post/${post.id}`)}
-                      className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <MessageCircle className="w-5 h-5" />
-                      <span className="text-sm">{post.comments_count}</span>
-                    </button>
-                  </div>
-
-                </div>
-              </Card>
-            ))}
-          </div>
         </div>
       </div>
     </Layout>
