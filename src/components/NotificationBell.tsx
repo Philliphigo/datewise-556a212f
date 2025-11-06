@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell } from "lucide-react";
+import { Bell, Heart, MessageSquare, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,10 +7,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
+import { Separator } from "@/components/ui/separator";
 
 interface Notification {
   id: string;
@@ -97,6 +99,24 @@ export const NotificationBell = () => {
     setUnreadCount(0);
   };
 
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case "match":
+        return <Users className="w-4 h-4 text-primary" />;
+      case "like":
+        return <Heart className="w-4 h-4 text-rose-500" />;
+      case "message":
+        return <MessageSquare className="w-4 h-4 text-blue-500" />;
+      default:
+        return <Bell className="w-4 h-4 text-muted-foreground" />;
+    }
+  };
+
+  const groupedNotifications = {
+    unread: notifications.filter((n) => !n.read),
+    read: notifications.filter((n) => n.read),
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -112,44 +132,83 @@ export const NotificationBell = () => {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 glass border-border/50">
-        <div className="flex items-center justify-between p-2 border-b border-border/50">
+      <DropdownMenuContent align="end" className="w-80 glass border-border/50 p-0">
+        <div className="flex items-center justify-between p-3 border-b border-border/50">
           <p className="font-semibold">Notifications</p>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
               onClick={markAllAsRead}
-              className="text-xs text-primary"
+              className="text-xs text-primary h-7"
             >
-              Mark all as read
+              Mark all read
             </Button>
           )}
         </div>
         <div className="max-h-96 overflow-y-auto">
           {notifications.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              No notifications yet
+            <div className="p-8 text-center">
+              <Bell className="w-8 h-8 mx-auto mb-2 text-muted-foreground opacity-50" />
+              <p className="text-sm text-muted-foreground">No notifications yet</p>
             </div>
           ) : (
-            notifications.map((notification) => (
-              <DropdownMenuItem
-                key={notification.id}
-                className={`p-3 cursor-pointer ${
-                  !notification.read ? "bg-primary/5" : ""
-                }`}
-                onClick={() => markAsRead(notification.id)}
-              >
-                <div className="space-y-1">
-                  <p className="text-sm">{notification.message}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(notification.created_at), {
-                      addSuffix: true,
-                    })}
-                  </p>
+            <div>
+              {groupedNotifications.unread.length > 0 && (
+                <div>
+                  <div className="px-3 py-2 text-xs font-medium text-muted-foreground bg-muted/30">
+                    New
+                  </div>
+                  {groupedNotifications.unread.map((notification) => (
+                    <DropdownMenuItem
+                      key={notification.id}
+                      className="p-3 cursor-pointer bg-primary/5 hover:bg-primary/10 border-l-2 border-primary"
+                      onClick={() => markAsRead(notification.id)}
+                    >
+                      <div className="flex gap-3 w-full">
+                        <div className="mt-0.5">{getNotificationIcon(notification.type)}</div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm leading-tight">{notification.message}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(notification.created_at), {
+                              addSuffix: true,
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
                 </div>
-              </DropdownMenuItem>
-            ))
+              )}
+              
+              {groupedNotifications.read.length > 0 && (
+                <div>
+                  {groupedNotifications.unread.length > 0 && <DropdownMenuSeparator />}
+                  <div className="px-3 py-2 text-xs font-medium text-muted-foreground bg-muted/10">
+                    Earlier
+                  </div>
+                  {groupedNotifications.read.map((notification) => (
+                    <DropdownMenuItem
+                      key={notification.id}
+                      className="p-3 cursor-pointer hover:bg-muted/5"
+                      onClick={() => markAsRead(notification.id)}
+                    >
+                      <div className="flex gap-3 w-full opacity-70">
+                        <div className="mt-0.5">{getNotificationIcon(notification.type)}</div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm leading-tight">{notification.message}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(notification.created_at), {
+                              addSuffix: true,
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </DropdownMenuContent>
