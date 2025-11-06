@@ -47,6 +47,7 @@ const Feed = () => {
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [postCategory, setPostCategory] = useState("");
 
   useEffect(() => {
     if (!user) {
@@ -54,15 +55,21 @@ const Feed = () => {
       return;
     }
     fetchPosts();
-  }, [user, navigate]);
+  }, [user, navigate, selectedCategory]);
 
   const fetchPosts = async () => {
     try {
-      const { data: postsData, error } = await supabase
+      let query = supabase
         .from("posts")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(50);
+
+      if (selectedCategory !== "all") {
+        query = query.eq("category", selectedCategory);
+      }
+
+      const { data: postsData, error } = await query;
 
       if (error) throw error;
 
@@ -134,18 +141,29 @@ const Feed = () => {
   const handleCreatePost = async () => {
     if (!user || !newPost.trim() || posting) return;
 
+    if (newPost.length > 5000) {
+      toast({
+        title: "Error",
+        description: "Post is too long (max 5000 characters)",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setPosting(true);
     try {
       const { error } = await supabase.from("posts").insert({
         content: newPost,
         user_id: user.id,
         image_url: uploadedImage,
+        category: postCategory || null,
       });
 
       if (error) throw error;
 
       setNewPost("");
       setUploadedImage(null);
+      setPostCategory("");
       toast({
         title: "Success",
         description: "Post created successfully!",
@@ -321,9 +339,11 @@ const Feed = () => {
               placeholder="What's on your mind?"
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
+              maxLength={5000}
               className="glass border-border/50 resize-none"
               rows={2}
             />
+            <p className="text-xs text-muted-foreground text-right">{newPost.length}/5000</p>
             {uploadedImage && (
               <div className="relative">
                 <img src={uploadedImage} alt="Upload preview" className="rounded-lg max-h-32 w-full object-cover" />
@@ -337,25 +357,44 @@ const Feed = () => {
                 </Button>
               </div>
             )}
-            <div className="flex justify-between items-center">
-              <label className="cursor-pointer">
-                <Button variant="ghost" size="sm" className="glass" asChild>
-                  <div>
-                    <Image className="w-4 h-4 mr-2" />
-                    Photo
-                  </div>
-                </Button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageUpload}
-                />
-              </label>
+            <div className="flex justify-between items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <select
+                  value={postCategory}
+                  onChange={(e) => setPostCategory(e.target.value)}
+                  className="text-xs bg-muted/50 border border-border/50 rounded-md px-2 py-1.5"
+                >
+                  <option value="">No Category</option>
+                  <option value="free-tonight">Free Tonight</option>
+                  <option value="casual">Casual</option>
+                  <option value="hookup">Hookup</option>
+                  <option value="coffee-date">Coffee Date</option>
+                  <option value="dinner-date">Dinner Date</option>
+                  <option value="drinks">Drinks</option>
+                  <option value="concert">Concert</option>
+                  <option value="adventure">Adventure</option>
+                  <option value="long-term">Long Term</option>
+                </select>
+                <label className="cursor-pointer">
+                  <Button variant="ghost" size="sm" className="glass" asChild>
+                    <div>
+                      <Image className="w-4 h-4 mr-2" />
+                      Photo
+                    </div>
+                  </Button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+              </div>
               <Button
                 onClick={handleCreatePost}
                 disabled={!newPost.trim() || posting}
                 className="gradient-romantic text-white"
+                size="sm"
               >
                 {posting ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

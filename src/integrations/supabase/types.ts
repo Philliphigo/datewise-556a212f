@@ -291,6 +291,7 @@ export type Database = {
       }
       posts: {
         Row: {
+          category: string | null
           comments_count: number | null
           content: string
           created_at: string | null
@@ -301,6 +302,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          category?: string | null
           comments_count?: number | null
           content: string
           created_at?: string | null
@@ -311,6 +313,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          category?: string | null
           comments_count?: number | null
           content?: string
           created_at?: string | null
@@ -337,6 +340,7 @@ export type Database = {
           looking_for: string | null
           name: string
           onboarding_complete: boolean | null
+          photo_urls: string[] | null
           photo_visibility: string | null
           subscription_tier: string | null
           updated_at: string | null
@@ -356,6 +360,7 @@ export type Database = {
           looking_for?: string | null
           name: string
           onboarding_complete?: boolean | null
+          photo_urls?: string[] | null
           photo_visibility?: string | null
           subscription_tier?: string | null
           updated_at?: string | null
@@ -375,6 +380,7 @@ export type Database = {
           looking_for?: string | null
           name?: string
           onboarding_complete?: boolean | null
+          photo_urls?: string[] | null
           photo_visibility?: string | null
           subscription_tier?: string | null
           updated_at?: string | null

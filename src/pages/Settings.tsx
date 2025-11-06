@@ -14,6 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Shield, Bell, Eye, Trash2, Moon, Sun, AlertTriangle } from "lucide-react";
 import { VerificationRequest } from "@/components/VerificationRequest";
+import { BlockedUsers } from "@/components/BlockedUsers";
+import { ReportFeedbackView } from "@/components/ReportFeedbackView";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -183,6 +185,12 @@ const Settings = () => {
 
           {/* Verification Request */}
           <VerificationRequest />
+
+          {/* Blocked Users */}
+          <BlockedUsers />
+
+          {/* Report Feedback */}
+          <ReportFeedbackView />
 
           {/* Privacy Settings */}
           <Card className="glass-card p-6 space-y-6">
