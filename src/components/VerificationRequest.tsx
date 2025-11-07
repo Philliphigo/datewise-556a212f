@@ -58,15 +58,12 @@ export const VerificationRequest = () => {
 
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage
-        .from('verification-docs')
-        .getPublicUrl(filePath);
-
+      // Store file path instead of public URL for security
       const { error: requestError } = await supabase
         .from("verification_requests")
         .insert({
           user_id: user.id,
-          document_url: data.publicUrl,
+          document_url: filePath, // Store path instead of URL
           status: 'pending',
         });
 

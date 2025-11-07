@@ -101,6 +101,26 @@ const Donate = () => {
       return;
     }
 
+    if (!phoneNumber.trim()) {
+      toast({
+        title: "Phone Number Required",
+        description: "Please enter your mobile money phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate phone number format for Malawi (Airtel: 099x, TNM: 088x)
+    const phoneRegex = /^(099|088)\d{7}$/;
+    if (!phoneRegex.test(phoneNumber.replace(/\s/g, ''))) {
+      toast({
+        title: "Invalid Phone Number",
+        description: "Please enter a valid Malawi mobile number (e.g., 0991234567 for Airtel or 0881234567 for TNM)",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setProcessing(true);
 
     try {

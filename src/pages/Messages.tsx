@@ -306,10 +306,13 @@ const Messages = () => {
         .upload(filePath, file, { upsert: false });
       if (uploadError) throw uploadError;
 
-      const { data: publicData } = supabase.storage
+      // Use signed URL for private bucket
+      const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('chat-attachments')
-        .getPublicUrl(filePath);
-      const url = publicData.publicUrl;
+        .createSignedUrl(filePath, 3600); // 1 hour expiry
+      
+      if (urlError) throw urlError;
+      const url = signedUrlData.signedUrl;
 
       const { error: insertError } = await supabase.from('messages').insert({
         match_id: selectedMatch,

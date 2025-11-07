@@ -56,8 +56,19 @@ serve(async (req) => {
       );
     }
 
-    const { amount, currency = 'MWK', tier, email, firstName, lastName } = await req.json();
+    const { amount, currency = 'MWK', tier, email, firstName, lastName, phoneNumber } = await req.json();
     const userId = user.id; // Use verified user ID from JWT
+    
+    // Validate phone number format for Malawi mobile money
+    if (phoneNumber) {
+      const phoneRegex = /^(099|088)\d{7}$/;
+      if (!phoneRegex.test(phoneNumber.replace(/\s/g, ''))) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid phone number format. Please use a valid Malawi number (e.g., 0991234567 or 0881234567)' }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
     
     // Validate payment amount matches tier
     validatePayment(tier, amount, currency);

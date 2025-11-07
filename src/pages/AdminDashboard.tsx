@@ -185,18 +185,34 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleVerifyUser = async (userId: string) => {
+  const handleVerifyUser = async (requestId: string, userId: string, approve: boolean) => {
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ verified: true })
-        .eq("id", userId);
+      // Update verification request status
+      const { error: requestError } = await supabase
+        .from("verification_requests")
+        .update({
+          status: approve ? 'approved' : 'rejected',
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user?.id,
+          rejection_reason: approve ? null : 'Document verification failed',
+        })
+        .eq("id", requestId);
 
-      if (error) throw error;
+      if (requestError) throw requestError;
+
+      // If approved, update profile verification status
+      if (approve) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({ verified: true })
+          .eq("id", userId);
+
+        if (profileError) throw profileError;
+      }
 
       toast({
         title: "Success",
-        description: "User verified successfully",
+        description: `Verification request ${approve ? 'approved' : 'rejected'} successfully`,
       });
       fetchDashboardData();
     } catch (error: any) {
@@ -481,7 +497,19 @@ const AdminDashboard = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleVerifyUser(user.id)}
+                            onClick={async () => {
+                              try {
+                                const { error } = await supabase
+                                  .from("profiles")
+                                  .update({ verified: true })
+                                  .eq("id", user.id);
+                                if (error) throw error;
+                                toast({ title: "User verified successfully" });
+                                fetchDashboardData();
+                              } catch (error: any) {
+                                toast({ title: "Error", description: error.message, variant: "destructive" });
+                              }
+                            }}
                           >
                             <CheckCircle className="w-4 h-4 mr-1" />
                             Verify
@@ -577,6 +605,85 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   ))}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Verification Tab */}
+            <TabsContent value="verification" className="space-y-3">
+              <Card className="floating-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileCheck className="w-5 h-5" />
+                    Verification Requests
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {verificationRequests.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">No verification requests</p>
+                  ) : (
+                    verificationRequests.map((request) => (
+                      <div
+                        key={request.id}
+                        className="p-4 rounded-lg border border-border hover:border-primary/30 transition-colors space-y-3"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <p className="font-semibold">
+                                {request.profiles?.name || "Anonymous User"}
+                              </p>
+                              <Badge
+                                variant={
+                                  request.status === "pending"
+                                    ? "default"
+                                    : request.status === "approved"
+                                    ? "secondary"
+                                    : "destructive"
+                                }
+                                className="text-xs"
+                              >
+                                {request.status}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Submitted: {new Date(request.created_at).toLocaleString()}
+                            </p>
+                            {request.document_url && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Document: {request.document_url.split('/').pop()}
+                              </p>
+                            )}
+                          </div>
+                          {request.status === "pending" && (
+                            <div className="flex gap-2 ml-4">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleVerifyUser(request.id, request.user_id, true)}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleVerifyUser(request.id, request.user_id, false)}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                        {request.rejection_reason && (
+                          <div className="p-3 rounded bg-destructive/10 border border-destructive/20">
+                            <p className="text-sm">Reason: {request.rejection_reason}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
