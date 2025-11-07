@@ -1,8 +1,7 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Heart, Flame, MessageCircle, Users, User, Rss, Settings } from "lucide-react";
+import { Heart, Flame, MessageCircle, Users, User, Rss, Settings, Sliders } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { NotificationBell } from "./NotificationBell";
 import { Footer } from "./Footer";
 import {
   Dialog,
@@ -112,7 +111,11 @@ export const Layout = ({ children }: LayoutProps) => {
             />
             
             <div className="flex items-center gap-4">
-              <NotificationBell />
+              <Link to="/discovery-settings">
+                <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors">
+                  <Sliders className="w-5 h-5 text-foreground" />
+                </div>
+              </Link>
               <Link to="/settings">
                 <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors">
                   <Settings className="w-5 h-5 text-foreground" />

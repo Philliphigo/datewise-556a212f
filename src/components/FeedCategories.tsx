@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { 
   Moon, 
@@ -40,8 +38,8 @@ interface FeedCategoriesProps {
 
 export const FeedCategories = ({ selectedCategory, onCategoryChange }: FeedCategoriesProps) => {
   return (
-    <ScrollArea className="w-full pb-2">
-      <div className="flex gap-2 px-1">
+    <div className="w-full pb-2 overflow-x-auto hide-scrollbar">
+      <div className="flex gap-2 px-1 min-w-max">
         {categories.map((category) => {
           const Icon = category.icon;
           const isActive = selectedCategory === category.id;
@@ -72,6 +70,6 @@ export const FeedCategories = ({ selectedCategory, onCategoryChange }: FeedCateg
           );
         })}
       </div>
-    </ScrollArea>
+    </div>
   );
 };

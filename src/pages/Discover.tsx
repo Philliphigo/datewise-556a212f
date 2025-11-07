@@ -224,63 +224,6 @@ const Discover = () => {
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-sm mx-auto space-y-4 px-2">
-          {/* Filter Button */}
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="glass"
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              Filters
-            </Button>
-          </div>
-
-          {/* Filters Panel */}
-          {showFilters && (
-            <Card className="glass-card p-4 space-y-4 animate-scale-in">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Gender</label>
-                <Select value={genderFilter} onValueChange={setGenderFilter}>
-                  <SelectTrigger className="glass">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Age Range</label>
-                <Select value={ageFilter} onValueChange={setAgeFilter}>
-                  <SelectTrigger className="glass">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Ages</SelectItem>
-                    <SelectItem value="18-25">18-25</SelectItem>
-                    <SelectItem value="26-35">26-35</SelectItem>
-                    <SelectItem value="36+">36+</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button
-                onClick={() => {
-                  fetchProfiles();
-                  setShowFilters(false);
-                }}
-                className="w-full gradient-romantic text-white"
-              >
-                Apply Filters
-              </Button>
-            </Card>
-          )}
 
           <Card
             ref={cardRef}

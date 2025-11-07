@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Shield, Bell, Eye, Trash2, Moon, Sun, AlertTriangle, ChevronDown, User, BadgeCheck, UserX, MessageSquare } from "lucide-react";
+import { Loader2, Shield, Bell, Eye, Trash2, Moon, Sun, AlertTriangle, ChevronDown, User, BadgeCheck, UserX, MessageSquare, Heart } from "lucide-react";
 import { VerificationRequest } from "@/components/VerificationRequest";
 import { BlockedUsers } from "@/components/BlockedUsers";
 import { ReportFeedbackView } from "@/components/ReportFeedbackView";
@@ -335,6 +335,94 @@ const Settings = () => {
                     </div>
                     <LiquidToggle checked={emailNotifications} onCheckedChange={setEmailNotifications} />
                   </div>
+                </div>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
+          {/* Links Section */}
+          <Collapsible>
+            <Card className="glass-card overflow-hidden">
+              <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Heart className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold">Company</h2>
+                </div>
+                <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="p-4 pt-0 space-y-2">
+                  <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/about')}>
+                    About Us
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/help')}>
+                    Help Center
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/contact')}>
+                    Contact Us
+                  </Button>
+                </div>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
+          <Collapsible>
+            <Card className="glass-card overflow-hidden">
+              <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Shield className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold">Support</h2>
+                </div>
+                <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="p-4 pt-0 space-y-2">
+                  <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/donate')}>
+                    Donate
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/privacy')}>
+                    Privacy Policy
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/terms')}>
+                    Terms of Service
+                  </Button>
+                </div>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
+          <Collapsible>
+            <Card className="glass-card overflow-hidden">
+              <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold">Follow Us</h2>
+                </div>
+                <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="p-4 pt-0 space-y-2">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start" 
+                    onClick={() => window.open('https://www.facebook.com/share/1BTZ1eAYDn/?mibextid=wwXIfr', '_blank')}
+                  >
+                    Facebook
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start" 
+                    onClick={() => window.open('https://www.instagram.com/696p69?igsh=MTM0eDYzc2ZzejVxNw%3D%3D&utm_source=qr', '_blank')}
+                  >
+                    Instagram
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start" 
+                    onClick={() => window.open('https://www.tiktok.com/@philchinya265?_t=ZM-90QydTcM5TX&_r=1', '_blank')}
+                  >
+                    TikTok
+                  </Button>
                 </div>
               </CollapsibleContent>
             </Card>

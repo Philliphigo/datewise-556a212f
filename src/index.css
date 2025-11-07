@@ -119,6 +119,15 @@
     --shadow-xl: 0 16px 48px 0 hsla(0, 0%, 0%, 0.5), 0 8px 16px 0 hsla(0, 0%, 0%, 0.25);
     --float-shadow: 0 12px 40px 0 hsla(0, 0%, 0%, 0.35), 0 6px 12px 0 hsla(0, 0%, 0%, 0.2);
   }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 @layer base {

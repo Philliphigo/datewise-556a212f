@@ -332,6 +332,7 @@ export type Database = {
           bio: string | null
           city: string | null
           created_at: string | null
+          discovery_preferences: Json | null
           gender: string
           id: string
           interests: string[] | null
@@ -352,6 +353,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           created_at?: string | null
+          discovery_preferences?: Json | null
           gender: string
           id: string
           interests?: string[] | null
@@ -372,6 +374,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           created_at?: string | null
+          discovery_preferences?: Json | null
           gender?: string
           id?: string
           interests?: string[] | null

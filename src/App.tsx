@@ -15,7 +15,7 @@ import Feed from "./pages/Feed";
 import Settings from "./pages/Settings";
 import Donate from "./pages/Donate";
 import AdminDashboard from "./pages/AdminDashboard";
-import DiscoverySettings from "./pages/DiscoverySettings";
+import DiscoverySettings from "./pages/DiscoverySettingsNew";
 import FeedPost from "./pages/FeedPost";
 import NotFound from "./pages/NotFound";
 import About from "./pages/About";
