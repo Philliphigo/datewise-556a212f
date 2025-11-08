@@ -78,6 +78,7 @@ const Settings = () => {
       if (error) throw error;
       setProfile(data);
       setPhotoVisibility(data.photo_visibility || "everyone");
+      setEmailNotifications(data.email_notifications ?? true);
       setName(data.name || "");
       setAge(typeof data.age === 'number' ? data.age : '');
       setGender(data.gender || "");
@@ -103,6 +104,7 @@ const Settings = () => {
         .from("profiles")
         .update({ 
           photo_visibility: photoVisibility,
+          email_notifications: emailNotifications,
           name,
           age: age === '' ? null : Number(age),
           gender,
@@ -224,6 +226,19 @@ const Settings = () => {
                         <SelectItem value="private">Private</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-4">
+                    <div className="space-y-0.5">
+                      <Label>Email Notifications</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Receive updates and announcements from DateWise
+                      </p>
+                    </div>
+                    <LiquidToggle
+                      checked={emailNotifications}
+                      onCheckedChange={setEmailNotifications}
+                    />
                   </div>
                 </div>
               </CollapsibleContent>

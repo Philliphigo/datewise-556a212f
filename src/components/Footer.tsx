@@ -16,7 +16,7 @@ export const Footer = () => {
           </p>
 
           <div className="mt-4 text-sm text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} DateWise. All rights reserved.</p>
+            <p>&copy; 2025 DateWise. All rights reserved.</p>
           </div>
         </div>
       </div>

@@ -333,6 +333,7 @@ export type Database = {
           city: string | null
           created_at: string | null
           discovery_preferences: Json | null
+          email_notifications: boolean | null
           gender: string
           id: string
           interests: string[] | null
@@ -354,6 +355,7 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           discovery_preferences?: Json | null
+          email_notifications?: boolean | null
           gender: string
           id: string
           interests?: string[] | null
@@ -375,6 +377,7 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           discovery_preferences?: Json | null
+          email_notifications?: boolean | null
           gender?: string
           id?: string
           interests?: string[] | null
@@ -492,6 +495,33 @@ export type Database = {
           tier?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      system_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_broadcast: boolean | null
+          is_read: boolean | null
+          recipient_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_broadcast?: boolean | null
+          is_read?: boolean | null
+          recipient_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_broadcast?: boolean | null
+          is_read?: boolean | null
+          recipient_id?: string | null
         }
         Relationships: []
       }

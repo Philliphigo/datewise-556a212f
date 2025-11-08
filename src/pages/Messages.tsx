@@ -44,6 +44,7 @@ interface MatchInfo {
     avatar_url: string | null;
     is_online: boolean;
     last_seen: string;
+    verified: boolean;
   };
 }
 
@@ -75,7 +76,7 @@ const Messages = () => {
   const matchId = searchParams.get("match");
 
   const [matches, setMatches] = useState<MatchInfo[]>([]);
-  const [selectedMatch, setSelectedMatch] = useState<string | null>(matchId);
+  const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -100,6 +101,16 @@ const Messages = () => {
       updateOnlineStatus(false);
     };
   }, [user, navigate]);
+
+  // Auto-select Team DateWise chat on mount if no match specified
+  useEffect(() => {
+    if (matches.length > 0 && !matchId && !selectedMatch) {
+      const teamDateWise = matches.find(m => m.profile.id === '00000000-0000-0000-0000-000000000001');
+      if (teamDateWise) {
+        setSelectedMatch(teamDateWise.id);
+      }
+    }
+  }, [matches, matchId, selectedMatch]);
 
   useEffect(() => {
     if (selectedMatch) {
@@ -154,7 +165,7 @@ const Messages = () => {
           
           const { data: profile } = await supabase
             .from("profiles")
-            .select("id, name, avatar_url, is_online, last_seen")
+            .select("id, name, avatar_url, is_online, last_seen, verified")
             .eq("id", otherUserId)
             .single();
 
@@ -416,7 +427,12 @@ const Messages = () => {
                         alt={currentMatch?.profile.name}
                         className="w-10 h-10 rounded-full object-cover"
                       />
-                      {currentMatch?.profile.is_online && (
+                      {currentMatch?.profile.verified && (
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-background">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                      )}
+                      {!currentMatch?.profile.verified && currentMatch?.profile.is_online && (
                         <Circle className="absolute bottom-0 right-0 w-2.5 h-2.5 fill-green-500 text-green-500" />
                       )}
                     </div>

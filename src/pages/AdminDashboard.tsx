@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import defaultAvatar from "@/assets/default-avatar.jpg";
 import {
   Users,
   DollarSign,
@@ -57,6 +58,10 @@ const AdminDashboard = () => {
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [actionTaken, setActionTaken] = useState("");
+  const [activeTab, setActiveTab] = useState("overview");
+  const [reportFeedback, setReportFeedback] = useState<any[]>([]);
+  const [systemMessage, setSystemMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -142,7 +147,7 @@ const AdminDashboard = () => {
       // Fetch recent users
       const { data: usersData } = await supabase
         .from("profiles")
-        .select("id, name, verified, created_at, subscription_tier, is_active, age, city")
+        .select("id, name, verified, created_at, subscription_tier, age, city")
         .order("created_at", { ascending: false })
         .limit(20);
 
@@ -169,11 +174,30 @@ const AdminDashboard = () => {
       // Fetch verification requests
       const { data: verificationData } = await supabase
         .from("verification_requests")
-        .select("*, profiles(name, avatar_url)")
+        .select(`
+          *,
+          profile:profiles(name, avatar_url)
+        `)
         .order("created_at", { ascending: false })
         .limit(20);
 
       setVerificationRequests(verificationData || []);
+
+      // Fetch report feedback
+      const { data: feedbackData } = await supabase
+        .from("report_feedback")
+        .select(`
+          *,
+          report:reports(
+            reason,
+            description,
+            reporter:profiles!reports_reporter_id_fkey(name),
+            reported:profiles!reports_reported_id_fkey(name)
+          )
+        `)
+        .order("created_at", { ascending: false });
+
+      setReportFeedback(feedbackData || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -185,23 +209,21 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleVerifyUser = async (requestId: string, userId: string, approve: boolean) => {
+  const handleVerifyUser = async (requestId: string, userId: string, status: string, reason?: string) => {
     try {
-      // Update verification request status
       const { error: requestError } = await supabase
         .from("verification_requests")
         .update({
-          status: approve ? 'approved' : 'rejected',
+          status,
           reviewed_at: new Date().toISOString(),
           reviewed_by: user?.id,
-          rejection_reason: approve ? null : 'Document verification failed',
+          rejection_reason: reason,
         })
         .eq("id", requestId);
 
       if (requestError) throw requestError;
 
-      // If approved, update profile verification status
-      if (approve) {
+      if (status === "approved") {
         const { error: profileError } = await supabase
           .from("profiles")
           .update({ verified: true })
@@ -211,10 +233,10 @@ const AdminDashboard = () => {
       }
 
       toast({
-        title: "Success",
-        description: `Verification request ${approve ? 'approved' : 'rejected'} successfully`,
+        title: "User Verified",
+        description: `User has been ${status === "approved" ? "verified" : "rejected"}`,
       });
-      fetchDashboardData();
+      await fetchDashboardData();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -226,7 +248,6 @@ const AdminDashboard = () => {
 
   const handleBanUser = async (userId: string) => {
     try {
-      // Ban functionality - could delete user or use user_roles table
       toast({
         title: "Info",
         description: "Ban feature requires additional setup",
@@ -256,7 +277,7 @@ const AdminDashboard = () => {
 
       toast({
         title: "Success",
-        description: `Report ${status} successfully`,
+        description: "Report resolved successfully",
       });
       fetchDashboardData();
     } catch (error: any) {
@@ -269,68 +290,33 @@ const AdminDashboard = () => {
   };
 
   const handleSendFeedback = async () => {
-    if (!selectedReport || !feedbackMessage.trim()) return;
+    if (!selectedReport || !feedbackMessage) {
+      toast({
+        title: "Error",
+        description: "Please provide feedback message",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
-      const { error } = await supabase
-        .from("report_feedback")
-        .insert({
-          report_id: selectedReport.id,
-          admin_id: user?.id,
-          feedback_message: feedbackMessage,
-          action_taken: actionTaken,
-        });
+      const { error } = await supabase.from("report_feedback").insert({
+        report_id: selectedReport.id,
+        admin_id: user?.id,
+        feedback_message: feedbackMessage,
+        action_taken: actionTaken || null,
+      });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Feedback sent to reporter",
+        description: "Feedback sent successfully",
       });
-      
       setFeedbackDialog(false);
       setFeedbackMessage("");
       setActionTaken("");
       setSelectedReport(null);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleVerificationDecision = async (requestId: string, approved: boolean, reason?: string) => {
-    try {
-      const { error: updateError } = await supabase
-        .from("verification_requests")
-        .update({
-          status: approved ? "approved" : "rejected",
-          reviewed_at: new Date().toISOString(),
-          reviewed_by: user?.id,
-          rejection_reason: reason,
-        })
-        .eq("id", requestId);
-
-      if (updateError) throw updateError;
-
-      if (approved) {
-        const request = verificationRequests.find(r => r.id === requestId);
-        if (request) {
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .update({ verified: true })
-            .eq("id", request.user_id);
-
-          if (profileError) throw profileError;
-        }
-      }
-
-      toast({
-        title: "Success",
-        description: `Verification request ${approved ? "approved" : "rejected"}`,
-      });
       fetchDashboardData();
     } catch (error: any) {
       toast({
@@ -341,440 +327,364 @@ const AdminDashboard = () => {
     }
   };
 
-  if (loading) {
+  if (loading || !isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (!isAdmin) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Admin Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/discover")}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="text-xl font-bold flex items-center gap-2">
-                <Shield className="w-6 h-6 text-primary" />
-                Admin Dashboard
-              </h1>
-            </div>
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/discover")}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Manage and monitor DateWise</p>
           </div>
         </div>
-      </header>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="space-y-8">
-          {/* Stats Grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            <Card className="floating-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Users</CardTitle>
-                <Users className="h-5 w-5 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats.totalUsers}</div>
-                <p className="text-xs text-muted-foreground mt-1">Total accounts</p>
-              </CardContent>
-            </Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-6 w-full">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="verification">
+              Verification ({verificationRequests.filter(v => v.status === 'pending').length})
+            </TabsTrigger>
+            <TabsTrigger value="feedback">Feedback</TabsTrigger>
+            <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
+          </TabsList>
 
-            <Card className="floating-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Matches</CardTitle>
-                <Heart className="h-5 w-5 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats.totalMatches}</div>
-                <p className="text-xs text-muted-foreground mt-1">Connections</p>
-              </CardContent>
-            </Card>
-
-            <Card className="floating-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-                <DollarSign className="h-5 w-5 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">${stats.totalRevenue.toFixed(2)}</div>
-                <p className="text-xs text-muted-foreground mt-1">Total earnings</p>
-              </CardContent>
-            </Card>
-
-            <Card className="floating-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Reports</CardTitle>
-                <AlertCircle className="h-5 w-5 text-destructive" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats.pendingReports}</div>
-                <p className="text-xs text-muted-foreground mt-1">Pending</p>
-              </CardContent>
-            </Card>
-
-            <Card className="floating-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Posts</CardTitle>
-                <TrendingUp className="h-5 w-5 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats.totalPosts}</div>
-                <p className="text-xs text-muted-foreground mt-1">Community</p>
-              </CardContent>
-            </Card>
-
-            <Card className="floating-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Messages</CardTitle>
-                <MessageSquare className="h-5 w-5 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats.totalMessages}</div>
-                <p className="text-xs text-muted-foreground mt-1">Total sent</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Content Tabs */}
-          <Tabs defaultValue="users" className="space-y-6">
-            <TabsList className="glass">
-              <TabsTrigger value="users">Users</TabsTrigger>
-              <TabsTrigger value="reports">Reports</TabsTrigger>
-              <TabsTrigger value="verification">Verification</TabsTrigger>
-              <TabsTrigger value="payments">Payments</TabsTrigger>
-            </TabsList>
-
-            {/* Users Tab */}
-            <TabsContent value="users" className="space-y-3">
-              <Card className="floating-card">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    User Management
-                  </CardTitle>
+          <TabsContent value="overview" className="space-y-6">
+            {/* Stats Grid */}
+            <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <Card className="glass-card">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {users.map((user) => (
-                    <div
-                      key={user.id}
-                      className="flex items-center justify-between p-4 rounded-lg border border-border hover:border-primary/30 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold">{user.name || "Anonymous"}</p>
-                          {user.verified && (
-                            <Badge variant="secondary" className="text-xs">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Verified
-                            </Badge>
-                          )}
-                          {!user.is_active && (
-                            <Badge variant="destructive" className="text-xs">
-                              <Ban className="w-3 h-3 mr-1" />
-                              Banned
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <p className="text-xs text-muted-foreground">
-                            {user.age} • {user.city || "Unknown"} • Joined {new Date(user.created_at).toLocaleDateString()}
-                          </p>
-                          <Badge variant="outline" className="text-xs">
-                            {user.subscription_tier || "free"}
-                          </Badge>
-                        </div>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalUsers}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Matches</CardTitle>
+                  <Heart className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalMatches}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Pending Reports</CardTitle>
+                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.pendingReports}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
+                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalPosts}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Messages</CardTitle>
+                  <MessageCircleReply className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalMessages}</div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-4">
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle>Recent Users</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {users.map((user: any) => (
+                    <div key={user.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
+                      <div>
+                        <p className="font-medium">{user.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {user.age ? `${user.age} years old` : 'Age not set'} • {user.city || 'Location not set'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Joined {new Date(user.created_at).toLocaleDateString()}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {!user.verified && (
+                        {user.verified && <Badge variant="default">Verified</Badge>}
+                        <Badge variant="outline">{user.subscription_tier}</Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reports" className="space-y-4">
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle>User Reports</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {reports.map((report: any) => (
+                    <div key={report.id} className="p-4 border border-border rounded-lg space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{report.reason}</p>
+                          <p className="text-sm text-muted-foreground">{report.description}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(report.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Badge variant={
+                          report.status === "pending" ? "default" :
+                          report.status === "resolved" ? "secondary" : "destructive"
+                        }>
+                          {report.status}
+                        </Badge>
+                      </div>
+                      {report.status === "pending" && (
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => handleResolveReport(report.id, "resolved")}>
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Resolve
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleResolveReport(report.id, "dismissed")}>
+                            <XCircle className="w-4 h-4 mr-2" />
+                            Dismiss
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => {
+                            setSelectedReport(report);
+                            setFeedbackDialog(true);
+                          }}>
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Send Feedback
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="verification" className="space-y-4">
+            {verificationRequests.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No verification requests
+              </div>
+            ) : (
+              verificationRequests.map((request: any) => (
+                <Card key={request.id} className="glass-card p-4">
+                  <div className="flex items-start gap-4">
+                    <img
+                      src={request.profile?.avatar_url || defaultAvatar}
+                      alt={request.profile?.name}
+                      className="w-16 h-16 rounded-full object-cover"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold">{request.profile?.name}</h3>
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          request.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                          request.status === 'approved' ? 'bg-green-500/20 text-green-500' :
+                          'bg-red-500/20 text-red-500'
+                        }`}>
+                          {request.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Submitted {new Date(request.created_at).toLocaleDateString()}
+                      </p>
+                      {request.document_url && (
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Document: {request.document_url.split('/').pop()}
+                        </p>
+                      )}
+                      {request.status === 'pending' && (
+                        <div className="flex gap-2">
                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={async () => {
-                              try {
-                                const { error } = await supabase
-                                  .from("profiles")
-                                  .update({ verified: true })
-                                  .eq("id", user.id);
-                                if (error) throw error;
-                                toast({ title: "User verified successfully" });
-                                fetchDashboardData();
-                              } catch (error: any) {
-                                toast({ title: "Error", description: error.message, variant: "destructive" });
-                              }
-                            }}
+                            onClick={() => handleVerifyUser(request.id, request.user_id, "approved")}
                           >
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Verify
+                            Approve
                           </Button>
-                        )}
-                        {user.is_active && (
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => handleBanUser(user.id)}
+                            onClick={() => handleVerifyUser(request.id, request.user_id, "rejected", "Does not meet verification criteria")}
                           >
-                            <Ban className="w-4 h-4 mr-1" />
-                            Ban
+                            Reject
                           </Button>
-                        )}
-                      </div>
+                        </div>
+                      )}
+                      {request.status === 'rejected' && request.rejection_reason && (
+                        <p className="text-sm text-red-500 mt-2">
+                          Reason: {request.rejection_reason}
+                        </p>
+                      )}
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </TabsContent>
+                  </div>
+                </Card>
+              ))
+            )}
+          </TabsContent>
 
-            {/* Reports Tab */}
-            <TabsContent value="reports" className="space-y-3">
-              <Card className="floating-card">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5" />
-                    User Reports
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {reports.map((report) => (
-                    <div
-                      key={report.id}
-                      className="p-4 rounded-lg border border-border hover:border-primary/30 transition-colors space-y-3"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <p className="font-semibold">{report.reason}</p>
-                            <Badge
-                              variant={
-                                report.status === "pending"
-                                  ? "default"
-                                  : report.status === "resolved"
-                                  ? "secondary"
-                                  : "outline"
-                              }
-                              className="text-xs"
-                            >
-                              {report.status}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {report.description || "No additional details"}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            {new Date(report.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                        {report.status === "pending" && (
-                          <div className="flex gap-2 ml-4">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleResolveReport(report.id, "resolved")}
-                            >
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Resolve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleResolveReport(report.id, "dismissed")}
-                            >
-                              <XCircle className="w-4 h-4 mr-1" />
-                              Dismiss
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => {
-                                setSelectedReport(report);
-                                setFeedbackDialog(true);
-                              }}
-                            >
-                              <MessageCircleReply className="w-4 h-4 mr-1" />
-                              Feedback
-                            </Button>
-                          </div>
-                        )}
+          <TabsContent value="feedback" className="space-y-4">
+            {reportFeedback.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No feedback sent yet
+              </div>
+            ) : (
+              reportFeedback.map((feedback: any) => (
+                <Card key={feedback.id} className="glass-card p-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-semibold">Report: {feedback.report?.reason}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {feedback.report?.reporter?.name} reported {feedback.report?.reported?.name}
+                        </p>
                       </div>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(feedback.created_at).toLocaleDateString()}
+                      </span>
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Verification Tab */}
-            <TabsContent value="verification" className="space-y-3">
-              <Card className="floating-card">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileCheck className="w-5 h-5" />
-                    Verification Requests
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {verificationRequests.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">No verification requests</p>
-                  ) : (
-                    verificationRequests.map((request) => (
-                      <div
-                        key={request.id}
-                        className="p-4 rounded-lg border border-border hover:border-primary/30 transition-colors space-y-3"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <p className="font-semibold">
-                                {request.profiles?.name || "Anonymous User"}
-                              </p>
-                              <Badge
-                                variant={
-                                  request.status === "pending"
-                                    ? "default"
-                                    : request.status === "approved"
-                                    ? "secondary"
-                                    : "destructive"
-                                }
-                                className="text-xs"
-                              >
-                                {request.status}
-                              </Badge>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              Submitted: {new Date(request.created_at).toLocaleString()}
-                            </p>
-                            {request.document_url && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Document: {request.document_url.split('/').pop()}
-                              </p>
-                            )}
-                          </div>
-                          {request.status === "pending" && (
-                            <div className="flex gap-2 ml-4">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleVerifyUser(request.id, request.user_id, true)}
-                              >
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleVerifyUser(request.id, request.user_id, false)}
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Reject
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                        {request.rejection_reason && (
-                          <div className="p-3 rounded bg-destructive/10 border border-destructive/20">
-                            <p className="text-sm">Reason: {request.rejection_reason}</p>
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Payments Tab */}
-            <TabsContent value="payments" className="space-y-3">
-              <Card className="floating-card">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="w-5 h-5" />
-                    Payment History
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {payments.map((payment) => (
-                    <div
-                      key={payment.id}
-                      className="flex items-center justify-between p-4 rounded-lg border border-border hover:border-primary/30 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-lg">${Number(payment.amount).toFixed(2)}</p>
-                          <Badge
-                            variant={payment.status === "completed" ? "secondary" : "outline"}
-                            className="text-xs"
-                          >
-                            {payment.status}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <p className="text-sm text-muted-foreground">
-                            {payment.payment_method.toUpperCase()} • {payment.currency}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(payment.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                        {payment.transaction_id && (
-                          <p className="text-xs text-muted-foreground mt-1 font-mono">
-                            TX: {payment.transaction_id}
-                          </p>
-                        )}
-                      </div>
+                    <div className="bg-muted/50 p-3 rounded">
+                      <p className="text-sm font-medium mb-1">Admin Feedback:</p>
+                      <p className="text-sm">{feedback.feedback_message}</p>
+                      {feedback.action_taken && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Action: {feedback.action_taken}
+                        </p>
+                      )}
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+                  </div>
+                </Card>
+              ))
+            )}
+          </TabsContent>
 
-      {/* Feedback Dialog */}
-      <Dialog open={feedbackDialog} onOpenChange={setFeedbackDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Send Feedback to Reporter</DialogTitle>
-            <DialogDescription>
-              Provide feedback about how this report was handled
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Action Taken (optional)</label>
+          <TabsContent value="broadcast" className="space-y-4">
+            <Card className="glass-card p-6">
+              <h3 className="font-semibold mb-4">Send Update to All Users</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                This will send an email to all users who have enabled email notifications
+              </p>
               <Textarea
-                placeholder="e.g., User warned, Content removed, etc."
-                value={actionTaken}
-                onChange={(e) => setActionTaken(e.target.value)}
-                rows={2}
+                placeholder="Type your update message here..."
+                value={systemMessage}
+                onChange={(e) => setSystemMessage(e.target.value)}
+                className="glass mb-4 min-h-[150px]"
               />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Feedback Message</label>
+              <Button
+                onClick={async () => {
+                  if (!systemMessage.trim()) {
+                    toast({
+                      title: "Error",
+                      description: "Message cannot be empty",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  
+                  setSendingMessage(true);
+                  try {
+                    const { error } = await supabase.functions.invoke('send-broadcast-email', {
+                      body: { message: systemMessage }
+                    });
+
+                    if (error) throw error;
+
+                    toast({
+                      title: "Success",
+                      description: "Broadcast message sent successfully",
+                    });
+                    setSystemMessage("");
+                  } catch (error: any) {
+                    toast({
+                      title: "Error",
+                      description: error.message,
+                      variant: "destructive",
+                    });
+                  } finally {
+                    setSendingMessage(false);
+                  }
+                }}
+                disabled={sendingMessage || !systemMessage.trim()}
+              >
+                {sendingMessage ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Broadcast"}
+              </Button>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Feedback Dialog */}
+        <Dialog open={feedbackDialog} onOpenChange={setFeedbackDialog}>
+          <DialogContent className="glass-card">
+            <DialogHeader>
+              <DialogTitle>Send Feedback to Reporter</DialogTitle>
+              <DialogDescription>
+                Provide feedback on the report action taken
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
               <Textarea
-                placeholder="Your message to the reporter..."
+                placeholder="Feedback message..."
                 value={feedbackMessage}
                 onChange={(e) => setFeedbackMessage(e.target.value)}
-                rows={4}
+                className="glass"
               />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setFeedbackDialog(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSendFeedback} disabled={!feedbackMessage.trim()}>
+              <Textarea
+                placeholder="Action taken (optional)..."
+                value={actionTaken}
+                onChange={(e) => setActionTaken(e.target.value)}
+                className="glass"
+              />
+              <Button onClick={handleSendFeedback} className="w-full">
                 Send Feedback
               </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };
