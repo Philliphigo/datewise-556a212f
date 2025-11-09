@@ -230,9 +230,10 @@ const Discover = () => {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            className={`overflow-hidden animate-scale-in transition-transform duration-300 rounded-[32px] shadow-[0_20px_60px_rgba(219,39,119,0.3)] ${
-              swipeDirection === 'left' ? '-translate-x-full opacity-0' : 
-              swipeDirection === 'right' ? 'translate-x-full opacity-0' : ''
+            className={`overflow-hidden neomorph-card p-0 ${
+              swipeDirection === 'left' ? 'animate-swipe-left' : 
+              swipeDirection === 'right' ? 'animate-swipe-right' : 
+              'animate-spring-in'
             }`}
           >
             {/* Profile Image with Overlay */}
@@ -254,12 +255,12 @@ const Discover = () => {
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm"
+                      className="w-14 h-14 rounded-full neomorph-card bg-card/80 hover:bg-card backdrop-blur-md"
                     >
-                      <Info className="w-5 h-5 text-white" />
+                      <Info className="w-5 h-5 text-primary" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-52 p-2 glass-card rounded-2xl border-2" align="start">
+                  <PopoverContent className="w-52 p-3 neomorph-card" align="start">
                     <div className="space-y-1">
                       <Button
                         variant="ghost"
@@ -303,36 +304,36 @@ const Discover = () => {
                 )}
                 
                 {/* Action Buttons */}
-                <div className="flex items-center justify-center gap-6 pt-4">
+                <div className="flex items-center justify-center gap-8 pt-6">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="w-16 h-16 rounded-full border-2 border-pink-500 hover:bg-pink-500/20 text-pink-500"
+                    className="w-20 h-20 rounded-full neomorph-card bg-card/90 hover:bg-card active:scale-95 transition-all"
                     onClick={handlePass}
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-7 h-7 text-destructive" />
                   </Button>
                   
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="w-16 h-16 rounded-full border-2 border-white/50 hover:bg-white/10 text-white"
+                    className="w-20 h-20 rounded-full neomorph-card bg-card/90 hover:bg-card active:scale-95 transition-all"
                     onClick={handleMessage}
                   >
-                    <MessageCircle className="w-6 h-6" />
+                    <MessageCircle className="w-7 h-7 text-muted-foreground" />
                   </Button>
                   
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="w-16 h-16 rounded-full border-2 border-cyan-400 hover:bg-cyan-400/20 text-cyan-400"
+                    className="w-20 h-20 rounded-full neomorph-card bg-primary/10 hover:bg-primary/20 glow-primary active:scale-95 transition-all"
                     onClick={handleLike}
                     disabled={actionLoading}
                   >
                     {actionLoading ? (
-                      <Loader2 className="w-6 h-6 animate-spin" />
+                      <Loader2 className="w-7 h-7 animate-spin text-primary" />
                     ) : (
-                      <Heart className="w-6 h-6" />
+                      <Heart className="w-7 h-7 text-primary fill-primary" />
                     )}
                   </Button>
                 </div>

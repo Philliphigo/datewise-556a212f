@@ -6,118 +6,107 @@
 
 @layer base {
   :root {
-    /* Monochrome Liquid Glass Theme - iOS 16 Inspired */
-    --background: 0 0% 98%;
-    --foreground: 0 0% 10%;
+    /* Neumorphic Soft UI - Pink Accent Theme */
+    --background: 330 25% 96%;
+    --foreground: 330 15% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card: 330 20% 98%;
+    --card-foreground: 330 15% 15%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover: 330 20% 98%;
+    --popover-foreground: 330 15% 15%;
 
-    /* Pink Dating App Brand */
+    /* Pink Primary Accent */
     --primary: 330 81% 60%;
     --primary-foreground: 0 0% 100%;
     --primary-soft: 330 81% 70%;
+    --primary-glow: 330 81% 75%;
     
-    --secondary: 0 0% 90%;
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 330 15% 92%;
+    --secondary-foreground: 330 15% 15%;
 
-    --accent: 0 0% 95%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 330 20% 94%;
+    --accent-foreground: 330 15% 15%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 330 15% 94%;
+    --muted-foreground: 330 10% 50%;
 
-    --destructive: 0 0% 20%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 95%;
-    --ring: 0 0% 20%;
+    --border: 330 15% 88%;
+    --input: 330 15% 96%;
+    --ring: 330 81% 60%;
 
-    --radius: 1.25rem;
+    --radius: 2rem;
 
-    /* iOS 16 Liquid Glass Effects */
-    --glass-bg: hsla(0, 0%, 100%, 0.75);
-    --glass-border: hsla(0, 0%, 100%, 0.5);
-    --glass-shadow: 0 8px 32px 0 hsla(0, 0%, 0%, 0.08);
-    --glass-inner-shadow: inset 0 1px 0 0 hsla(0, 0%, 100%, 0.8);
+    /* Neumorphic Dual-Layer Shadows */
+    --neomorph-shadow-light: -8px -8px 16px hsla(330, 100%, 100%, 0.8);
+    --neomorph-shadow-dark: 8px 8px 16px hsla(330, 40%, 80%, 0.4);
+    --neomorph-inset-light: inset -4px -4px 8px hsla(330, 100%, 100%, 0.5);
+    --neomorph-inset-dark: inset 4px 4px 8px hsla(330, 40%, 85%, 0.3);
     
-    /* Liquid Shimmer Overlay */
-    --shimmer-gradient: linear-gradient(135deg, 
-      hsla(0, 0%, 100%, 0.0) 0%, 
-      hsla(0, 0%, 100%, 0.4) 45%,
-      hsla(0, 0%, 100%, 0.6) 50%,
-      hsla(0, 0%, 100%, 0.4) 55%,
-      hsla(0, 0%, 100%, 0.0) 100%);
+    /* Elegant Shadows with Pink Tint */
+    --shadow-sm: 0 2px 12px 0 hsla(330, 40%, 60%, 0.08);
+    --shadow-md: 0 6px 20px 0 hsla(330, 40%, 60%, 0.12), 0 2px 8px 0 hsla(330, 40%, 60%, 0.06);
+    --shadow-lg: 0 12px 32px 0 hsla(330, 40%, 60%, 0.16), 0 4px 12px 0 hsla(330, 40%, 60%, 0.08);
+    --shadow-xl: 0 20px 48px 0 hsla(330, 40%, 60%, 0.20), 0 8px 20px 0 hsla(330, 40%, 60%, 0.10);
     
-    /* Elegant Shadows */
-    --shadow-sm: 0 2px 8px 0 hsla(0, 0%, 0%, 0.04);
-    --shadow-md: 0 4px 16px 0 hsla(0, 0%, 0%, 0.08), 0 2px 4px 0 hsla(0, 0%, 0%, 0.04);
-    --shadow-lg: 0 8px 32px 0 hsla(0, 0%, 0%, 0.12), 0 4px 8px 0 hsla(0, 0%, 0%, 0.06);
-    --shadow-xl: 0 16px 48px 0 hsla(0, 0%, 0%, 0.16), 0 8px 16px 0 hsla(0, 0%, 0%, 0.08);
-    
-    /* Floating Effect */
-    --float-shadow: 0 12px 40px 0 hsla(0, 0%, 0%, 0.10), 0 6px 12px 0 hsla(0, 0%, 0%, 0.06);
+    /* Card Shadows - Dual Layer */
+    --card-shadow: var(--neomorph-shadow-light), var(--neomorph-shadow-dark);
+    --card-hover-shadow: -12px -12px 24px hsla(330, 100%, 100%, 0.9), 12px 12px 24px hsla(330, 40%, 80%, 0.5);
 
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-spring: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    --transition-liquid: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    /* Animations - SwiftUI Spring */
+    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    --transition-swipe: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .dark {
-    --background: 0 0% 8%;
-    --foreground: 0 0% 95%;
+    --background: 330 15% 10%;
+    --foreground: 330 10% 95%;
 
-    --card: 0 0% 12%;
-    --card-foreground: 0 0% 95%;
+    --card: 330 15% 14%;
+    --card-foreground: 330 10% 95%;
 
-    --popover: 0 0% 12%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 330 15% 14%;
+    --popover-foreground: 330 10% 95%;
 
     --primary: 330 81% 60%;
     --primary-foreground: 0 0% 100%;
     --primary-soft: 330 81% 70%;
+    --primary-glow: 330 81% 75%;
 
-    --secondary: 0 0% 18%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 330 10% 20%;
+    --secondary-foreground: 330 10% 95%;
 
-    --accent: 0 0% 20%;
-    --accent-foreground: 0 0% 95%;
+    --accent: 330 10% 22%;
+    --accent-foreground: 330 10% 95%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 330 10% 18%;
+    --muted-foreground: 330 8% 60%;
 
-    --destructive: 0 0% 85%;
-    --destructive-foreground: 0 0% 10%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 18%;
-    --ring: 0 0% 80%;
+    --border: 330 10% 24%;
+    --input: 330 10% 18%;
+    --ring: 330 81% 60%;
 
-    /* Dark Mode Liquid Glass */
-    --glass-bg: hsla(0, 0%, 12%, 0.7);
-    --glass-border: hsla(0, 0%, 100%, 0.1);
-    --glass-shadow: 0 8px 32px 0 hsla(0, 0%, 0%, 0.3);
-    --glass-inner-shadow: inset 0 1px 0 0 hsla(0, 0%, 100%, 0.1);
-    
-    /* Dark Mode Shimmer */
-    --shimmer-gradient: linear-gradient(135deg, 
-      hsla(0, 0%, 100%, 0.0) 0%, 
-      hsla(0, 0%, 100%, 0.05) 45%,
-      hsla(0, 0%, 100%, 0.1) 50%,
-      hsla(0, 0%, 100%, 0.05) 55%,
-      hsla(0, 0%, 100%, 0.0) 100%);
+    /* Dark Neumorphic Shadows */
+    --neomorph-shadow-light: -6px -6px 12px hsla(330, 20%, 18%, 0.4);
+    --neomorph-shadow-dark: 6px 6px 12px hsla(330, 20%, 5%, 0.6);
+    --neomorph-inset-light: inset -3px -3px 6px hsla(330, 20%, 18%, 0.3);
+    --neomorph-inset-dark: inset 3px 3px 6px hsla(330, 20%, 5%, 0.4);
     
     /* Dark Mode Shadows */
-    --shadow-sm: 0 2px 8px 0 hsla(0, 0%, 0%, 0.2);
-    --shadow-md: 0 4px 16px 0 hsla(0, 0%, 0%, 0.3), 0 2px 4px 0 hsla(0, 0%, 0%, 0.15);
-    --shadow-lg: 0 8px 32px 0 hsla(0, 0%, 0%, 0.4), 0 4px 8px 0 hsla(0, 0%, 0%, 0.2);
-    --shadow-xl: 0 16px 48px 0 hsla(0, 0%, 0%, 0.5), 0 8px 16px 0 hsla(0, 0%, 0%, 0.25);
-    --float-shadow: 0 12px 40px 0 hsla(0, 0%, 0%, 0.35), 0 6px 12px 0 hsla(0, 0%, 0%, 0.2);
+    --shadow-sm: 0 2px 12px 0 hsla(330, 40%, 20%, 0.3);
+    --shadow-md: 0 6px 20px 0 hsla(330, 40%, 15%, 0.4), 0 2px 8px 0 hsla(330, 40%, 10%, 0.2);
+    --shadow-lg: 0 12px 32px 0 hsla(330, 40%, 10%, 0.5), 0 4px 12px 0 hsla(330, 40%, 5%, 0.3);
+    --shadow-xl: 0 20px 48px 0 hsla(330, 40%, 5%, 0.6), 0 8px 20px 0 hsla(330, 40%, 0%, 0.4);
+    
+    --card-shadow: var(--neomorph-shadow-light), var(--neomorph-shadow-dark);
+    --card-hover-shadow: -10px -10px 20px hsla(330, 20%, 18%, 0.5), 10px 10px 20px hsla(330, 20%, 5%, 0.7);
   }
 
   .hide-scrollbar::-webkit-scrollbar {
@@ -146,31 +135,43 @@
 }
 
 @layer utilities {
-  /* Elegant Glass Effect - No Shimmer */
+  /* Neumorphic Card Effects */
+  .neomorph-card {
+    background: hsl(var(--card));
+    box-shadow: var(--card-shadow);
+    border-radius: var(--radius);
+    transition: var(--transition-spring);
+  }
+
+  .neomorph-card:hover {
+    box-shadow: var(--card-hover-shadow);
+    transform: translateY(-2px);
+  }
+
+  .neomorph-card:active {
+    box-shadow: var(--neomorph-inset-light), var(--neomorph-inset-dark);
+    transform: translateY(0);
+  }
+
+  /* Glass Effect for Overlays */
   .glass {
-    background: var(--glass-bg);
-    backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
+    background: hsla(var(--card), 0.6);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(var(--border) / 0.3);
   }
 
   .glass-card {
-    @apply glass rounded-2xl;
+    @apply neomorph-card;
   }
 
-  /* Elegant Floating Cards */
-  .floating-card {
-    @apply glass-card;
-    box-shadow: var(--float-shadow);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  /* Bento Grid Layout */
+  .bento-grid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 
-  .floating-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-xl);
-  }
-
-  /* Monochrome Utility Classes */
+  /* SwiftUI-inspired Shadows */
   .shadow-elegant-sm {
     box-shadow: var(--shadow-sm);
   }
@@ -187,44 +188,44 @@
     box-shadow: var(--shadow-xl);
   }
 
-  /* Remove colored gradients - replace with subtle grayscale */
+  /* Pink Gradient Backgrounds */
   .gradient-romantic {
-    background: linear-gradient(135deg, hsl(0, 0%, 95%) 0%, hsl(0, 0%, 98%) 100%);
+    background: linear-gradient(135deg, hsl(330, 81%, 65%) 0%, hsl(330, 81%, 75%) 100%);
   }
 
   .dark .gradient-romantic {
-    background: linear-gradient(135deg, hsl(0, 0%, 12%) 0%, hsl(0, 0%, 15%) 100%);
+    background: linear-gradient(135deg, hsl(330, 70%, 45%) 0%, hsl(330, 70%, 55%) 100%);
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, hsl(0, 0%, 20%) 0%, hsl(0, 0%, 40%) 100%);
+    background: linear-gradient(135deg, hsl(330, 81%, 60%) 0%, hsl(330, 81%, 75%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .dark .gradient-text {
-    background: linear-gradient(135deg, hsl(0, 0%, 85%) 0%, hsl(0, 0%, 95%) 100%);
+    background: linear-gradient(135deg, hsl(330, 81%, 70%) 0%, hsl(330, 81%, 85%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Subtle Glow Effects - Monochrome */
+  /* Pink Glow Effects */
   .glow-primary {
-    box-shadow: 0 0 20px hsla(0, 0%, 0%, 0.1);
+    box-shadow: 0 0 24px hsla(330, 81%, 60%, 0.4), 0 0 48px hsla(330, 81%, 60%, 0.2);
   }
 
   .dark .glow-primary {
-    box-shadow: 0 0 30px hsla(0, 0%, 100%, 0.15);
+    box-shadow: 0 0 32px hsla(330, 81%, 60%, 0.5), 0 0 64px hsla(330, 81%, 60%, 0.25);
   }
 
   .glow-secondary {
-    box-shadow: 0 0 16px hsla(0, 0%, 0%, 0.08);
+    box-shadow: 0 0 16px hsla(330, 81%, 60%, 0.3);
   }
 
   .dark .glow-secondary {
-    box-shadow: 0 0 24px hsla(0, 0%, 100%, 0.12);
+    box-shadow: 0 0 24px hsla(330, 81%, 60%, 0.35);
   }
 
   .animate-float {
@@ -235,21 +236,58 @@
     animation: glow 3s ease-in-out infinite alternate;
   }
 
+  /* SwiftUI Spring Animations */
+  @keyframes swipe-right {
+    0% {
+      transform: translateX(0) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(120%) rotate(20deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes swipe-left {
+    0% {
+      transform: translateX(0) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(-120%) rotate(-20deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes spring-in {
+    0% {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
   @keyframes float {
     0%, 100% {
       transform: translateY(0px);
     }
     50% {
-      transform: translateY(-20px);
+      transform: translateY(-12px);
     }
   }
 
   @keyframes glow {
     from {
-      filter: drop-shadow(0 0 5px hsla(330, 80%, 65%, 0.3));
+      filter: drop-shadow(0 0 8px hsla(330, 80%, 65%, 0.4));
     }
     to {
-      filter: drop-shadow(0 0 20px hsla(330, 80%, 65%, 0.6));
+      filter: drop-shadow(0 0 24px hsla(330, 80%, 65%, 0.7));
     }
   }
 
@@ -259,26 +297,25 @@
       transform: scale(1);
     }
     50% {
-      opacity: 0.8;
-      transform: scale(1.05);
+      opacity: 0.85;
+      transform: scale(1.03);
     }
+  }
+
+  .animate-swipe-right {
+    animation: swipe-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-swipe-left {
+    animation: swipe-left 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-spring-in {
+    animation: spring-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .animate-pulse-soft {
     animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  @keyframes liquid-bubble {
-    0%, 100% {
-      transform: scale(1);
-    }
-    50% {
-      transform: scale(1.02);
-    }
-  }
-
-  .animate-liquid-bubble {
-    animation: liquid-bubble 2s ease-in-out infinite;
   }
 
   /* Hide Lovable Badge */
@@ -286,41 +323,22 @@
   display: none !important;
 }
 
-@keyframes liquid-squeeze {
+@keyframes button-press {
   0% {
     transform: scale(1);
+    box-shadow: var(--card-shadow);
   }
   50% {
-    transform: scale(1.08, 0.92);
+    transform: scale(0.96);
+    box-shadow: var(--neomorph-inset-light), var(--neomorph-inset-dark);
   }
   100% {
     transform: scale(1);
+    box-shadow: var(--card-shadow);
   }
 }
 
-@keyframes ios-spring {
-  0% {
-    transform: scale(1);
-  }
-  30% {
-    transform: scale(0.94);
-  }
-  60% {
-    transform: scale(1.02);
-  }
-  80% {
-    transform: scale(0.98);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.animate-liquid-bubble {
-  animation: liquid-squeeze 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.animate-ios-spring {
-  animation: ios-spring 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+.animate-button-press {
+  animation: button-press 0.2s ease-out;
 }
 }

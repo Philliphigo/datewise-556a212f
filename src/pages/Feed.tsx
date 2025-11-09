@@ -256,8 +256,8 @@ const Feed = () => {
 
         {/* Create Post - Collapsible */}
         <Collapsible open={showCreatePost} onOpenChange={setShowCreatePost}>
-          <Card className="glass-card overflow-hidden">
-            <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
+          <Card className="neomorph-card overflow-hidden">
+            <CollapsibleTrigger className="w-full p-6 flex items-center justify-between hover:bg-accent/50 transition-all active:scale-[0.99]">
               <div className="flex items-center gap-3">
                 <Plus className="w-5 h-5 text-primary" />
                 <span className="font-semibold">Create Post</span>
@@ -265,13 +265,13 @@ const Feed = () => {
               <X className={`w-5 h-5 text-muted-foreground transition-transform ${showCreatePost ? 'rotate-0' : 'rotate-45'}`} />
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="p-4 pt-0 space-y-3">
+              <div className="p-6 pt-0 space-y-4">
                 <Textarea
                   placeholder="What's on your mind?"
                   value={newPost}
                   onChange={(e) => setNewPost(e.target.value)}
                   maxLength={5000}
-                  className="glass border-border/50 resize-none"
+                  className="neomorph-card border-0 resize-none focus:ring-2 focus:ring-primary/30"
                   rows={3}
                 />
                 <p className="text-xs text-muted-foreground text-right">{newPost.length}/5000</p>
@@ -319,7 +319,7 @@ const Feed = () => {
                   <Button
                     onClick={handleCreatePost}
                     disabled={!newPost.trim() || posting}
-                    className="gradient-romantic text-white"
+                    className="neomorph-card bg-primary text-primary-foreground hover:bg-primary/90 glow-primary px-6"
                     size="sm"
                   >
                     {posting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
@@ -338,19 +338,19 @@ const Feed = () => {
         />
 
         {/* Posts Feed */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {posts.length === 0 ? (
-            <Card className="glass-card p-8 text-center">
+            <Card className="neomorph-card p-12 text-center">
               <p className="text-muted-foreground">No posts yet. Be the first to share!</p>
             </Card>
           ) : (
             posts.map((post, index) => (
               <Card
                 key={post.id}
-                className="glass-card overflow-hidden animate-fade-in"
+                className="neomorph-card overflow-hidden animate-spring-in"
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
-                <div className="p-4 space-y-4">
+                <div className="p-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar className="w-10 h-10 border-2 border-primary/20">
