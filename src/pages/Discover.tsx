@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
-import { Heart, X, Loader2, CheckCircle, Star, RotateCcw, Zap, ChevronUp, ChevronDown, MapPin } from "lucide-react";
+import { Heart, X, Loader2, CheckCircle, Star, RotateCcw, MessageCircle, ChevronUp, ChevronDown, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -152,11 +152,8 @@ const Discover = () => {
     }
   };
 
-  const handleBoost = () => {
-    toast({
-      title: "⚡ Boost Activated",
-      description: "Your profile is now boosted for 30 minutes!",
-    });
+  const handleMessage = () => {
+    navigate("/messages");
   };
 
   const handleRewind = () => {
@@ -252,7 +249,10 @@ const Discover = () => {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[calc(100vh-140px)]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            <p className="text-muted-foreground animate-pulse-soft">Finding matches...</p>
+          </div>
         </div>
       </Layout>
     );
@@ -264,11 +264,11 @@ const Discover = () => {
     return (
       <Layout>
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] px-6 text-center">
-          <div className="w-24 h-24 rounded-full liquid-glass flex items-center justify-center mb-6 animate-spring-in">
-            <Heart className="w-12 h-12 text-primary" />
+          <div className="w-28 h-28 rounded-full liquid-glass flex items-center justify-center mb-6 animate-bounce-in">
+            <Heart className="w-14 h-14 text-primary animate-pulse-soft" />
           </div>
-          <h2 className="text-2xl font-bold mb-3">No More Profiles</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl font-bold mb-3 animate-float-up">No More Profiles</h2>
+          <p className="text-muted-foreground animate-float-up" style={{ animationDelay: '0.1s' }}>
             Check back later for more potential matches!
           </p>
         </div>
@@ -281,7 +281,6 @@ const Discover = () => {
     : [currentProfile.avatar_url || defaultAvatar];
   const currentPhoto = photos[currentPhotoIndex] || defaultAvatar;
 
-  // Calculate card transform based on drag
   const cardStyle = isDragging && Math.abs(touchDelta.x) > 10 ? {
     transform: `translateX(${touchDelta.x * 0.5}px) rotate(${touchDelta.x * 0.03}deg)`,
     transition: 'none'
@@ -293,7 +292,7 @@ const Discover = () => {
         {/* Profile Card */}
         <div 
           ref={cardRef}
-          className={`relative flex-1 profile-card overflow-hidden ${
+          className={`relative flex-1 profile-card overflow-hidden card-glow ${
             swipeDirection === 'left' ? 'animate-swipe-left' : 
             swipeDirection === 'right' ? 'animate-swipe-right' : 
             'animate-spring-in'
@@ -306,7 +305,7 @@ const Discover = () => {
         >
           {/* Photo Progress Indicators */}
           {photos.length > 1 && (
-            <div className="absolute top-3 left-0 right-0 z-20 photo-progress">
+            <div className="absolute top-4 left-0 right-0 z-20 photo-progress">
               {photos.map((_, idx) => (
                 <div 
                   key={idx} 
@@ -320,45 +319,47 @@ const Discover = () => {
           <img
             src={currentPhoto}
             alt={currentProfile.name}
-            className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ${isExpanded ? 'scale-110' : ''}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ${isExpanded ? 'scale-105 blur-[2px]' : ''}`}
           />
 
-          {/* Like/Pass Overlays */}
+          {/* Like/Pass Overlays with iOS 26 Style */}
           {isDragging && touchDelta.x > 50 && (
             <div className="absolute inset-0 bg-success/20 flex items-center justify-center z-30 animate-fade-in">
-              <div className="w-20 h-20 rounded-full bg-success/80 flex items-center justify-center">
-                <Heart className="w-10 h-10 text-white fill-white" />
+              <div className="w-24 h-24 rounded-full bg-success/90 flex items-center justify-center shadow-lg animate-scale-up">
+                <Heart className="w-12 h-12 text-white fill-white" />
               </div>
             </div>
           )}
           {isDragging && touchDelta.x < -50 && (
             <div className="absolute inset-0 bg-destructive/20 flex items-center justify-center z-30 animate-fade-in">
-              <div className="w-20 h-20 rounded-full bg-destructive/80 flex items-center justify-center">
-                <X className="w-10 h-10 text-white" strokeWidth={3} />
+              <div className="w-24 h-24 rounded-full bg-destructive/90 flex items-center justify-center shadow-lg animate-scale-up">
+                <X className="w-12 h-12 text-white" strokeWidth={3} />
               </div>
             </div>
           )}
 
           {/* Gradient Overlay */}
-          <div className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${isExpanded ? 'bg-black/60' : 'gradient-overlay-bottom'}`} />
+          <div className={`absolute inset-0 pointer-events-none transition-all duration-400 ${isExpanded ? 'bg-black/70' : 'gradient-overlay-bottom'}`} />
 
           {/* Profile Info */}
-          <div className={`absolute bottom-0 left-0 right-0 z-10 transition-all duration-500 ease-out ${isExpanded ? 'h-[70%] overflow-y-auto' : ''}`}>
+          <div className={`absolute bottom-0 left-0 right-0 z-10 transition-all duration-500 ease-out ${isExpanded ? 'h-[75%] overflow-y-auto smooth-scroll' : ''}`}>
             <div className="p-5">
               {/* Name, Age, Verified */}
               <div className="flex items-center gap-2 mb-2">
-                <h2 className="text-3xl font-bold text-white tracking-tight">
+                <h2 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg">
                   {currentProfile.name}
                 </h2>
                 <span className="text-2xl font-light text-white/90">{currentProfile.age}</span>
                 {currentProfile.verified && (
-                  <CheckCircle className="w-6 h-6 text-info fill-info" />
+                  <div className="w-7 h-7 rounded-full bg-info flex items-center justify-center shadow-md">
+                    <CheckCircle className="w-5 h-5 text-white fill-white" />
+                  </div>
                 )}
               </div>
 
               {/* Location */}
               {currentProfile.city && (
-                <div className="flex items-center gap-1.5 text-white/80 text-sm mb-3">
+                <div className="flex items-center gap-1.5 text-white/85 text-sm mb-3">
                   <MapPin className="w-4 h-4" />
                   <span>{currentProfile.city}</span>
                 </div>
@@ -366,18 +367,18 @@ const Discover = () => {
 
               {/* Bio Preview */}
               {!isExpanded && currentProfile.bio && (
-                <p className="text-white/90 text-sm leading-relaxed line-clamp-2">
+                <p className="text-white/90 text-sm leading-relaxed line-clamp-2 drop-shadow">
                   "{currentProfile.bio}"
                 </p>
               )}
 
               {/* Expanded Content */}
               {isExpanded && (
-                <div className="space-y-4 animate-float-up">
+                <div className="space-y-5 animate-float-up">
                   {/* Full Bio */}
                   {currentProfile.bio && (
-                    <div>
-                      <h3 className="text-white/60 text-xs uppercase tracking-wider mb-2">About</h3>
+                    <div className="liquid-glass-light rounded-2xl p-4">
+                      <h3 className="text-white/60 text-xs uppercase tracking-wider mb-2 font-medium">About</h3>
                       <p className="text-white text-sm leading-relaxed">
                         {currentProfile.bio}
                       </p>
@@ -387,12 +388,12 @@ const Discover = () => {
                   {/* Interests */}
                   {currentProfile.interests && currentProfile.interests.length > 0 && (
                     <div>
-                      <h3 className="text-white/60 text-xs uppercase tracking-wider mb-2">Interests</h3>
+                      <h3 className="text-white/60 text-xs uppercase tracking-wider mb-3 font-medium">Interests</h3>
                       <div className="flex flex-wrap gap-2">
                         {currentProfile.interests.map((interest, idx) => (
                           <Badge 
                             key={idx} 
-                            className="bg-white/20 text-white border-white/30 backdrop-blur-sm px-3 py-1"
+                            className="bg-white/15 text-white border-white/25 backdrop-blur-sm px-3.5 py-1.5 rounded-full text-sm"
                           >
                             {interest}
                           </Badge>
@@ -403,37 +404,37 @@ const Discover = () => {
 
                   {/* Looking For */}
                   {currentProfile.looking_for && (
-                    <div>
-                      <h3 className="text-white/60 text-xs uppercase tracking-wider mb-2">Looking For</h3>
+                    <div className="liquid-glass-light rounded-2xl p-4">
+                      <h3 className="text-white/60 text-xs uppercase tracking-wider mb-2 font-medium">Looking For</h3>
                       <p className="text-white text-sm">{currentProfile.looking_for}</p>
                     </div>
                   )}
 
                   {/* Gender */}
-                  <div>
-                    <h3 className="text-white/60 text-xs uppercase tracking-wider mb-2">Gender</h3>
+                  <div className="liquid-glass-light rounded-2xl p-4">
+                    <h3 className="text-white/60 text-xs uppercase tracking-wider mb-2 font-medium">Gender</h3>
                     <p className="text-white text-sm capitalize">{currentProfile.gender}</p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Expand Button */}
+            {/* Expand Button - iOS 26 Capsule Style */}
             <button 
               onClick={toggleExpand}
-              className="absolute right-5 bottom-5 w-11 h-11 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 transition-all duration-300 hover:bg-white/30 active:scale-95 z-20"
+              className="absolute right-5 bottom-5 w-12 h-12 rounded-full liquid-glass-light flex items-center justify-center transition-all duration-300 hover:bg-white/30 active:scale-90 z-20"
             >
               {isExpanded ? (
-                <ChevronDown className="w-5 h-5 text-white" />
+                <ChevronDown className="w-6 h-6 text-white" />
               ) : (
-                <ChevronUp className="w-5 h-5 text-white" />
+                <ChevronUp className="w-6 h-6 text-white" />
               )}
             </button>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-center gap-4 py-4">
+        {/* Action Buttons - iOS 26 Style */}
+        <div className="flex items-center justify-center gap-4 py-5">
           {/* Rewind */}
           <button 
             onClick={handleRewind}
@@ -444,10 +445,10 @@ const Discover = () => {
 
           {/* Pass */}
           <button 
-            className="action-btn action-btn-pass w-14 h-14 haptic-medium"
+            className="action-btn action-btn-pass w-[60px] h-[60px] haptic-medium"
             onClick={handlePass}
           >
-            <X className="w-7 h-7 text-destructive" strokeWidth={3} />
+            <X className="w-8 h-8 text-destructive" strokeWidth={2.5} />
           </button>
 
           {/* Super Like */}
@@ -461,23 +462,23 @@ const Discover = () => {
 
           {/* Like */}
           <button 
-            className="action-btn action-btn-like w-14 h-14 haptic-medium"
+            className="action-btn action-btn-like w-[60px] h-[60px] haptic-medium"
             onClick={handleLike}
             disabled={actionLoading}
           >
             {actionLoading ? (
-              <Loader2 className="w-7 h-7 animate-spin text-success" />
+              <Loader2 className="w-8 h-8 animate-spin text-success" />
             ) : (
-              <Heart className="w-7 h-7 text-success fill-success" />
+              <Heart className="w-8 h-8 text-success fill-success" />
             )}
           </button>
 
-          {/* Boost */}
+          {/* Message - Replaced Boost */}
           <button 
-            onClick={handleBoost}
-            className="action-btn action-btn-boost w-12 h-12 haptic-light"
+            onClick={handleMessage}
+            className="action-btn action-btn-message w-12 h-12 haptic-light"
           >
-            <Zap className="w-5 h-5 text-boost fill-boost" />
+            <MessageCircle className="w-5 h-5 text-boost" />
           </button>
         </div>
       </div>
