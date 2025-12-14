@@ -2,13 +2,11 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar } from "@/components/ui/avatar";
-import { Heart, MessageCircle, Send, Loader2, Image, MoreVertical, Trash2, Plus, X } from "lucide-react";
+import { Heart, MessageCircle, Send, Loader2, Image, MoreVertical, Trash2, Plus, X, Compass } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { PostComments } from "@/components/PostComments";
 import { PostReactions } from "@/components/PostReactions";
 import { FeedCategories } from "@/components/FeedCategories";
 import { useNavigate } from "react-router-dom";
@@ -49,7 +47,6 @@ const Feed = () => {
   const [loading, setLoading] = useState(true);
   const [newPost, setNewPost] = useState("");
   const [posting, setPosting] = useState(false);
-  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [postCategory, setPostCategory] = useState("");
@@ -170,9 +167,10 @@ const Feed = () => {
       setNewPost("");
       setUploadedImage(null);
       setPostCategory("");
+      setShowCreatePost(false);
       toast({
-        title: "Success",
-        description: "Post created successfully!",
+        title: "Posted!",
+        description: "Your post is now live",
       });
       fetchPosts();
     } catch (error: any) {
@@ -223,7 +221,7 @@ const Feed = () => {
       if (error) throw error;
 
       toast({
-        title: "Post Deleted",
+        title: "Deleted",
         description: "Your post has been removed",
       });
       fetchPosts();
@@ -248,52 +246,61 @@ const Feed = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 max-w-2xl space-y-4 pb-32">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold gradient-text">Connect</h1>
-          <p className="text-muted-foreground">Share your moments</p>
+      <div className="container mx-auto px-4 py-6 max-w-2xl space-y-4 pb-32">
+        {/* Header */}
+        <div className="text-center space-y-2 animate-float-up">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full liquid-glass mb-2">
+            <Compass className="w-5 h-5 text-primary" />
+            <span className="text-sm font-medium">Connect</span>
+          </div>
+          <h1 className="text-3xl font-bold">Feed</h1>
+          <p className="text-muted-foreground text-sm">Share your moments</p>
         </div>
 
         {/* Create Post - Collapsible */}
         <Collapsible open={showCreatePost} onOpenChange={setShowCreatePost}>
-          <Card className="neomorph-card overflow-hidden">
-            <CollapsibleTrigger className="w-full p-6 flex items-center justify-between hover:bg-accent/50 transition-all active:scale-[0.99]">
+          <div className="liquid-glass rounded-3xl overflow-hidden animate-spring-in">
+            <CollapsibleTrigger className="w-full p-5 flex items-center justify-between transition-colors hover:bg-white/5">
               <div className="flex items-center gap-3">
-                <Plus className="w-5 h-5 text-primary" />
-                <span className="font-semibold">Create Post</span>
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Plus className="w-5 h-5 text-primary" />
+                </div>
+                <span className="font-medium">Create Post</span>
               </div>
-              <X className={`w-5 h-5 text-muted-foreground transition-transform ${showCreatePost ? 'rotate-0' : 'rotate-45'}`} />
+              <X className={`w-5 h-5 text-muted-foreground transition-transform duration-300 ${showCreatePost ? 'rotate-0' : 'rotate-45'}`} />
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="p-6 pt-0 space-y-4">
+              <div className="px-5 pb-5 space-y-4">
                 <Textarea
                   placeholder="What's on your mind?"
                   value={newPost}
                   onChange={(e) => setNewPost(e.target.value)}
                   maxLength={5000}
-                  className="neomorph-card border-0 resize-none focus:ring-2 focus:ring-primary/30"
+                  className="bg-white/5 border-white/10 rounded-2xl resize-none focus:ring-2 focus:ring-primary/30 min-h-[100px]"
                   rows={3}
                 />
                 <p className="text-xs text-muted-foreground text-right">{newPost.length}/5000</p>
+                
                 {uploadedImage && (
-                  <div className="relative">
-                    <img src={uploadedImage} alt="Upload" className="rounded-lg max-h-32 w-full object-cover" />
+                  <div className="relative rounded-2xl overflow-hidden">
+                    <img src={uploadedImage} alt="Upload" className="max-h-48 w-full object-cover" />
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute top-2 right-2 bg-background/90 h-8 w-8"
+                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 h-8 w-8 rounded-full"
                       onClick={() => setUploadedImage(null)}
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-4 h-4 text-white" />
                     </Button>
                   </div>
                 )}
-                <div className="flex justify-between items-center gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
+                
+                <div className="flex justify-between items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-3">
                     <select
                       value={postCategory}
                       onChange={(e) => setPostCategory(e.target.value)}
-                      className="text-xs bg-muted/50 border border-border/50 rounded-md px-3 py-2"
+                      className="text-sm bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-primary/30"
                     >
                       <option value="">Category</option>
                       <option value="free-tonight">Free Tonight</option>
@@ -307,19 +314,17 @@ const Feed = () => {
                       <option value="long-term">Long Term</option>
                     </select>
                     <label className="cursor-pointer">
-                      <Button variant="ghost" size="sm" className="glass" asChild>
-                        <div>
-                          <Image className="w-4 h-4 mr-2" />
-                          Photo
-                        </div>
-                      </Button>
+                      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                        <Image className="w-4 h-4 text-primary" />
+                        <span className="text-sm">Photo</span>
+                      </div>
                       <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                     </label>
                   </div>
                   <Button
                     onClick={handleCreatePost}
                     disabled={!newPost.trim() || posting}
-                    className="neomorph-card bg-primary text-primary-foreground hover:bg-primary/90 glow-primary px-6"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-6"
                     size="sm"
                   >
                     {posting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
@@ -328,7 +333,7 @@ const Feed = () => {
                 </div>
               </div>
             </CollapsibleContent>
-          </Card>
+          </div>
         </Collapsible>
 
         {/* Categories */}
@@ -338,22 +343,26 @@ const Feed = () => {
         />
 
         {/* Posts Feed */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {posts.length === 0 ? (
-            <Card className="neomorph-card p-12 text-center">
+            <div className="liquid-glass rounded-3xl p-12 text-center animate-spring-in">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Heart className="w-8 h-8 text-primary" />
+              </div>
               <p className="text-muted-foreground">No posts yet. Be the first to share!</p>
-            </Card>
+            </div>
           ) : (
             posts.map((post, index) => (
-              <Card
+              <div
                 key={post.id}
-                className="neomorph-card overflow-hidden animate-spring-in"
+                className="liquid-glass rounded-3xl overflow-hidden animate-spring-in"
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
-                <div className="p-6 space-y-4">
+                <div className="p-5 space-y-4">
+                  {/* Header */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10 border-2 border-primary/20">
+                      <Avatar className="w-11 h-11 border-2 border-primary/20">
                         <img
                           src={post.profile?.avatar_url || defaultAvatar}
                           alt={post.profile?.name}
@@ -370,12 +379,12 @@ const Feed = () => {
                     {post.user_id === user?.id && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
                             <MoreVertical className="w-5 h-5" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="glass">
-                          <DropdownMenuItem onClick={() => handleDeletePost(post.id)} className="text-destructive">
+                        <DropdownMenuContent className="liquid-glass rounded-2xl border-white/10">
+                          <DropdownMenuItem onClick={() => handleDeletePost(post.id)} className="text-destructive rounded-xl">
                             <Trash2 className="w-4 h-4 mr-2" />
                             Delete
                           </DropdownMenuItem>
@@ -384,13 +393,20 @@ const Feed = () => {
                     )}
                   </div>
 
-                  <p className="text-foreground/90">{post.content}</p>
+                  {/* Content */}
+                  <p className="text-foreground/90 leading-relaxed">{post.content}</p>
 
+                  {/* Image */}
                   {post.image_url && (
-                    <img src={post.image_url} alt="Post" className="w-full rounded-lg max-h-96 object-cover" />
+                    <img 
+                      src={post.image_url} 
+                      alt="Post" 
+                      className="w-full rounded-2xl max-h-96 object-cover" 
+                    />
                   )}
 
-                  <div className="flex items-center gap-6 pt-2 border-t border-border/50">
+                  {/* Actions */}
+                  <div className="flex items-center gap-6 pt-3 border-t border-white/10">
                     <PostReactions
                       onReact={(type) => handleLike(post.id, type)}
                       userReaction={post.userLiked ? "like" : undefined}
@@ -405,7 +421,7 @@ const Feed = () => {
                     </button>
                   </div>
                 </div>
-              </Card>
+              </div>
             ))
           )}
         </div>
