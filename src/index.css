@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -16,7 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 9%;
 
-    /* Pure Pink Primary - Action Color */
+    /* Pure Pink Primary - iOS 26 Optimized */
     --primary: 338 100% 50%;
     --primary-foreground: 0 0% 100%;
     --primary-soft: 338 90% 60%;
@@ -31,50 +31,57 @@
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
 
+    /* iOS 26 System Colors */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 76% 36%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 45 93% 47%;
+    --warning: 38 92% 50%;
     --warning-foreground: 0 0% 9%;
 
-    --info: 199 89% 48%;
+    --info: 211 100% 50%;
     --info-foreground: 0 0% 100%;
 
-    --star: 217 91% 60%;
-    --boost: 271 81% 56%;
+    --star: 211 100% 50%;
+    --boost: 280 100% 60%;
 
-    --border: 0 0% 90%;
+    --border: 0 0% 89%;
     --input: 0 0% 96%;
     --ring: 338 100% 50%;
 
     --radius: 1.5rem;
 
-    /* Liquid Glass Effects - iOS 26 */
+    /* iOS 26 Liquid Glass Effects - Based on WWDC 2025 */
     --glass-bg: rgba(255, 255, 255, 0.72);
     --glass-bg-heavy: rgba(255, 255, 255, 0.88);
-    --glass-border: rgba(255, 255, 255, 0.5);
+    --glass-bg-light: rgba(255, 255, 255, 0.45);
+    --glass-border: rgba(255, 255, 255, 0.6);
     --glass-blur: 40px;
     --glass-saturate: 180%;
     
-    /* iOS Dual-Layer Shadows */
+    /* iOS 26 Specular Highlights */
+    --specular-top: rgba(255, 255, 255, 0.8);
+    --specular-edge: rgba(255, 255, 255, 0.4);
+    
+    /* iOS 26 Dual-Layer Shadows */
     --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
     --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
-    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.16), 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.08);
     
-    /* Action Button Glow Shadows */
-    --shadow-action-pink: 0 8px 24px hsla(338, 100%, 50%, 0.35);
-    --shadow-action-green: 0 8px 24px hsla(142, 76%, 36%, 0.35);
-    --shadow-action-blue: 0 8px 24px hsla(217, 91%, 60%, 0.35);
-    --shadow-action-yellow: 0 8px 24px hsla(45, 93%, 47%, 0.35);
-    --shadow-action-purple: 0 8px 24px hsla(271, 81%, 56%, 0.35);
+    /* iOS 26 Colored Glow Shadows */
+    --shadow-glow-pink: 0 8px 32px hsla(338, 100%, 50%, 0.35);
+    --shadow-glow-green: 0 8px 32px hsla(142, 71%, 45%, 0.35);
+    --shadow-glow-blue: 0 8px 32px hsla(211, 100%, 50%, 0.35);
+    --shadow-glow-yellow: 0 8px 32px hsla(38, 92%, 50%, 0.35);
+    --shadow-glow-purple: 0 8px 32px hsla(280, 100%, 60%, 0.35);
 
-    /* SwiftUI Spring Animations */
-    --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* iOS 26 SwiftUI Spring Animations */
+    --spring-snappy: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    --spring-bouncy: cubic-bezier(0.34, 1.56, 0.64, 1);
     --spring-smooth: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -83,10 +90,10 @@
     --background: 0 0% 7%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 10%;
+    --card: 0 0% 11%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 10%;
+    --popover: 0 0% 11%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 338 100% 55%;
@@ -106,20 +113,24 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 76% 42%;
-    --warning: 45 93% 52%;
-    --info: 199 89% 55%;
-    --star: 217 91% 65%;
-    --boost: 271 81% 62%;
+    --success: 142 71% 50%;
+    --warning: 38 92% 55%;
+    --info: 211 100% 55%;
+    --star: 211 100% 60%;
+    --boost: 280 100% 65%;
 
-    --border: 0 0% 20%;
+    --border: 0 0% 18%;
     --input: 0 0% 15%;
     --ring: 338 100% 55%;
 
-    /* Dark Liquid Glass */
-    --glass-bg: rgba(30, 30, 30, 0.78);
-    --glass-bg-heavy: rgba(30, 30, 30, 0.92);
+    /* Dark Mode Liquid Glass - iOS 26 */
+    --glass-bg: rgba(40, 40, 45, 0.75);
+    --glass-bg-heavy: rgba(40, 40, 45, 0.92);
+    --glass-bg-light: rgba(50, 50, 55, 0.5);
     --glass-border: rgba(255, 255, 255, 0.08);
+    
+    --specular-top: rgba(255, 255, 255, 0.12);
+    --specular-edge: rgba(255, 255, 255, 0.05);
   }
 
   .hide-scrollbar::-webkit-scrollbar {
@@ -142,22 +153,28 @@
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'kern' 1;
+    text-rendering: optimizeLegibility;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold tracking-tight;
+    /* iOS 26 Bolder text rendering */
+    font-weight: 600;
   }
 }
 
 @layer utilities {
-  /* Liquid Glass Card - iOS 26 Style */
+  /* iOS 26 Liquid Glass Card - Authentic Implementation */
   .liquid-glass {
     background: var(--glass-bg);
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-md),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      var(--shadow-md),
+      inset 0 0.5px 0 var(--specular-top),
+      inset 0 0 0 0.5px var(--specular-edge);
   }
 
   .liquid-glass-heavy {
@@ -165,111 +182,127 @@
     backdrop-filter: blur(60px) saturate(200%);
     -webkit-backdrop-filter: blur(60px) saturate(200%);
     border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-lg),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    box-shadow: 
+      var(--shadow-lg),
+      inset 0 1px 0 var(--specular-top),
+      inset 0 0 0 0.5px var(--specular-edge);
   }
 
-  /* iOS Navigation Bar */
+  .liquid-glass-light {
+    background: var(--glass-bg-light);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  /* iOS 26 Navigation Bar - From WWDC 2025 */
   .ios-nav {
     background: var(--glass-bg-heavy);
     backdrop-filter: blur(50px) saturate(180%);
     -webkit-backdrop-filter: blur(50px) saturate(180%);
-    border-top: 0.5px solid rgba(255, 255, 255, 0.25);
-    box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.05);
+    border-top: 0.5px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.03);
   }
 
   .dark .ios-nav {
-    border-top: 0.5px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2);
+    border-top: 0.5px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
   }
 
-  /* iOS Header Bar */
+  /* iOS 26 Header Bar */
   .ios-header {
     background: var(--glass-bg);
     backdrop-filter: blur(40px) saturate(180%);
     -webkit-backdrop-filter: blur(40px) saturate(180%);
-    border-bottom: 0.5px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.04);
   }
 
   .dark .ios-header {
-    border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.05);
   }
 
-  /* Action Button Styles - iOS Style */
+  /* iOS 26 Capsule Shapes - Primary for touch interfaces */
+  .capsule {
+    border-radius: 9999px;
+  }
+
+  /* iOS 26 Action Button Styles */
   .action-btn {
     @apply rounded-full flex items-center justify-center;
     transform-origin: center;
-    transition: all 0.2s var(--spring-bounce);
+    transition: all 0.25s var(--spring-snappy);
+    will-change: transform, box-shadow;
+  }
+
+  .action-btn:hover {
+    transform: scale(1.08);
   }
 
   .action-btn:active {
-    transform: scale(0.88);
+    transform: scale(0.92);
+    transition-duration: 0.1s;
   }
 
   .action-btn-pass {
     @apply bg-white dark:bg-card;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.8);
   }
 
   .action-btn-pass:hover {
-    box-shadow: var(--shadow-lg);
-    transform: scale(1.05);
+    box-shadow: var(--shadow-lg), 0 0 20px rgba(255,59,48,0.2);
   }
 
   .action-btn-rewind {
     @apply bg-white dark:bg-card;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.8);
   }
 
   .action-btn-rewind:hover {
-    box-shadow: var(--shadow-action-yellow);
-    transform: scale(1.05);
+    box-shadow: var(--shadow-glow-yellow);
   }
 
   .action-btn-star {
     @apply bg-white dark:bg-card;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.8);
   }
 
   .action-btn-star:hover {
-    box-shadow: var(--shadow-action-blue);
-    transform: scale(1.05);
+    box-shadow: var(--shadow-glow-blue);
   }
 
   .action-btn-like {
     @apply bg-white dark:bg-card;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.8);
   }
 
   .action-btn-like:hover {
-    box-shadow: var(--shadow-action-green);
-    transform: scale(1.05);
+    box-shadow: var(--shadow-glow-green);
   }
 
-  .action-btn-boost {
+  .action-btn-message {
     @apply bg-white dark:bg-card;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.8);
   }
 
-  .action-btn-boost:hover {
-    box-shadow: var(--shadow-action-purple);
-    transform: scale(1.05);
+  .action-btn-message:hover {
+    box-shadow: var(--shadow-glow-purple);
   }
 
-  /* Profile Card */
+  /* iOS 26 Profile Card with Concentric Shapes */
   .profile-card {
     @apply relative overflow-hidden;
-    border-radius: 1.5rem;
-    box-shadow: var(--shadow-lg);
+    border-radius: 1.75rem;
+    box-shadow: var(--shadow-xl);
   }
 
-  /* Progress Bars for Photos */
+  /* iOS 26 Photo Progress Indicators */
   .photo-progress {
-    @apply flex gap-1 px-3;
+    @apply flex gap-1.5 px-3;
   }
 
   .photo-progress-segment {
-    @apply h-0.5 flex-1 rounded-full transition-all duration-300;
+    @apply h-[3px] flex-1 rounded-full transition-all duration-300;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
   }
 
   .photo-progress-segment.active {
@@ -280,14 +313,14 @@
     @apply bg-white/40;
   }
 
-  /* SwiftUI-Inspired Keyframe Animations */
+  /* iOS 26 SwiftUI-Inspired Keyframe Animations */
   @keyframes spring-in {
     0% {
       opacity: 0;
-      transform: scale(0.85) translateY(20px);
+      transform: scale(0.88) translateY(16px);
     }
-    50% {
-      transform: scale(1.03) translateY(-4px);
+    60% {
+      transform: scale(1.02) translateY(-3px);
     }
     100% {
       opacity: 1;
@@ -301,7 +334,7 @@
       opacity: 1;
     }
     100% {
-      transform: translateX(150%) rotate(20deg);
+      transform: translateX(120%) rotate(15deg);
       opacity: 0;
     }
   }
@@ -312,7 +345,7 @@
       opacity: 1;
     }
     100% {
-      transform: translateX(-150%) rotate(-20deg);
+      transform: translateX(-120%) rotate(-15deg);
       opacity: 0;
     }
   }
@@ -320,7 +353,7 @@
   @keyframes float-up {
     0% {
       opacity: 0;
-      transform: translateY(24px);
+      transform: translateY(20px);
     }
     100% {
       opacity: 1;
@@ -329,31 +362,53 @@
   }
 
   @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes scale-up {
     0% {
       opacity: 0;
+      transform: scale(0.95);
     }
     100% {
       opacity: 1;
-    }
-  }
-
-  @keyframes pulse-ring {
-    0% {
       transform: scale(1);
-      opacity: 1;
-    }
-    100% {
-      transform: scale(1.5);
-      opacity: 0;
     }
   }
 
-  @keyframes button-tap {
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes pulse-soft {
     0%, 100% {
-      transform: scale(1);
+      opacity: 1;
     }
     50% {
-      transform: scale(0.92);
+      opacity: 0.7;
+    }
+  }
+
+  @keyframes bounce-in {
+    0% {
+      transform: scale(0.3);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    70% {
+      transform: scale(0.9);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
     }
   }
 
@@ -368,19 +423,28 @@
     }
   }
 
-  @keyframes slide-in-left {
+  @keyframes slide-in-up {
     0% {
-      transform: translateX(-100%);
+      transform: translateY(100%);
       opacity: 0;
     }
     100% {
-      transform: translateX(0);
+      transform: translateY(0);
       opacity: 1;
     }
   }
 
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 20px hsla(338, 100%, 50%, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px hsla(338, 100%, 50%, 0.5);
+    }
+  }
+
   .animate-spring-in {
-    animation: spring-in 0.5s var(--spring-bounce) forwards;
+    animation: spring-in 0.5s var(--spring-bouncy) forwards;
   }
 
   .animate-swipe-right {
@@ -392,55 +456,131 @@
   }
 
   .animate-float-up {
-    animation: float-up 0.4s var(--ease-out-expo) forwards;
+    animation: float-up 0.45s var(--ease-out-expo) forwards;
   }
 
   .animate-fade-in {
-    animation: fade-in 0.2s ease-out forwards;
+    animation: fade-in 0.25s ease-out forwards;
   }
 
-  .animate-button-tap {
-    animation: button-tap 0.15s ease-out;
+  .animate-scale-up {
+    animation: scale-up 0.3s var(--spring-smooth) forwards;
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
+  }
+
+  .animate-bounce-in {
+    animation: bounce-in 0.6s var(--spring-bouncy) forwards;
   }
 
   .animate-slide-in-right {
-    animation: slide-in-right 0.35s var(--ease-out-expo) forwards;
+    animation: slide-in-right 0.4s var(--ease-out-expo) forwards;
   }
 
-  .animate-slide-in-left {
-    animation: slide-in-left 0.35s var(--ease-out-expo) forwards;
+  .animate-slide-in-up {
+    animation: slide-in-up 0.4s var(--ease-out-expo) forwards;
   }
 
-  /* Gradient Overlays */
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
+  /* iOS 26 Gradient Overlays */
   .gradient-overlay-bottom {
     background: linear-gradient(
       to top,
-      rgba(0, 0, 0, 0.7) 0%,
-      rgba(0, 0, 0, 0.4) 35%,
-      rgba(0, 0, 0, 0.1) 65%,
+      rgba(0, 0, 0, 0.65) 0%,
+      rgba(0, 0, 0, 0.35) 35%,
+      rgba(0, 0, 0, 0.08) 65%,
       transparent 100%
     );
   }
 
-  /* Verified Badge */
-  .verified-badge {
-    @apply inline-flex items-center justify-center w-5 h-5 rounded-full;
-    background: hsl(var(--info));
+  /* iOS 26 Scroll Edge Effects - Soft Style */
+  .scroll-edge-soft {
+    mask-image: linear-gradient(to bottom, transparent, black 8px, black calc(100% - 8px), transparent);
   }
 
-  /* iOS Tab Bar Active Indicator */
-  .tab-active-indicator {
-    @apply absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full;
-    background: hsl(var(--primary));
-  }
-
-  /* Haptic Feedback Simulation */
+  /* iOS 26 Haptic Feedback Simulation */
   .haptic-light:active {
-    animation: button-tap 0.1s ease-out;
+    transform: scale(0.98);
+    transition: transform 0.1s ease-out;
   }
 
   .haptic-medium:active {
-    animation: button-tap 0.15s ease-out;
+    transform: scale(0.95);
+    transition: transform 0.1s ease-out;
+  }
+
+  .haptic-heavy:active {
+    transform: scale(0.92);
+    transition: transform 0.08s ease-out;
+  }
+
+  /* iOS 26 Focus States */
+  .focus-ring:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px hsla(338, 100%, 50%, 0.3);
+  }
+
+  /* iOS 26 Separator */
+  .ios-separator {
+    @apply h-px;
+    background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
+  }
+
+  /* iOS 26 Badge Notification Dot */
+  .notification-dot {
+    @apply absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full;
+    background: hsl(var(--primary));
+    box-shadow: 0 0 0 2px hsl(var(--background));
+  }
+
+  .notification-badge {
+    @apply absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    box-shadow: 0 0 0 2px hsl(var(--background));
+  }
+
+  /* iOS 26 Input Fields */
+  .ios-input {
+    @apply rounded-xl px-4 py-3;
+    background: var(--glass-bg-light);
+    border: 1px solid var(--glass-border);
+    transition: all 0.2s ease;
+  }
+
+  .ios-input:focus {
+    background: var(--glass-bg);
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 3px hsla(338, 100%, 50%, 0.15);
+  }
+
+  /* iOS 26 Cards with Inner Glow */
+  .card-glow {
+    position: relative;
+  }
+
+  .card-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(180deg, var(--specular-top), transparent 50%);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    pointer-events: none;
   }
 
   /* Hide Lovable Badge */
@@ -448,24 +588,69 @@
     display: none !important;
   }
 
-  /* iOS-style separator */
-  .ios-separator {
-    @apply h-px;
-    background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
-  }
-
-  /* Smooth scrolling */
+  /* Smooth Scrolling */
   .smooth-scroll {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Page Transitions */
-  .page-enter {
-    animation: slide-in-right 0.35s var(--ease-out-expo) forwards;
+  /* iOS 26 Avatar Ring */
+  .avatar-ring {
+    box-shadow: 0 0 0 3px hsl(var(--background)), 0 0 0 5px hsl(var(--primary));
   }
 
-  .page-exit {
-    animation: slide-in-left 0.35s var(--ease-out-expo) reverse forwards;
+  /* iOS 26 Online Indicator */
+  .online-indicator {
+    @apply absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full;
+    background: hsl(var(--success));
+    box-shadow: 0 0 0 2.5px hsl(var(--background));
+  }
+
+  /* iOS 26 Skeleton Loading */
+  .skeleton {
+    background: linear-gradient(90deg, 
+      hsl(var(--muted)) 25%, 
+      hsl(var(--muted) / 0.5) 50%, 
+      hsl(var(--muted)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* iOS 26 Pill Button */
+  .pill-button {
+    @apply px-5 py-2.5 rounded-full font-medium transition-all duration-200;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    box-shadow: var(--shadow-md), var(--shadow-glow-pink);
+  }
+
+  .pill-button:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg), 0 12px 40px hsla(338, 100%, 50%, 0.4);
+  }
+
+  .pill-button:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  /* iOS 26 List Item */
+  .list-item {
+    @apply flex items-center gap-4 p-4 rounded-2xl transition-all duration-200;
+  }
+
+  .list-item:hover {
+    background: var(--glass-bg-light);
+  }
+
+  .list-item:active {
+    background: var(--glass-bg);
+    transform: scale(0.99);
+  }
+
+  /* iOS 26 Tab Indicator */
+  .tab-indicator {
+    @apply h-0.5 rounded-full;
+    background: hsl(var(--primary));
   }
 }

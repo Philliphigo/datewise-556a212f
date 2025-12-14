@@ -8,80 +8,66 @@ const LiquidToggle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SwitchPrimitives.Root
     className={cn(
-      // iOS 16 Liquid Glass Toggle - exact dimensions
-      "peer inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer items-center rounded-full",
+      // iOS 26 Liquid Glass Toggle - Capsule shape
+      "peer inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer items-center",
+      "rounded-full", // Capsule shape per iOS 26 guidelines
       // Liquid glass background with blur
       "relative overflow-hidden",
-      // iOS spring animation - 400ms with custom bounce easing
-      "transition-all duration-[400ms] ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
+      // iOS 26 spring animation - bouncy and responsive
+      "transition-all duration-[350ms] ease-[cubic-bezier(0.2,0.9,0.3,1.2)]",
       "disabled:cursor-not-allowed disabled:opacity-50",
-      // Checked state - iOS green with glow
-      "data-[state=checked]:bg-[#34C759]",
-      "data-[state=checked]:shadow-[0_0_12px_rgba(52,199,89,0.4),inset_0_1px_1px_rgba(255,255,255,0.2)]",
-      // Unchecked state - glass effect
-      "data-[state=unchecked]:bg-[rgba(120,120,128,0.32)]",
+      // Checked state - iOS system green with inner glow
+      "data-[state=checked]:bg-[#30D158]",
+      "data-[state=checked]:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04),0_0_12px_rgba(48,209,88,0.3)]",
+      // Unchecked state - iOS 26 liquid glass material
+      "data-[state=unchecked]:bg-[rgba(120,120,128,0.28)]",
       "dark:data-[state=unchecked]:bg-[rgba(120,120,128,0.36)]",
-      "data-[state=unchecked]:shadow-[inset_0_1px_3px_rgba(0,0,0,0.1)]",
-      // Border for depth
-      "border border-transparent",
-      "data-[state=unchecked]:border-black/5",
+      "data-[state=unchecked]:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]",
       className
     )}
     {...props}
     ref={ref}
   >
-    {/* Liquid shine overlay */}
+    {/* Specular highlight overlay - iOS 26 style */}
     <span 
       className={cn(
         "absolute inset-0 rounded-full pointer-events-none",
-        "bg-gradient-to-b from-white/25 via-transparent to-transparent",
-        "opacity-100 transition-opacity duration-300"
+        "bg-gradient-to-b from-white/20 via-transparent to-transparent"
       )}
     />
     
-    {/* Thumb with liquid glass effect */}
+    {/* Thumb with iOS 26 liquid glass depth */}
     <SwitchPrimitives.Thumb
       className={cn(
-        // iOS exact thumb size
+        // iOS exact thumb size - capsule proportions
         "pointer-events-none block h-[27px] w-[27px] rounded-full",
-        // Spring animation with bounce
-        "transition-all duration-[400ms] ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
+        // iOS 26 spring animation with squish effect
+        "transition-all duration-[350ms] ease-[cubic-bezier(0.2,0.9,0.3,1.2)]",
         // Translate positions
         "data-[state=checked]:translate-x-[22px]",
         "data-[state=unchecked]:translate-x-[2px]",
-        // Stretch effect during transition
-        "data-[state=checked]:scale-x-[1.0] data-[state=unchecked]:scale-x-[1.0]",
-        "active:scale-x-[1.15]",
-        // Pure white with glass effect
+        // Pure white with glass material
         "bg-white",
         "relative overflow-hidden",
-        // Multi-layer iOS shadow for depth
-        "shadow-[0_3px_8px_rgba(0,0,0,0.15),0_1px_1px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.04)]"
+        // iOS 26 multi-layer shadow for realistic depth
+        "shadow-[0_3px_8px_rgba(0,0,0,0.12),0_1px_1px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.04)]"
       )}
     >
-      {/* Inner glossy highlight - top shine */}
+      {/* Inner gradient for 3D effect */}
       <span 
         className={cn(
           "absolute inset-0 rounded-full",
-          "bg-gradient-to-b from-white via-white/80 to-white/60"
+          "bg-gradient-to-b from-white via-white to-[#f5f5f5]"
         )}
       />
       
-      {/* Specular highlight at top */}
+      {/* Top specular highlight */}
       <span 
         className={cn(
-          "absolute top-[2px] left-[20%] right-[20%] h-[40%]",
+          "absolute top-[2px] left-[18%] right-[18%] h-[42%]",
           "rounded-full",
           "bg-gradient-to-b from-white to-transparent",
-          "opacity-90 blur-[0.5px]"
-        )}
-      />
-      
-      {/* Subtle edge shadow for 3D effect */}
-      <span 
-        className={cn(
-          "absolute inset-0 rounded-full",
-          "shadow-[inset_0_-1px_2px_rgba(0,0,0,0.05)]"
+          "opacity-80"
         )}
       />
     </SwitchPrimitives.Thumb>
