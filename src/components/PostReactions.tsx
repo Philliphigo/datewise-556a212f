@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Heart, Laugh, Frown, HeartCrack } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const REACTIONS = [
-  { type: "like", icon: Heart, label: "Like", color: "text-primary" },
-  { type: "laugh", icon: Laugh, label: "Laugh", color: "text-yellow-500" },
-  { type: "sad", icon: Frown, label: "Sad", color: "text-blue-500" },
-  { type: "angry", icon: HeartCrack, label: "Angry", color: "text-red-500" },
+  { type: "like", emoji: "❤️", label: "Like" },
+  { type: "laugh", emoji: "😂", label: "Laugh" },
+  { type: "sad", emoji: "😢", label: "Sad" },
+  { type: "angry", emoji: "😡", label: "Angry" },
 ];
 
 interface PostReactionsProps {
@@ -42,7 +41,7 @@ export const PostReactions = ({ onReact, userReaction, count }: PostReactionsPro
   };
 
   const currentReaction = REACTIONS.find(r => r.type === userReaction);
-  const Icon = currentReaction?.icon || Heart;
+  const displayEmoji = currentReaction?.emoji || "🤍";
 
   return (
     <div className="relative">
@@ -56,35 +55,29 @@ export const PostReactions = ({ onReact, userReaction, count }: PostReactionsPro
         onTouchStart={handleMouseDown}
         onTouchEnd={handleMouseUp}
         className={cn(
-          "flex items-center gap-2 transition-colors",
-          userReaction ? currentReaction?.color : "text-muted-foreground hover:text-primary"
+          "flex items-center gap-2 transition-all duration-200",
+          userReaction ? "scale-110" : "hover:scale-105"
         )}
       >
-        <Icon
-          className="w-5 h-5"
-          fill={userReaction ? "currentColor" : "none"}
-        />
-        <span className="text-sm">{count}</span>
+        <span className="text-xl">{displayEmoji}</span>
+        <span className="text-sm text-muted-foreground">{count}</span>
       </button>
 
       {showReactions && (
-        <div className="absolute bottom-full left-0 mb-2 flex gap-2 p-2 glass-card rounded-full shadow-lg animate-scale-in">
-          {REACTIONS.map((reaction) => {
-            const ReactionIcon = reaction.icon;
-            return (
-              <button
-                key={reaction.type}
-                onClick={() => handleReactionSelect(reaction.type)}
-                className={cn(
-                  "p-2 rounded-full hover:scale-125 transition-transform",
-                  reaction.color
-                )}
-                title={reaction.label}
-              >
-                <ReactionIcon className="w-6 h-6" fill="currentColor" />
-              </button>
-            );
-          })}
+        <div className="absolute bottom-full left-0 mb-2 flex gap-1 p-2 liquid-glass rounded-full shadow-lg animate-bounce-in z-50">
+          {REACTIONS.map((reaction) => (
+            <button
+              key={reaction.type}
+              onClick={() => handleReactionSelect(reaction.type)}
+              className={cn(
+                "p-2 rounded-full hover:scale-125 transition-transform duration-200 hover:bg-white/10",
+                userReaction === reaction.type && "bg-white/20 scale-110"
+              )}
+              title={reaction.label}
+            >
+              <span className="text-2xl">{reaction.emoji}</span>
+            </button>
+          ))}
         </div>
       )}
     </div>
