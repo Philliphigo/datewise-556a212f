@@ -215,7 +215,6 @@ export const Layout = ({ children }: LayoutProps) => {
                           active ? "text-primary" : "text-muted-foreground"
                         }`} 
                         strokeWidth={active ? 2.5 : 1.8}
-                        fill={active && (item.path === "/matches" || item.path === "/discover") ? "currentColor" : "none"}
                       />
                     </div>
                     

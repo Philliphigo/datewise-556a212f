@@ -12,7 +12,8 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Shield, Bell, Eye, Trash2, Moon, Sun, AlertTriangle, ChevronDown, User, BadgeCheck, UserX, MessageSquare, Heart } from "lucide-react";
+import { Loader2, Shield, Bell, Eye, Trash2, Moon, Sun, AlertTriangle, ChevronDown, User, BadgeCheck, UserX, MessageSquare, Heart, Sparkles, X, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { VerificationRequest } from "@/components/VerificationRequest";
 import { BlockedUsers } from "@/components/BlockedUsers";
 import { ReportFeedbackView } from "@/components/ReportFeedbackView";
@@ -49,8 +50,15 @@ const Settings = () => {
   const [gender, setGender] = useState("");
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
+  const [interests, setInterests] = useState<string[]>([]);
+  const [lookingFor, setLookingFor] = useState("");
   const [deactivateOpen, setDeactivateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const INTEREST_OPTIONS = [
+    "Music", "Travel", "Sports", "Movies", "Gaming", "Cooking", "Reading", 
+    "Photography", "Art", "Fitness", "Dancing", "Nature", "Technology", "Fashion"
+  ];
   const [dangerLoading, setDangerLoading] = useState(false);
 
   useEffect(() => {
@@ -84,6 +92,8 @@ const Settings = () => {
       setGender(data.gender || "");
       setCity(data.city || "");
       setBio(data.bio || "");
+      setInterests(data.interests || []);
+      setLookingFor(data.looking_for || "");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -110,6 +120,8 @@ const Settings = () => {
           gender,
           city,
           bio,
+          interests,
+          looking_for: lookingFor,
         })
         .eq("id", user.id);
 
@@ -192,6 +204,51 @@ const Settings = () => {
                     <div className="space-y-2 sm:col-span-2">
                       <Label htmlFor="bio">Bio</Label>
                       <Textarea id="bio" value={bio} onChange={(e)=>setBio(e.target.value)} rows={4} className="glass" />
+                    </div>
+                    <div className="space-y-2 sm:col-span-2">
+                      <Label>Interested In</Label>
+                      <Select value={lookingFor} onValueChange={setLookingFor}>
+                        <SelectTrigger className="glass">
+                          <SelectValue placeholder="What are you looking for?" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="friendship">Friendship</SelectItem>
+                          <SelectItem value="casual">Casual Dating</SelectItem>
+                          <SelectItem value="relationship">Serious Relationship</SelectItem>
+                          <SelectItem value="marriage">Marriage</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-3 sm:col-span-2">
+                      <Label className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        My Interests
+                      </Label>
+                      <div className="flex flex-wrap gap-2">
+                        {interests.map((interest, idx) => (
+                          <Badge 
+                            key={idx} 
+                            className="bg-primary/10 text-primary border-primary/20 px-3 py-1.5 rounded-full text-sm cursor-pointer hover:bg-destructive/20 hover:text-destructive hover:border-destructive/30 transition-colors group"
+                            onClick={() => setInterests(interests.filter((_, i) => i !== idx))}
+                          >
+                            {interest}
+                            <X className="w-3 h-3 ml-1.5 opacity-60 group-hover:opacity-100" />
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {INTEREST_OPTIONS.filter(opt => !interests.includes(opt)).map((option) => (
+                          <Badge 
+                            key={option}
+                            variant="outline"
+                            className="px-3 py-1.5 rounded-full text-sm cursor-pointer hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-colors"
+                            onClick={() => setInterests([...interests, option])}
+                          >
+                            <Plus className="w-3 h-3 mr-1" />
+                            {option}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>

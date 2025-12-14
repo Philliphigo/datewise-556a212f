@@ -271,23 +271,6 @@ const Profile = () => {
             </div>
           )}
 
-          {/* Stats Section - iOS 26 Bento Grid */}
-          {isOwnProfile && (
-            <div className="grid grid-cols-3 gap-3 animate-float-up" style={{ animationDelay: '0.2s' }}>
-              <div className="liquid-glass rounded-2xl p-4 text-center">
-                <p className="text-2xl font-bold text-primary">0</p>
-                <p className="text-xs text-muted-foreground mt-1">Likes</p>
-              </div>
-              <div className="liquid-glass rounded-2xl p-4 text-center">
-                <p className="text-2xl font-bold text-primary">0</p>
-                <p className="text-xs text-muted-foreground mt-1">Matches</p>
-              </div>
-              <div className="liquid-glass rounded-2xl p-4 text-center">
-                <p className="text-2xl font-bold text-primary">0</p>
-                <p className="text-xs text-muted-foreground mt-1">Views</p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </Layout>
