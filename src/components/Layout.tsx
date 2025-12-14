@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Heart, Flame, MessageCircle, Users, User, Rss, Settings, Sliders } from "lucide-react";
+import { Heart, MessageCircle, User, Compass, Flame, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Footer } from "./Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,10 +30,10 @@ export const Layout = ({ children }: LayoutProps) => {
   const [newMatches, setNewMatches] = useState(0);
 
   const navItems = [
-    { icon: Flame, label: "Discover", path: "/discover" },
-    { icon: Users, label: "Matches", path: "/matches", badge: newMatches },
-    { icon: Rss, label: "Feed", path: "/feed" },
-    { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
+    { icon: Flame, label: "Home", path: "/discover" },
+    { icon: Compass, label: "Explore", path: "/feed" },
+    { icon: Heart, label: "Likes", path: "/matches" },
+    { icon: MessageCircle, label: "Chat", path: "/messages", badge: unreadMessages },
     { icon: User, label: "Profile", path: "/profile" },
   ];
 
@@ -117,27 +117,36 @@ export const Layout = ({ children }: LayoutProps) => {
   if (!user) return <>{children}</>;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
+      {/* iOS Header - Hidden on most pages, shown contextually */}
       {!isAdminRoute && (
-        <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-elegant-sm">
-          <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-            <Link to="/discover" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Heart className="w-6 h-6 text-primary" fill="currentColor" />
-              </div>
-              <span className="text-xl font-semibold text-foreground">DateWise</span>
+        <header className="fixed top-0 left-0 right-0 z-50 ios-header">
+          <div className="flex items-center justify-between h-14 px-4">
+            {/* Left - Filter/Settings */}
+            <Link 
+              to="/discovery-settings"
+              className="w-10 h-10 flex items-center justify-center rounded-full haptic-light"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-foreground">
+                <path d="M4 6H20M4 12H20M4 18H12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
             </Link>
-            <div className="absolute left-1/2 transform -translate-x-1/2 w-20 h-12 cursor-default" onClick={handleAdminClick} />
-            <div className="flex items-center gap-4">
-              <Link to="/discovery-settings">
-                <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors">
-                  <Sliders className="w-5 h-5 text-foreground" />
-                </div>
-              </Link>
-              <Link to="/settings">
-                <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors">
-                  <Settings className="w-5 h-5 text-foreground" />
-                </div>
+
+            {/* Center - Title */}
+            <div 
+              className="absolute left-1/2 -translate-x-1/2 cursor-default"
+              onClick={handleAdminClick}
+            >
+              <h1 className="text-lg font-semibold text-foreground">For You</h1>
+            </div>
+
+            {/* Right - Actions */}
+            <div className="flex items-center gap-2">
+              <Link 
+                to="/settings"
+                className="w-10 h-10 flex items-center justify-center rounded-full haptic-light"
+              >
+                <Settings className="w-5 h-5 text-foreground" />
               </Link>
             </div>
           </div>
@@ -145,7 +154,7 @@ export const Layout = ({ children }: LayoutProps) => {
       )}
 
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-        <DialogContent className="rounded-3xl border-2 border-border/50">
+        <DialogContent className="liquid-glass rounded-3xl border-0">
           <DialogHeader>
             <DialogTitle>Admin Access</DialogTitle>
             <DialogDescription>Verifying admin permissions...</DialogDescription>
@@ -156,26 +165,44 @@ export const Layout = ({ children }: LayoutProps) => {
         </DialogContent>
       </Dialog>
 
-      <main className={isAdminRoute ? "flex-1" : "flex-1 pt-16 pb-20"}>{children}</main>
+      <main className={isAdminRoute ? "flex-1" : "flex-1 pt-14 pb-20"}>{children}</main>
       {!isAdminRoute && <Footer />}
 
+      {/* iOS Tab Bar */}
       {!isAdminRoute && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/30">
-          <div className="flex items-center justify-around h-16 px-4 max-w-md mx-auto">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 ios-nav pb-safe-bottom">
+          <div className="flex items-center justify-around h-20 px-2 max-w-lg mx-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);
               return (
-                <Link key={item.path} to={item.path} className="relative flex flex-col items-center justify-center gap-1 transition-all group min-w-[60px]">
+                <Link 
+                  key={item.path} 
+                  to={item.path} 
+                  className="relative flex flex-col items-center justify-center gap-1 min-w-[64px] py-2 haptic-light"
+                >
                   <div className="relative">
-                    <Icon className={`w-6 h-6 transition-colors ${active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
+                    {active && item.path === "/discover" ? (
+                      <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center">
+                        <Icon className="w-4 h-4 text-background" fill="currentColor" />
+                      </div>
+                    ) : (
+                      <Icon 
+                        className={`w-6 h-6 transition-colors duration-200 ${
+                          active ? "text-primary" : "text-muted-foreground"
+                        }`} 
+                        strokeWidth={active ? 2.5 : 2}
+                      />
+                    )}
                     {item.badge && item.badge > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                        {item.badge > 9 ? '9+' : item.badge}
+                      <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                        {item.badge > 99 ? '99+' : item.badge}
                       </span>
                     )}
                   </div>
-                  <span className={`text-xs font-medium transition-colors ${active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`}>
+                  <span className={`text-[10px] font-medium transition-colors duration-200 ${
+                    active ? "text-foreground" : "text-muted-foreground"
+                  }`}>
                     {item.label}
                   </span>
                 </Link>
