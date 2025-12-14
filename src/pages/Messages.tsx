@@ -68,7 +68,7 @@ const Messages = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [showReportDialog, setShowReportDialog] = useState(false);
+  
   const [showSettings, setShowSettings] = useState(false);
   const [chatTheme, setChatTheme] = useState(CHAT_THEMES[0]);
   const [muteNotifications, setMuteNotifications] = useState(false);
@@ -467,10 +467,12 @@ const Messages = () => {
                       Chat Settings
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-white/10" />
-                    <DropdownMenuItem onClick={() => setShowReportDialog(true)} className="rounded-xl">
-                      <AlertTriangle className="w-4 h-4 mr-2" />
-                      Report User
-                    </DropdownMenuItem>
+                    {currentMatch && (
+                      <ReportDialog 
+                        reportedUserId={currentMatch.profile.id} 
+                        reportedUserName={currentMatch.profile.name} 
+                      />
+                    )}
                     <DropdownMenuItem onClick={handleBlockUser} className="text-destructive rounded-xl">
                       <Ban className="w-4 h-4 mr-2" />
                       Block User
@@ -595,14 +597,6 @@ const Messages = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Report Dialog */}
-        {currentMatch && (
-          <ReportDialog
-            open={showReportDialog}
-            onOpenChange={setShowReportDialog}
-            reportedId={currentMatch.profile.id}
-          />
-        )}
       </div>
     </Layout>
   );
