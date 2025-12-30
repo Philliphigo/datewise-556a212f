@@ -545,10 +545,10 @@
   }
 
   .notification-badge {
-    @apply absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center;
+    @apply absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-bold flex items-center justify-center leading-none;
     background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-    box-shadow: 0 0 0 2px hsl(var(--background));
+    color: white;
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 2px 4px rgba(0,0,0,0.2);
   }
 
   /* iOS 26 Input Fields */

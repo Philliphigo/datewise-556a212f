@@ -419,15 +419,15 @@ const Discover = () => {
               )}
             </div>
 
-            {/* Expand Button - iOS 26 Capsule Style */}
+            {/* Expand Button - Text only */}
             <button 
               onClick={toggleExpand}
-              className="absolute right-5 bottom-5 w-12 h-12 rounded-full liquid-glass-light flex items-center justify-center transition-all duration-300 hover:bg-white/30 active:scale-90 z-20"
+              className="absolute right-5 bottom-5 flex items-center gap-1 transition-all duration-300 active:scale-90 z-20"
             >
               {isExpanded ? (
-                <ChevronDown className="w-6 h-6 text-white" />
+                <ChevronDown className="w-5 h-5 text-white drop-shadow-lg" />
               ) : (
-                <ChevronUp className="w-6 h-6 text-white" />
+                <ChevronUp className="w-5 h-5 text-white drop-shadow-lg" />
               )}
             </button>
           </div>
