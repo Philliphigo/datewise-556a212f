@@ -107,6 +107,13 @@ export default {
           "0%": { opacity: "0", transform: "translateY(30px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "reaction-pop": {
+          "0%": { transform: "scale(1)" },
+          "25%": { transform: "scale(0.7) rotate(-15deg)" },
+          "50%": { transform: "scale(1.3) rotate(10deg)" },
+          "75%": { transform: "scale(0.95) rotate(-5deg)" },
+          "100%": { transform: "scale(1) rotate(0deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -115,6 +122,7 @@ export default {
         "swipe-right": "swipe-right 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "swipe-left": "swipe-left 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "float-up": "float-up 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        "reaction-pop": "reaction-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
       },
     },
   },

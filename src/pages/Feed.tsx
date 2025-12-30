@@ -36,7 +36,8 @@ interface Post {
     name: string;
     avatar_url: string | null;
   };
-  userLiked: boolean;
+  userReaction: string | null;
+  reactionCounts: { [key: string]: number };
 }
 
 const Feed = () => {
@@ -84,17 +85,30 @@ const Feed = () => {
             .eq("id", post.user_id)
             .single();
 
+          // Get user's reaction
           const { data: userLike } = await supabase
             .from("post_likes")
-            .select("id")
+            .select("id, reaction_type")
             .eq("post_id", post.id)
             .eq("user_id", user?.id)
             .maybeSingle();
 
+          // Get reaction counts by type
+          const { data: allLikes } = await supabase
+            .from("post_likes")
+            .select("reaction_type")
+            .eq("post_id", post.id);
+
+          const reactionCounts: { [key: string]: number } = {};
+          (allLikes || []).forEach((like: { reaction_type: string }) => {
+            reactionCounts[like.reaction_type] = (reactionCounts[like.reaction_type] || 0) + 1;
+          });
+
           return {
             ...post,
             profile,
-            userLiked: !!userLike,
+            userReaction: userLike?.reaction_type || null,
+            reactionCounts,
           };
         })
       );
@@ -184,23 +198,33 @@ const Feed = () => {
     }
   };
 
-  const handleLike = async (postId: string, reaction: string = "like") => {
+  const handleLike = async (postId: string, reactionType: string = "like") => {
     if (!user) return;
 
     const post = posts.find((p) => p.id === postId);
     if (!post) return;
 
     try {
-      if (post.userLiked) {
+      if (post.userReaction === reactionType) {
+        // Remove reaction if clicking same type
         await supabase
           .from("post_likes")
           .delete()
           .eq("post_id", postId)
           .eq("user_id", user.id);
+      } else if (post.userReaction) {
+        // Update existing reaction to new type
+        await supabase
+          .from("post_likes")
+          .update({ reaction_type: reactionType })
+          .eq("post_id", postId)
+          .eq("user_id", user.id);
       } else {
+        // Insert new reaction
         await supabase.from("post_likes").insert({
           post_id: postId,
           user_id: user.id,
+          reaction_type: reactionType,
         });
       }
 
@@ -409,8 +433,9 @@ const Feed = () => {
                   <div className="flex items-center gap-6 pt-3 border-t border-white/10">
                     <PostReactions
                       onReact={(type) => handleLike(post.id, type)}
-                      userReaction={post.userLiked ? "like" : undefined}
+                      userReaction={post.userReaction || undefined}
                       count={post.likes_count}
+                      reactionCounts={post.reactionCounts}
                     />
                     <button 
                       onClick={() => navigate(`/post/${post.id}`)}
