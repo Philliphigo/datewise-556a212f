@@ -30,8 +30,17 @@ export const PostReactions = ({ onReact, userReaction, count, reactionCounts = {
   const [showReactions, setShowReactions] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [prevReaction, setPrevReaction] = useState<string | undefined>(userReaction);
   const isMobile = useIsMobile();
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Trigger animation when reaction changes
+  if (userReaction !== prevReaction) {
+    setPrevReaction(userReaction);
+    setIsAnimating(true);
+    setTimeout(() => setIsAnimating(false), 400);
+  }
 
   const handleCountClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -107,11 +116,18 @@ export const PostReactions = ({ onReact, userReaction, count, reactionCounts = {
             onTouchEnd={handleMouseUp}
             onClick={handleClick}
             className={cn(
-              "transition-all duration-200",
+              "transition-all duration-200 relative",
               userReaction ? "scale-110" : "hover:scale-105"
             )}
           >
-            <span className="text-xl">{displayEmoji}</span>
+            <span 
+              className={cn(
+                "text-xl inline-block transition-all duration-300",
+                isAnimating && "animate-reaction-pop"
+              )}
+            >
+              {displayEmoji}
+            </span>
           </button>
           <button 
             onClick={handleCountClick}

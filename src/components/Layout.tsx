@@ -31,9 +31,9 @@ export const Layout = ({ children }: LayoutProps) => {
 
   const navItems = [
     { icon: Flame, label: "Discover", path: "/discover" },
-    { icon: Heart, label: "Matches", path: "/matches", badge: newMatches },
+    { icon: Heart, label: "Matches", path: "/matches", badge: newMatches > 0 ? newMatches : undefined },
     { icon: Compass, label: "Feed", path: "/feed" },
-    { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages },
+    { icon: MessageCircle, label: "Messages", path: "/messages", badge: unreadMessages > 0 ? unreadMessages : undefined },
     { icon: User, label: "Profile", path: "/profile" },
   ];
 
