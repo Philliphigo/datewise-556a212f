@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const REACTIONS = [
   { type: "like", emoji: "❤️", label: "Like" },
@@ -17,12 +18,16 @@ interface PostReactionsProps {
 export const PostReactions = ({ onReact, userReaction, count }: PostReactionsProps) => {
   const [showReactions, setShowReactions] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const isMobile = useIsMobile();
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseDown = () => {
-    const timer = setTimeout(() => {
-      setShowReactions(true);
-    }, 500);
-    setLongPressTimer(timer);
+    if (isMobile) {
+      const timer = setTimeout(() => {
+        setShowReactions(true);
+      }, 500);
+      setLongPressTimer(timer);
+    }
   };
 
   const handleMouseUp = () => {
@@ -30,9 +35,28 @@ export const PostReactions = ({ onReact, userReaction, count }: PostReactionsPro
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
-    if (!showReactions) {
+    if (!showReactions && isMobile) {
       onReact("like");
     }
+  };
+
+  const handleMouseEnter = () => {
+    if (!isMobile) {
+      hoverTimeoutRef.current = setTimeout(() => {
+        setShowReactions(true);
+      }, 200);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+    }
+    setShowReactions(false);
   };
 
   const handleReactionSelect = (type: string) => {
@@ -40,20 +64,27 @@ export const PostReactions = ({ onReact, userReaction, count }: PostReactionsPro
     setShowReactions(false);
   };
 
+  const handleClick = () => {
+    if (!isMobile && !showReactions) {
+      onReact("like");
+    }
+  };
+
   const currentReaction = REACTIONS.find(r => r.type === userReaction);
   const displayEmoji = currentReaction?.emoji || "🤍";
 
   return (
-    <div className="relative">
+    <div 
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <button
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
-        onMouseLeave={() => {
-          if (longPressTimer) clearTimeout(longPressTimer);
-          setShowReactions(false);
-        }}
         onTouchStart={handleMouseDown}
         onTouchEnd={handleMouseUp}
+        onClick={handleClick}
         className={cn(
           "flex items-center gap-2 transition-all duration-200",
           userReaction ? "scale-110" : "hover:scale-105"
