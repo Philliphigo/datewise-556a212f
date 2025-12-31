@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Heart, Sparkles, Shield, Zap } from "lucide-react";
+import { Heart, Sparkles, Shield, Zap, Star, Orbit } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroBg from "@/assets/hero-bg.jpg";
 
 const Landing = () => {
   const features = [
@@ -29,92 +28,142 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen overflow-hidden relative bg-background">
-      {/* Animated Blur Background */}
+      {/* Starfield Background */}
+      <div className="starfield" />
+      
+      {/* Nebula Gradients */}
+      <div className="absolute inset-0 nebula-gradient pointer-events-none" />
+      
+      {/* Animated Cosmic Orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-20 w-96 h-96 bg-pink-500/30 rounded-full animate-float" style={{ filter: 'blur(80px)', animationDelay: '0s', animationDuration: '8s' }} />
-        <div className="absolute top-40 right-32 w-80 h-80 bg-purple-500/20 rounded-full animate-float" style={{ filter: 'blur(70px)', animationDelay: '2s', animationDuration: '10s' }} />
-        <div className="absolute bottom-32 left-40 w-72 h-72 bg-pink-400/25 rounded-full animate-float" style={{ filter: 'blur(90px)', animationDelay: '4s', animationDuration: '12s' }} />
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-rose-500/20 rounded-full animate-float" style={{ filter: 'blur(85px)', animationDelay: '1s', animationDuration: '9s' }} />
+        <div 
+          className="absolute w-[600px] h-[600px] rounded-full animate-cosmic-float opacity-30"
+          style={{ 
+            background: 'radial-gradient(circle, hsla(42, 92%, 56%, 0.15), transparent 70%)',
+            top: '-10%',
+            right: '-10%',
+            animationDelay: '0s'
+          }} 
+        />
+        <div 
+          className="absolute w-[500px] h-[500px] rounded-full animate-cosmic-float opacity-25"
+          style={{ 
+            background: 'radial-gradient(circle, hsla(260, 60%, 50%, 0.15), transparent 70%)',
+            bottom: '-5%',
+            left: '-15%',
+            animationDelay: '2s'
+          }} 
+        />
+        <div 
+          className="absolute w-[400px] h-[400px] rounded-full animate-cosmic-float opacity-20"
+          style={{ 
+            background: 'radial-gradient(circle, hsla(200, 100%, 50%, 0.12), transparent 70%)',
+            top: '40%',
+            left: '60%',
+            animationDelay: '4s'
+          }} 
+        />
       </div>
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-background/40" />
-        
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center space-y-8 animate-fade-in">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <Heart className="w-16 h-16 text-pink-500 animate-glow" fill="currentColor" />
+          <div className="max-w-4xl mx-auto text-center space-y-8">
+            {/* Logo with Glow */}
+            <div className="flex items-center justify-center gap-3 mb-6 animate-spring-in">
+              <div className="relative">
+                <div className="absolute inset-0 blur-2xl bg-primary/50 animate-pulse-soft" />
+                <Orbit className="w-16 h-16 text-primary relative animate-cosmic-float" strokeWidth={1.5} />
+              </div>
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-bold text-foreground animate-float">
+            {/* Title with Golden Gradient */}
+            <h1 
+              className="text-6xl md:text-8xl font-display font-bold tracking-tight animate-spring-in text-gradient-gold"
+              style={{ animationDelay: '0.1s' }}
+            >
               DateWise
             </h1>
             
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Connect With Meaning. Find Your Perfect Match.
+            {/* Tagline */}
+            <p 
+              className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto animate-float-up font-light"
+              style={{ animationDelay: '0.2s' }}
+            >
+              Explore the universe of connection. Find your cosmic match.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
+            {/* CTA Buttons */}
+            <div 
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8 animate-float-up"
+              style={{ animationDelay: '0.3s' }}
+            >
               <Link to="/auth?mode=signup">
                 <Button
                   size="lg"
-                  className="bg-pink-500 hover:bg-pink-600 text-white border-0 transition-all transform hover:scale-105 px-8 py-6 text-lg rounded-full shadow-lg shadow-pink-500/30"
+                  className="pill-button px-10 py-7 text-lg group"
                 >
-                  Join Now
+                  <span>Begin Your Journey</span>
+                  <Star className="w-5 h-5 ml-2 group-hover:animate-spring-bounce" />
                 </Button>
               </Link>
               <Link to="/auth?mode=signin">
                 <Button
                   size="lg"
-                  variant="outline"
-                  className="floating-card border-2 border-border hover:border-pink-500/40 px-8 py-6 text-lg rounded-full"
+                  variant="ghost"
+                  className="floating-card border border-primary/20 hover:border-primary/50 px-10 py-7 text-lg text-foreground"
                 >
                   Sign In
                 </Button>
               </Link>
             </div>
-          </div>
-        </div>
 
-        {/* Floating Hearts */}
-        <div className="absolute inset-0 pointer-events-none">
-          {[...Array(6)].map((_, i) => (
-            <Heart
-              key={i}
-              className="absolute text-pink-500/20 animate-float"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${i * 0.5}s`,
-                fontSize: `${Math.random() * 20 + 10}px`,
-              }}
-              fill="currentColor"
-            />
-          ))}
+            {/* Floating Celestial Elements */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              {[...Array(8)].map((_, i) => (
+                <Star
+                  key={i}
+                  className="absolute text-primary/30 animate-cosmic-float"
+                  style={{
+                    left: `${10 + Math.random() * 80}%`,
+                    top: `${10 + Math.random() * 80}%`,
+                    animationDelay: `${i * 0.7}s`,
+                    width: `${12 + Math.random() * 16}px`,
+                    height: `${12 + Math.random() * 16}px`,
+                  }}
+                  fill="currentColor"
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-24 relative">
+      <section className="py-32 relative">
         <div className="container mx-auto px-4 relative z-10">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-foreground">
+          <h2 
+            className="text-4xl md:text-6xl font-display font-bold text-center mb-4 text-gradient-gold"
+          >
             Why DateWise?
           </h2>
+          <p className="text-center text-muted-foreground mb-16 text-lg">
+            Discover what makes us different
+          </p>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
                 <div
                   key={index}
-                  className="floating-card p-8 text-center space-y-4 hover:scale-105 transition-transform animate-scale-in"
-                  style={{ animationDelay: `${index * 0.1}s` }}
+                  className="floating-card p-8 text-center space-y-4 group animate-float-up"
+                  style={{ animationDelay: `${0.1 * index}s` }}
                 >
-                  <div className="w-16 h-16 mx-auto bg-pink-500/10 rounded-full flex items-center justify-center">
-                    <Icon className="w-8 h-8 text-pink-500" />
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 group-hover:bg-primary/20">
+                    <Icon className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold">{feature.title}</h3>
+                  <h3 className="text-xl font-display font-semibold text-foreground">{feature.title}</h3>
                   <p className="text-muted-foreground">{feature.description}</p>
                 </div>
               );
@@ -123,19 +172,27 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 relative overflow-hidden">
+      {/* Final CTA Section */}
+      <section className="py-32 relative overflow-hidden">
+        {/* Cosmic Glow Background */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse 60% 50% at 50% 50%, hsla(42, 92%, 56%, 0.1), transparent)'
+          }}
+        />
+        
         <div className="container mx-auto px-4 relative z-10 text-center space-y-8">
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+          <h2 className="text-4xl md:text-6xl font-display font-bold text-gradient-gold">
             Ready to Find Your Match?
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Join thousands of people finding meaningful connections every day
+            Join thousands exploring meaningful connections in the cosmic realm
           </p>
           <Link to="/auth?mode=signup">
             <Button
               size="lg"
-              className="bg-pink-500 hover:bg-pink-600 text-white border-0 transition-all transform hover:scale-105 px-12 py-8 text-xl rounded-full shadow-lg shadow-pink-500/30"
+              className="pill-button px-14 py-8 text-xl animate-glow-pulse"
             >
               Get Started Free
             </Button>
