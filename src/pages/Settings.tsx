@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Shield, Bell, Eye, Trash2, Moon, Sun, AlertTriangle, ChevronDown, User, BadgeCheck, UserX, MessageSquare, Heart, Sparkles, X, Plus } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { VerificationRequest } from "@/components/VerificationRequest";
 import { BlockedUsers } from "@/components/BlockedUsers";
@@ -370,10 +371,10 @@ const Settings = () => {
                 <div className="p-4 pt-0">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <p className="font-medium">Dark Mode</p>
-                      <p className="text-sm text-muted-foreground">Enable dark theme</p>
+                      <p className="font-medium">Theme</p>
+                      <p className="text-sm text-muted-foreground">Switch between light and dark mode</p>
                     </div>
-                    <LiquidToggle checked={darkMode} onCheckedChange={toggleDarkMode} />
+                    <ThemeToggle />
                   </div>
                 </div>
               </CollapsibleContent>
