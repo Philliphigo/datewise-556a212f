@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, User, Compass, Flame, Settings, Sparkles } from "lucide-react";
+import { Heart, MessageCircle, User, Compass, Flame, Settings, Sparkles, Moon, Sun } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Footer } from "./Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +28,24 @@ export const Layout = ({ children }: LayoutProps) => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [newMatches, setNewMatches] = useState(0);
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
+
+  const toggleTheme = () => {
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    if (newIsDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
 
   const navItems = [
     { icon: Flame, label: "Discover", path: "/discover" },
@@ -156,11 +174,22 @@ export const Layout = ({ children }: LayoutProps) => {
               <h1 className="text-lg font-semibold text-foreground tracking-tight">{getPageTitle()}</h1>
             </div>
 
-            {/* Right - Settings */}
+            {/* Right - Theme Toggle & Settings */}
             <div className="flex items-center gap-1">
+              <button 
+                onClick={toggleTheme}
+                className="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-primary/10 active:scale-95"
+                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {isDark ? (
+                  <Sun className="w-5 h-5 text-primary" />
+                ) : (
+                  <Moon className="w-5 h-5 text-foreground" />
+                )}
+              </button>
               <Link 
                 to="/settings"
-                className="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+                className="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-primary/10 active:scale-95"
               >
                 <Settings className="w-5 h-5 text-foreground" />
               </Link>
