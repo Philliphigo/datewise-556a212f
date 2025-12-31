@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,131 +6,89 @@
 
 @layer base {
   :root {
-    /* iOS 26 Liquid Glass - Pure Light Theme */
-    --background: 0 0% 98%;
-    --foreground: 0 0% 9%;
+    /* Cosmic Dark - Midnight Gold Theme */
+    --background: 230 25% 8%;
+    --foreground: 45 20% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
+    --card: 230 20% 12%;
+    --card-foreground: 45 20% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    --popover: 230 20% 10%;
+    --popover-foreground: 45 20% 95%;
 
-    /* Pure Pink Primary - iOS 26 Optimized */
-    --primary: 338 100% 50%;
-    --primary-foreground: 0 0% 100%;
-    --primary-soft: 338 90% 60%;
-    --primary-glow: 338 100% 65%;
+    /* Golden Primary */
+    --primary: 42 92% 56%;
+    --primary-foreground: 230 25% 8%;
+    --primary-soft: 42 80% 65%;
+    --primary-glow: 42 100% 70%;
     
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 9%;
+    --secondary: 230 15% 18%;
+    --secondary-foreground: 45 20% 95%;
 
-    --accent: 0 0% 94%;
-    --accent-foreground: 0 0% 9%;
+    --accent: 260 60% 65%;
+    --accent-foreground: 45 20% 95%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 230 15% 20%;
+    --muted-foreground: 230 10% 55%;
 
-    /* iOS 26 System Colors */
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    /* Cosmic System Colors */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 45 20% 95%;
 
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
+    --success: 160 84% 39%;
+    --success-foreground: 230 25% 8%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 9%;
+    --warning: 42 92% 56%;
+    --warning-foreground: 230 25% 8%;
 
-    --info: 211 100% 50%;
-    --info-foreground: 0 0% 100%;
+    --info: 200 100% 50%;
+    --info-foreground: 230 25% 8%;
 
-    --star: 211 100% 50%;
-    --boost: 280 100% 60%;
+    --star: 200 100% 60%;
+    --boost: 280 100% 70%;
 
-    --border: 0 0% 89%;
-    --input: 0 0% 96%;
-    --ring: 338 100% 50%;
+    --border: 230 15% 22%;
+    --input: 230 15% 15%;
+    --ring: 42 92% 56%;
 
     --radius: 1.5rem;
 
-    /* iOS 26 Liquid Glass Effects - Based on WWDC 2025 */
-    --glass-bg: rgba(255, 255, 255, 0.72);
-    --glass-bg-heavy: rgba(255, 255, 255, 0.88);
-    --glass-bg-light: rgba(255, 255, 255, 0.45);
-    --glass-border: rgba(255, 255, 255, 0.6);
+    /* Cosmic Glass Effects */
+    --glass-bg: rgba(18, 20, 35, 0.85);
+    --glass-bg-heavy: rgba(12, 14, 28, 0.95);
+    --glass-bg-light: rgba(30, 35, 55, 0.6);
+    --glass-border: rgba(255, 215, 100, 0.12);
     --glass-blur: 40px;
     --glass-saturate: 180%;
     
-    /* iOS 26 Specular Highlights */
-    --specular-top: rgba(255, 255, 255, 0.8);
-    --specular-edge: rgba(255, 255, 255, 0.4);
+    /* Cosmic Specular Highlights */
+    --specular-top: rgba(255, 215, 100, 0.15);
+    --specular-edge: rgba(255, 255, 255, 0.05);
     
-    /* iOS 26 Dual-Layer Shadows */
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
-    --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.08);
+    /* Cosmic Shadows */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.7), 0 4px 16px rgba(0, 0, 0, 0.5);
     
-    /* iOS 26 Colored Glow Shadows */
-    --shadow-glow-pink: 0 8px 32px hsla(338, 100%, 50%, 0.35);
-    --shadow-glow-green: 0 8px 32px hsla(142, 71%, 45%, 0.35);
-    --shadow-glow-blue: 0 8px 32px hsla(211, 100%, 50%, 0.35);
-    --shadow-glow-yellow: 0 8px 32px hsla(38, 92%, 50%, 0.35);
-    --shadow-glow-purple: 0 8px 32px hsla(280, 100%, 60%, 0.35);
+    /* Cosmic Glow Shadows */
+    --shadow-glow-gold: 0 8px 32px hsla(42, 92%, 56%, 0.4);
+    --shadow-glow-purple: 0 8px 32px hsla(260, 60%, 65%, 0.35);
+    --shadow-glow-cyan: 0 8px 32px hsla(200, 100%, 50%, 0.35);
+    --shadow-glow-green: 0 8px 32px hsla(160, 84%, 39%, 0.35);
+    --shadow-glow-red: 0 8px 32px hsla(0, 72%, 51%, 0.35);
 
-    /* iOS 26 SwiftUI Spring Animations */
+    /* Springy Animation Curves */
     --spring-snappy: cubic-bezier(0.2, 0.9, 0.3, 1.2);
     --spring-bouncy: cubic-bezier(0.34, 1.56, 0.64, 1);
     --spring-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+    --spring-wobbly: cubic-bezier(0.175, 0.885, 0.32, 1.275);
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .dark {
-    --background: 0 0% 7%;
-    --foreground: 0 0% 98%;
-
-    --card: 0 0% 11%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 0 0% 11%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 338 100% 55%;
-    --primary-foreground: 0 0% 100%;
-    --primary-soft: 338 90% 65%;
-    --primary-glow: 338 100% 70%;
-
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 98%;
-
-    --accent: 0 0% 18%;
-    --accent-foreground: 0 0% 98%;
-
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
-
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-
-    --success: 142 71% 50%;
-    --warning: 38 92% 55%;
-    --info: 211 100% 55%;
-    --star: 211 100% 60%;
-    --boost: 280 100% 65%;
-
-    --border: 0 0% 18%;
-    --input: 0 0% 15%;
-    --ring: 338 100% 55%;
-
-    /* Dark Mode Liquid Glass - iOS 26 */
-    --glass-bg: rgba(40, 40, 45, 0.75);
-    --glass-bg-heavy: rgba(40, 40, 45, 0.92);
-    --glass-bg-light: rgba(50, 50, 55, 0.5);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    
-    --specular-top: rgba(255, 255, 255, 0.12);
-    --specular-edge: rgba(255, 255, 255, 0.05);
+    /* Dark mode is the default for cosmic theme */
   }
 
   .hide-scrollbar::-webkit-scrollbar {
@@ -150,7 +108,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: 'kern' 1;
@@ -158,14 +116,13 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
-    /* iOS 26 Bolder text rendering */
-    font-weight: 600;
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    @apply font-bold tracking-tight;
   }
 }
 
 @layer utilities {
-  /* iOS 26 Liquid Glass Card - Authentic Implementation */
+  /* Cosmic Liquid Glass Card */
   .liquid-glass {
     background: var(--glass-bg);
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
@@ -192,87 +149,78 @@
     background: var(--glass-bg-light);
     backdrop-filter: blur(24px) saturate(150%);
     -webkit-backdrop-filter: blur(24px) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 215, 100, 0.08);
   }
 
-  /* iOS 26 Navigation Bar - From WWDC 2025 */
+  /* Cosmic Navigation Bar */
   .ios-nav {
-    background: var(--glass-bg-heavy);
+    background: linear-gradient(180deg, var(--glass-bg-heavy), rgba(8, 10, 22, 0.98));
     backdrop-filter: blur(50px) saturate(180%);
     -webkit-backdrop-filter: blur(50px) saturate(180%);
-    border-top: 0.5px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.03);
+    border-top: 1px solid rgba(255, 215, 100, 0.1);
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.5);
   }
 
-  .dark .ios-nav {
-    border-top: 0.5px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
-  }
-
-  /* iOS 26 Header Bar */
+  /* Cosmic Header Bar */
   .ios-header {
-    background: var(--glass-bg);
+    background: linear-gradient(180deg, rgba(8, 10, 22, 0.98), var(--glass-bg-heavy));
     backdrop-filter: blur(40px) saturate(180%);
     -webkit-backdrop-filter: blur(40px) saturate(180%);
-    border-bottom: 0.5px solid rgba(0, 0, 0, 0.04);
+    border-bottom: 1px solid rgba(255, 215, 100, 0.08);
   }
 
-  .dark .ios-header {
-    border-bottom: 0.5px solid rgba(255, 255, 255, 0.05);
-  }
-
-  /* iOS 26 Capsule Shapes - Primary for touch interfaces */
+  /* Capsule Shapes */
   .capsule {
     border-radius: 9999px;
   }
 
-  /* iOS 26 Action Button Styles */
+  /* Cosmic Action Button Styles */
   .action-btn {
     @apply rounded-full flex items-center justify-center;
     transform-origin: center;
-    transition: all 0.25s var(--spring-snappy);
+    transition: all 0.3s var(--spring-bouncy);
     will-change: transform, box-shadow;
   }
 
   .action-btn:hover {
-    transform: scale(1.08);
+    transform: scale(1.12);
   }
 
   .action-btn:active {
-    transform: scale(0.92);
-    transition-duration: 0.1s;
+    transform: scale(0.88);
+    transition-duration: 0.15s;
   }
 
   .action-btn-pass {
-    @apply bg-white dark:bg-card;
-    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.8);
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(230 20% 15%) 100%);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.1);
   }
 
   .action-btn-pass:hover {
-    box-shadow: var(--shadow-lg), 0 0 20px rgba(255,59,48,0.2);
+    box-shadow: var(--shadow-lg), var(--shadow-glow-red);
   }
 
   .action-btn-rewind {
-    @apply bg-white dark:bg-card;
-    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.8);
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(230 20% 15%) 100%);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.1);
   }
 
   .action-btn-rewind:hover {
-    box-shadow: var(--shadow-glow-yellow);
+    box-shadow: var(--shadow-glow-gold);
   }
 
   .action-btn-star {
-    @apply bg-white dark:bg-card;
-    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.8);
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(230 20% 15%) 100%);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.1);
   }
 
   .action-btn-star:hover {
-    box-shadow: var(--shadow-glow-blue);
+    box-shadow: var(--shadow-glow-cyan);
   }
 
   .action-btn-like {
-    @apply bg-white dark:bg-card;
-    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.8);
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(230 20% 15%) 100%);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.1);
   }
 
   .action-btn-like:hover {
@@ -280,51 +228,121 @@
   }
 
   .action-btn-message {
-    @apply bg-white dark:bg-card;
-    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.8);
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(230 20% 15%) 100%);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.1);
   }
 
   .action-btn-message:hover {
     box-shadow: var(--shadow-glow-purple);
   }
 
-  /* iOS 26 Profile Card with Concentric Shapes */
+  /* Profile Card with Cosmic Glow */
   .profile-card {
     @apply relative overflow-hidden;
     border-radius: 1.75rem;
-    box-shadow: var(--shadow-xl);
+    box-shadow: var(--shadow-xl), 0 0 60px rgba(0, 0, 0, 0.4);
   }
 
-  /* iOS 26 Photo Progress Indicators */
+  /* Photo Progress Indicators */
   .photo-progress {
     @apply flex gap-1.5 px-3;
   }
 
   .photo-progress-segment {
     @apply h-[3px] flex-1 rounded-full transition-all duration-300;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
   }
 
   .photo-progress-segment.active {
-    @apply bg-white;
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary-glow)));
   }
 
   .photo-progress-segment.inactive {
-    @apply bg-white/40;
+    @apply bg-white/30;
   }
 
-  /* iOS 26 SwiftUI-Inspired Keyframe Animations */
+  /* Cosmic Starfield Background */
+  .starfield {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: 
+      radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.8), transparent),
+      radial-gradient(1px 1px at 40% 70%, rgba(255, 215, 100, 0.6), transparent),
+      radial-gradient(1.5px 1.5px at 60% 20%, rgba(255, 255, 255, 0.9), transparent),
+      radial-gradient(1px 1px at 80% 90%, rgba(200, 180, 255, 0.7), transparent),
+      radial-gradient(1px 1px at 10% 80%, rgba(255, 255, 255, 0.5), transparent),
+      radial-gradient(1.5px 1.5px at 70% 50%, rgba(255, 215, 100, 0.8), transparent),
+      radial-gradient(1px 1px at 90% 30%, rgba(255, 255, 255, 0.6), transparent),
+      radial-gradient(1px 1px at 30% 50%, rgba(200, 180, 255, 0.5), transparent);
+    background-size: 250px 250px;
+    animation: twinkle 8s ease-in-out infinite alternate;
+  }
+
+  @keyframes twinkle {
+    0% { opacity: 0.4; }
+    100% { opacity: 0.8; }
+  }
+
+  /* Cosmic Nebula Gradients */
+  .nebula-gradient {
+    background: 
+      radial-gradient(ellipse 80% 50% at 20% 40%, hsla(260, 60%, 30%, 0.4), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 60%, hsla(42, 60%, 25%, 0.3), transparent),
+      radial-gradient(ellipse 100% 80% at 50% 100%, hsla(200, 60%, 20%, 0.25), transparent);
+  }
+
+  /* Springy Keyframe Animations */
   @keyframes spring-in {
     0% {
       opacity: 0;
-      transform: scale(0.88) translateY(16px);
+      transform: scale(0.6) translateY(30px);
     }
-    60% {
-      transform: scale(1.02) translateY(-3px);
+    50% {
+      transform: scale(1.08) translateY(-8px);
+    }
+    70% {
+      transform: scale(0.95) translateY(2px);
     }
     100% {
       opacity: 1;
       transform: scale(1) translateY(0);
+    }
+  }
+
+  @keyframes spring-bounce {
+    0% {
+      transform: scale(1);
+    }
+    25% {
+      transform: scale(0.9);
+    }
+    50% {
+      transform: scale(1.15);
+    }
+    75% {
+      transform: scale(0.95);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes spring-pop {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    60% {
+      transform: scale(1.2);
+    }
+    80% {
+      transform: scale(0.9);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
     }
   }
 
@@ -334,7 +352,7 @@
       opacity: 1;
     }
     100% {
-      transform: translateX(120%) rotate(15deg);
+      transform: translateX(120%) rotate(20deg);
       opacity: 0;
     }
   }
@@ -345,7 +363,7 @@
       opacity: 1;
     }
     100% {
-      transform: translateX(-120%) rotate(-15deg);
+      transform: translateX(-120%) rotate(-20deg);
       opacity: 0;
     }
   }
@@ -353,11 +371,11 @@
   @keyframes float-up {
     0% {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(40px) scale(0.9);
     }
     100% {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
     }
   }
 
@@ -369,7 +387,10 @@
   @keyframes scale-up {
     0% {
       opacity: 0;
-      transform: scale(0.95);
+      transform: scale(0.8);
+    }
+    60% {
+      transform: scale(1.05);
     }
     100% {
       opacity: 1;
@@ -391,17 +412,17 @@
       opacity: 1;
     }
     50% {
-      opacity: 0.7;
+      opacity: 0.6;
     }
   }
 
   @keyframes bounce-in {
     0% {
-      transform: scale(0.3);
+      transform: scale(0);
       opacity: 0;
     }
     50% {
-      transform: scale(1.05);
+      transform: scale(1.25);
     }
     70% {
       transform: scale(0.9);
@@ -436,45 +457,74 @@
 
   @keyframes glow-pulse {
     0%, 100% {
-      box-shadow: 0 0 20px hsla(338, 100%, 50%, 0.3);
+      box-shadow: 0 0 20px hsla(42, 92%, 56%, 0.3);
     }
     50% {
-      box-shadow: 0 0 40px hsla(338, 100%, 50%, 0.5);
+      box-shadow: 0 0 50px hsla(42, 92%, 56%, 0.6);
+    }
+  }
+
+  @keyframes cosmic-float {
+    0%, 100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    25% {
+      transform: translateY(-15px) rotate(2deg);
+    }
+    75% {
+      transform: translateY(10px) rotate(-2deg);
+    }
+  }
+
+  @keyframes golden-shimmer {
+    0% {
+      background-position: -200% center;
+    }
+    100% {
+      background-position: 200% center;
     }
   }
 
   .animate-spring-in {
-    animation: spring-in 0.5s var(--spring-bouncy) forwards;
+    animation: spring-in 0.7s var(--spring-bouncy) forwards;
+  }
+
+  .animate-spring-bounce {
+    animation: spring-bounce 0.5s var(--spring-bouncy);
+  }
+
+  .animate-spring-pop {
+    animation: spring-pop 0.5s var(--spring-bouncy) forwards;
   }
 
   .animate-swipe-right {
-    animation: swipe-right 0.35s var(--ease-out-expo) forwards;
+    animation: swipe-right 0.4s var(--ease-out-expo) forwards;
   }
 
   .animate-swipe-left {
-    animation: swipe-left 0.35s var(--ease-out-expo) forwards;
+    animation: swipe-left 0.4s var(--ease-out-expo) forwards;
   }
 
   .animate-float-up {
-    animation: float-up 0.45s var(--ease-out-expo) forwards;
+    animation: float-up 0.6s var(--spring-bouncy) forwards;
   }
 
   .animate-fade-in {
-    animation: fade-in 0.25s ease-out forwards;
+    animation: fade-in 0.3s ease-out forwards;
   }
 
   .animate-scale-up {
-    animation: scale-up 0.3s var(--spring-smooth) forwards;
+    animation: scale-up 0.4s var(--spring-bouncy) forwards;
   }
 
   .animate-shimmer {
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 215, 100, 0.3), transparent);
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
   }
 
   .animate-pulse-soft {
-    animation: pulse-soft 2s ease-in-out infinite;
+    animation: pulse-soft 2.5s ease-in-out infinite;
   }
 
   .animate-bounce-in {
@@ -482,90 +532,102 @@
   }
 
   .animate-slide-in-right {
-    animation: slide-in-right 0.4s var(--ease-out-expo) forwards;
+    animation: slide-in-right 0.5s var(--spring-bouncy) forwards;
   }
 
   .animate-slide-in-up {
-    animation: slide-in-up 0.4s var(--ease-out-expo) forwards;
+    animation: slide-in-up 0.5s var(--spring-bouncy) forwards;
   }
 
   .animate-glow-pulse {
-    animation: glow-pulse 2s ease-in-out infinite;
+    animation: glow-pulse 2.5s ease-in-out infinite;
   }
 
-  /* iOS 26 Gradient Overlays */
+  .animate-cosmic-float {
+    animation: cosmic-float 6s ease-in-out infinite;
+  }
+
+  .animate-golden-shimmer {
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary-glow)), hsl(var(--primary)));
+    background-size: 200% auto;
+    animation: golden-shimmer 3s linear infinite;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
+  /* Gradient Overlays */
   .gradient-overlay-bottom {
     background: linear-gradient(
       to top,
-      rgba(0, 0, 0, 0.65) 0%,
-      rgba(0, 0, 0, 0.35) 35%,
-      rgba(0, 0, 0, 0.08) 65%,
+      rgba(8, 10, 22, 0.95) 0%,
+      rgba(8, 10, 22, 0.7) 30%,
+      rgba(8, 10, 22, 0.3) 60%,
       transparent 100%
     );
   }
 
-  /* iOS 26 Scroll Edge Effects - Soft Style */
+  /* Scroll Edge Effects */
   .scroll-edge-soft {
     mask-image: linear-gradient(to bottom, transparent, black 8px, black calc(100% - 8px), transparent);
   }
 
-  /* iOS 26 Haptic Feedback Simulation */
+  /* Haptic Feedback Simulation with Spring */
   .haptic-light:active {
-    transform: scale(0.98);
-    transition: transform 0.1s ease-out;
+    transform: scale(0.97);
+    transition: transform 0.15s var(--spring-bouncy);
   }
 
   .haptic-medium:active {
-    transform: scale(0.95);
-    transition: transform 0.1s ease-out;
+    transform: scale(0.94);
+    transition: transform 0.15s var(--spring-bouncy);
   }
 
   .haptic-heavy:active {
-    transform: scale(0.92);
-    transition: transform 0.08s ease-out;
+    transform: scale(0.88);
+    transition: transform 0.12s var(--spring-bouncy);
   }
 
-  /* iOS 26 Focus States */
+  /* Focus States with Gold Glow */
   .focus-ring:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 4px hsla(338, 100%, 50%, 0.3);
+    box-shadow: 0 0 0 4px hsla(42, 92%, 56%, 0.35);
   }
 
-  /* iOS 26 Separator */
+  /* Cosmic Separator */
   .ios-separator {
     @apply h-px;
-    background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
+    background: linear-gradient(90deg, transparent, hsla(42, 92%, 56%, 0.2), transparent);
   }
 
-  /* iOS 26 Badge Notification Dot */
+  /* Notification Badge with Gold */
   .notification-dot {
     @apply absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full;
     background: hsl(var(--primary));
-    box-shadow: 0 0 0 2px hsl(var(--background));
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 10px hsla(42, 92%, 56%, 0.5);
   }
 
   .notification-badge {
     @apply absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-bold flex items-center justify-center leading-none;
-    background: hsl(var(--primary));
-    color: white;
-    box-shadow: 0 0 0 2px hsl(var(--background)), 0 2px 4px rgba(0,0,0,0.2);
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    color: hsl(var(--background));
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 2px 8px rgba(0,0,0,0.3), 0 0 12px hsla(42, 92%, 56%, 0.4);
   }
 
-  /* iOS 26 Input Fields */
+  /* Cosmic Input Fields */
   .ios-input {
     @apply rounded-xl px-4 py-3;
     background: var(--glass-bg-light);
     border: 1px solid var(--glass-border);
-    transition: all 0.2s ease;
+    transition: all 0.3s var(--spring-smooth);
   }
 
   .ios-input:focus {
     background: var(--glass-bg);
     border-color: hsl(var(--primary));
-    box-shadow: 0 0 0 3px hsla(338, 100%, 50%, 0.15);
+    box-shadow: 0 0 0 3px hsla(42, 92%, 56%, 0.2), 0 0 20px hsla(42, 92%, 56%, 0.1);
   }
 
-  /* iOS 26 Cards with Inner Glow */
+  /* Cards with Golden Inner Glow */
   .card-glow {
     position: relative;
   }
@@ -594,53 +656,55 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  /* iOS 26 Avatar Ring */
+  /* Cosmic Avatar Ring */
   .avatar-ring {
-    box-shadow: 0 0 0 3px hsl(var(--background)), 0 0 0 5px hsl(var(--primary));
+    box-shadow: 0 0 0 3px hsl(var(--background)), 0 0 0 5px hsl(var(--primary)), 0 0 15px hsla(42, 92%, 56%, 0.3);
   }
 
-  /* iOS 26 Online Indicator */
+  /* Online Indicator */
   .online-indicator {
     @apply absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full;
     background: hsl(var(--success));
-    box-shadow: 0 0 0 2.5px hsl(var(--background));
+    box-shadow: 0 0 0 2.5px hsl(var(--background)), 0 0 8px hsla(160, 84%, 39%, 0.5);
   }
 
-  /* iOS 26 Skeleton Loading */
+  /* Skeleton Loading with Gold Shimmer */
   .skeleton {
     background: linear-gradient(90deg, 
       hsl(var(--muted)) 25%, 
-      hsl(var(--muted) / 0.5) 50%, 
+      hsla(42, 92%, 56%, 0.1) 50%, 
       hsl(var(--muted)) 75%
     );
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }
 
-  /* iOS 26 Pill Button */
+  /* Cosmic Pill Button */
   .pill-button {
-    @apply px-5 py-2.5 rounded-full font-medium transition-all duration-200;
-    background: hsl(var(--primary));
+    @apply px-6 py-3 rounded-full font-semibold transition-all duration-300;
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
     color: hsl(var(--primary-foreground));
-    box-shadow: var(--shadow-md), var(--shadow-glow-pink);
+    box-shadow: var(--shadow-md), var(--shadow-glow-gold);
+    transition: all 0.3s var(--spring-bouncy);
   }
 
   .pill-button:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-lg), 0 12px 40px hsla(338, 100%, 50%, 0.4);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: var(--shadow-lg), 0 15px 50px hsla(42, 92%, 56%, 0.5);
   }
 
   .pill-button:active {
-    transform: translateY(0) scale(0.98);
+    transform: translateY(0) scale(0.97);
   }
 
-  /* iOS 26 List Item */
+  /* Cosmic List Item */
   .list-item {
-    @apply flex items-center gap-4 p-4 rounded-2xl transition-all duration-200;
+    @apply flex items-center gap-4 p-4 rounded-2xl transition-all duration-300;
   }
 
   .list-item:hover {
     background: var(--glass-bg-light);
+    transform: translateX(4px);
   }
 
   .list-item:active {
@@ -648,9 +712,50 @@
     transform: scale(0.99);
   }
 
-  /* iOS 26 Tab Indicator */
+  /* Tab Indicator with Gold */
   .tab-indicator {
     @apply h-0.5 rounded-full;
-    background: hsl(var(--primary));
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+  }
+
+  /* Cosmic Text Gradient */
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-glow)) 50%, hsl(var(--primary)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Cosmic Border Gradient */
+  .border-gradient-gold {
+    position: relative;
+    border: none;
+  }
+
+  .border-gradient-gold::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)), hsl(var(--primary)));
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    pointer-events: none;
+  }
+
+  /* Floating Card with Cosmic Style */
+  .floating-card {
+    @apply rounded-3xl;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s var(--spring-bouncy);
+  }
+
+  .floating-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl), 0 0 40px hsla(42, 92%, 56%, 0.15);
   }
 }
