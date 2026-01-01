@@ -222,7 +222,7 @@ const DiscoverySettingsNew = () => {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="flex gap-2 mt-4">
-                  {["all", "male", "female", "other"].map((gender) => (
+                  {["all", "male", "female"].map((gender) => (
                     <Button
                       key={gender}
                       variant={settings.genderPreference === gender ? "default" : "outline"}
