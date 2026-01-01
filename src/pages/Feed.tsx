@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { PostReactions } from "@/components/PostReactions";
 import { FeedCategories } from "@/components/FeedCategories";
 import { useNavigate } from "react-router-dom";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator, PullToRefreshContainer } from "@/components/PullToRefresh";
 import {
   Collapsible,
   CollapsibleContent,
@@ -53,15 +55,7 @@ const Feed = () => {
   const [postCategory, setPostCategory] = useState("");
   const [showCreatePost, setShowCreatePost] = useState(false);
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    fetchPosts();
-  }, [user, navigate, selectedCategory]);
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       let query = supabase
         .from("posts")
@@ -123,7 +117,36 @@ const Feed = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCategory, user?.id, toast]);
+
+  // Pull to refresh
+  const handleRefresh = useCallback(async () => {
+    await fetchPosts();
+    toast({
+      title: "Refreshed!",
+      description: "Feed updated with latest posts",
+    });
+  }, [fetchPosts, toast]);
+
+  const {
+    containerRef,
+    pullDistance,
+    isRefreshing,
+    isTriggered,
+    progress,
+    handlers,
+  } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    threshold: 80,
+  });
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    fetchPosts();
+  }, [user, navigate, fetchPosts]);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -270,16 +293,35 @@ const Feed = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-6 max-w-2xl space-y-4 pb-32">
-        {/* Header */}
-        <div className="text-center space-y-2 animate-float-up">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full liquid-glass mb-2">
-            <Compass className="w-5 h-5 text-primary" />
-            <span className="text-sm font-medium">Connect</span>
+      <div 
+        ref={containerRef}
+        className="relative container mx-auto px-4 py-6 max-w-2xl space-y-4 pb-32 overflow-auto h-[calc(100vh-80px)]"
+        {...handlers}
+      >
+        {/* Pull to Refresh Indicator */}
+        <PullToRefreshIndicator 
+          pullDistance={pullDistance}
+          isRefreshing={isRefreshing}
+          isTriggered={isTriggered}
+          progress={progress}
+        />
+        
+        {/* Content wrapper with pull effect */}
+        <div 
+          style={{
+            transform: pullDistance > 0 ? `translateY(${pullDistance * 0.3}px)` : 'none',
+            transition: isRefreshing ? 'transform 0.3s ease' : 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          }}
+        >
+          {/* Header */}
+          <div className="text-center space-y-2 animate-float-up mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full liquid-glass mb-2">
+              <Compass className="w-5 h-5 text-primary" />
+              <span className="text-sm font-medium">Connect</span>
+            </div>
+            <h1 className="text-3xl font-bold">Feed</h1>
+            <p className="text-muted-foreground text-sm">Share your moments</p>
           </div>
-          <h1 className="text-3xl font-bold">Feed</h1>
-          <p className="text-muted-foreground text-sm">Share your moments</p>
-        </div>
 
         {/* Create Post - Collapsible */}
         <Collapsible open={showCreatePost} onOpenChange={setShowCreatePost}>
@@ -449,6 +491,7 @@ const Feed = () => {
               </div>
             ))
           )}
+        </div>
         </div>
       </div>
     </Layout>
