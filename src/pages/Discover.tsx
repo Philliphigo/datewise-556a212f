@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
@@ -6,6 +6,8 @@ import { Heart, X, Loader2, CheckCircle, Star, RotateCcw, MessageCircle, Chevron
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator, PullToRefreshContainer } from "@/components/PullToRefresh";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 
 interface Profile {
@@ -39,15 +41,7 @@ const Discover = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [history, setHistory] = useState<number[]>([]);
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    fetchProfiles();
-  }, [user, navigate]);
-
-  const fetchProfiles = async () => {
+  const fetchProfiles = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -69,7 +63,36 @@ const Discover = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, toast]);
+
+  // Pull to refresh
+  const handleRefresh = useCallback(async () => {
+    await fetchProfiles();
+    toast({
+      title: "Refreshed!",
+      description: "New profiles loaded",
+    });
+  }, [fetchProfiles, toast]);
+
+  const {
+    containerRef,
+    pullDistance,
+    isRefreshing,
+    isTriggered,
+    progress,
+    handlers,
+  } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    threshold: 80,
+  });
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    fetchProfiles();
+  }, [user, navigate, fetchProfiles]);
 
   const handleLike = async () => {
     if (!user || actionLoading) return;
@@ -288,8 +311,20 @@ const Discover = () => {
 
   return (
     <Layout>
-      <div className="flex flex-col h-[calc(100vh-136px)] px-3">
-        {/* Profile Card */}
+      <div 
+        ref={containerRef}
+        className="relative flex flex-col h-[calc(100vh-136px)] px-3 overflow-hidden"
+        {...handlers}
+      >
+        {/* Pull to Refresh Indicator */}
+        <PullToRefreshIndicator 
+          pullDistance={pullDistance}
+          isRefreshing={isRefreshing}
+          isTriggered={isTriggered}
+          progress={progress}
+        />
+        
+        {/* Profile Card with transform for pull effect */}
         <div 
           ref={cardRef}
           className={`relative flex-1 profile-card overflow-hidden card-glow ${
@@ -297,8 +332,16 @@ const Discover = () => {
             swipeDirection === 'right' ? 'animate-swipe-right' : 
             'animate-spring-in'
           } ${isExpanded ? 'expanded' : ''}`}
-          style={cardStyle}
-          onTouchStart={handleTouchStart}
+          style={{
+            ...cardStyle,
+            transform: pullDistance > 0 
+              ? `translateY(${pullDistance * 0.3}px) ${cardStyle.transform || ''}` 
+              : cardStyle.transform,
+            transition: isRefreshing ? 'transform 0.3s ease' : cardStyle.transition,
+          }}
+          onTouchStart={(e) => {
+            if (pullDistance === 0) handleTouchStart(e);
+          }}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onClick={handlePhotoTap}
