@@ -174,7 +174,7 @@ const Settings = () => {
           </div>
 
           {/* Profile Section */}
-          <Collapsible defaultOpen>
+          <Collapsible>
             <Card className="glass-card overflow-hidden">
               <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
                 <div className="flex items-center gap-3">
