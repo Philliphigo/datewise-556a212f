@@ -4,13 +4,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, Circle, CheckCheck, ArrowLeft, MoreVertical, Paperclip, User, Settings, AlertTriangle, Ban, Palette, MessageSquare, Search } from "lucide-react";
+import { Send, Loader2, Circle, CheckCheck, ArrowLeft, MoreVertical, Paperclip, User, Settings, AlertTriangle, Ban, Palette, MessageSquare, Search, Megaphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ReportDialog } from "@/components/ReportDialog";
 import { LiquidToggle } from "@/components/ui/liquid-toggle";
+import { SystemInbox } from "@/components/SystemInbox";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 import { formatDistanceToNow } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,6 +62,7 @@ const Messages = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const matchId = searchParams.get("match");
+  const showInbox = searchParams.get("inbox") === "true";
 
   const [matches, setMatches] = useState<MatchInfo[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
@@ -73,6 +76,8 @@ const Messages = () => {
   const [chatTheme, setChatTheme] = useState(CHAT_THEMES[0]);
   const [muteNotifications, setMuteNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<"chats" | "updates">(showInbox ? "updates" : "chats");
+  const [unreadSystemCount, setUnreadSystemCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -82,6 +87,7 @@ const Messages = () => {
       return;
     }
     fetchMatches();
+    fetchUnreadSystemCount();
     updateOnlineStatus(true);
 
     return () => {
@@ -91,6 +97,7 @@ const Messages = () => {
 
   useEffect(() => {
     if (matches.length > 0 && matchId && !selectedMatch) {
+      setActiveTab("chats");
       setSelectedMatch(matchId);
     }
   }, [matches, matchId, selectedMatch]);
@@ -107,6 +114,20 @@ const Messages = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const fetchUnreadSystemCount = async () => {
+    try {
+      const { count } = await supabase
+        .from("system_messages")
+        .select("*", { count: "exact", head: true })
+        .or(`recipient_id.eq.${user?.id},and(recipient_id.is.null,is_broadcast.eq.true)`)
+        .eq("is_read", false);
+      
+      setUnreadSystemCount(count || 0);
+    } catch (error) {
+      console.error("Error fetching system count:", error);
+    }
+  };
 
   const updateOnlineStatus = async (isOnline: boolean) => {
     if (!user) return;
@@ -343,68 +364,106 @@ const Messages = () => {
   return (
     <Layout>
       <div className="h-[calc(100vh-136px)] flex">
-        {/* Matches List */}
+        {/* Sidebar with Tabs */}
         <div className={`flex flex-col ${selectedMatch ? 'hidden md:flex md:w-80' : 'w-full md:w-80'} border-r border-white/10`}>
-          {/* Search Header */}
-          <div className="p-4 border-b border-white/10">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search messages..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white/5 border-white/10 rounded-xl"
-              />
-            </div>
+          {/* Tab Buttons */}
+          <div className="flex p-2 gap-1 border-b border-white/10">
+            <button
+              onClick={() => { setActiveTab("chats"); setSelectedMatch(null); }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                activeTab === "chats" 
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-white/5 text-muted-foreground hover:bg-white/10"
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              Chats
+            </button>
+            <button
+              onClick={() => { setActiveTab("updates"); setSelectedMatch(null); }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all relative ${
+                activeTab === "updates" 
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-white/5 text-muted-foreground hover:bg-white/10"
+              }`}
+            >
+              <Megaphone className="w-4 h-4" />
+              Updates
+              {unreadSystemCount > 0 && (
+                <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 min-w-[20px] text-xs">
+                  {unreadSystemCount}
+                </Badge>
+              )}
+            </button>
           </div>
-          
-          {/* Matches */}
-          <div className="flex-1 overflow-y-auto">
-            {filteredMatches.length === 0 ? (
-              <div className="p-8 text-center">
-                <div className="w-16 h-16 rounded-full liquid-glass flex items-center justify-center mx-auto mb-3">
-                  <MessageSquare className="w-8 h-8 text-muted-foreground" />
+
+          {/* Tab Content */}
+          {activeTab === "chats" ? (
+            <>
+              {/* Search Header */}
+              <div className="p-4 border-b border-white/10">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search messages..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 bg-white/5 border-white/10 rounded-xl"
+                  />
                 </div>
-                <p className="text-muted-foreground text-sm">No matches yet</p>
               </div>
-            ) : (
-              filteredMatches.map((match, index) => (
-                <button
-                  key={match.id}
-                  onClick={() => setSelectedMatch(match.id)}
-                  className={`w-full p-4 flex items-center gap-3 transition-all hover:bg-white/5 animate-float-up ${
-                    selectedMatch === match.id ? "bg-white/10" : ""
-                  }`}
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  <div className="relative">
-                    <img
-                      src={match.profile.avatar_url || defaultAvatar}
-                      alt={match.profile.name}
-                      className="w-14 h-14 rounded-full object-cover"
-                    />
-                    {match.profile.is_online && (
-                      <span className="absolute bottom-0 right-0 w-4 h-4 bg-success rounded-full border-2 border-background" />
-                    )}
-                  </div>
-                  <div className="flex-1 text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">{match.profile.name}</span>
-                      {match.profile.verified && (
-                        <span className="w-4 h-4 rounded-full bg-info flex items-center justify-center">
-                          <span className="text-white text-[10px]">✓</span>
-                        </span>
-                      )}
+              
+              {/* Matches */}
+              <div className="flex-1 overflow-y-auto">
+                {filteredMatches.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <div className="w-16 h-16 rounded-full liquid-glass flex items-center justify-center mx-auto mb-3">
+                      <MessageSquare className="w-8 h-8 text-muted-foreground" />
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {match.profile.is_online ? "Online now" : 
-                        match.profile.last_seen ? `Active ${formatDistanceToNow(new Date(match.profile.last_seen), { addSuffix: true })}` : "Offline"}
-                    </p>
+                    <p className="text-muted-foreground text-sm">No matches yet</p>
                   </div>
-                </button>
-              ))
-            )}
-          </div>
+                ) : (
+                  filteredMatches.map((match, index) => (
+                    <button
+                      key={match.id}
+                      onClick={() => setSelectedMatch(match.id)}
+                      className={`w-full p-4 flex items-center gap-3 transition-all hover:bg-white/5 animate-float-up ${
+                        selectedMatch === match.id ? "bg-white/10" : ""
+                      }`}
+                      style={{ animationDelay: `${index * 0.05}s` }}
+                    >
+                      <div className="relative">
+                        <img
+                          src={match.profile.avatar_url || defaultAvatar}
+                          alt={match.profile.name}
+                          className="w-14 h-14 rounded-full object-cover"
+                        />
+                        {match.profile.is_online && (
+                          <span className="absolute bottom-0 right-0 w-4 h-4 bg-success rounded-full border-2 border-background" />
+                        )}
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">{match.profile.name}</span>
+                          {match.profile.verified && (
+                            <span className="w-4 h-4 rounded-full bg-info flex items-center justify-center">
+                              <span className="text-white text-[10px]">✓</span>
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {match.profile.is_online ? "Online now" : 
+                            match.profile.last_seen ? `Active ${formatDistanceToNow(new Date(match.profile.last_seen), { addSuffix: true })}` : "Offline"}
+                        </p>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </>
+          ) : (
+            <SystemInbox onUnreadCountChange={setUnreadSystemCount} />
+          )}
         </div>
 
         {/* Chat Area */}

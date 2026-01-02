@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 import {
   Users,
@@ -25,7 +28,18 @@ import {
   ArrowLeft,
   FileCheck,
   MessageCircleReply,
+  Megaphone,
+  Send,
+  Eye,
+  Trash2,
+  RefreshCw,
+  UserX,
+  Activity,
+  Calendar,
+  Search,
+  Filter,
 } from "lucide-react";
+import { format } from "date-fns";
 
 interface DashboardStats {
   totalUsers: number;
@@ -34,6 +48,9 @@ interface DashboardStats {
   pendingReports: number;
   totalPosts: number;
   totalMessages: number;
+  activeUsers: number;
+  pendingVerifications: number;
+  broadcastsSent: number;
 }
 
 const AdminDashboard = () => {
@@ -49,6 +66,9 @@ const AdminDashboard = () => {
     pendingReports: 0,
     totalPosts: 0,
     totalMessages: 0,
+    activeUsers: 0,
+    pendingVerifications: 0,
+    broadcastsSent: 0,
   });
   const [users, setUsers] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
@@ -62,6 +82,9 @@ const AdminDashboard = () => {
   const [reportFeedback, setReportFeedback] = useState<any[]>([]);
   const [systemMessage, setSystemMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [broadcastHistory, setBroadcastHistory] = useState<any[]>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -105,6 +128,7 @@ const AdminDashboard = () => {
   };
 
   const fetchDashboardData = async () => {
+    setRefreshing(true);
     try {
       // Fetch statistics
       const { count: userCount } = await supabase
@@ -128,6 +152,21 @@ const AdminDashboard = () => {
         .select("*", { count: "exact", head: true })
         .eq("status", "pending");
 
+      const { count: activeCount } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("is_online", true);
+
+      const { count: pendingVerifCount } = await supabase
+        .from("verification_requests")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+
+      const { count: broadcastCount } = await supabase
+        .from("system_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("is_broadcast", true);
+
       const { data: paymentsData } = await supabase
         .from("payments")
         .select("amount")
@@ -142,14 +181,17 @@ const AdminDashboard = () => {
         pendingReports: reportCount || 0,
         totalPosts: postCount || 0,
         totalMessages: messageCount || 0,
+        activeUsers: activeCount || 0,
+        pendingVerifications: pendingVerifCount || 0,
+        broadcastsSent: broadcastCount || 0,
       });
 
       // Fetch recent users
       const { data: usersData } = await supabase
         .from("profiles")
-        .select("id, name, verified, created_at, subscription_tier, age, city")
+        .select("id, name, verified, created_at, subscription_tier, age, city, is_online, avatar_url")
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(50);
 
       setUsers(usersData || []);
 
@@ -158,7 +200,7 @@ const AdminDashboard = () => {
         .from("reports")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(50);
 
       setReports(reportsData || []);
 
@@ -167,7 +209,7 @@ const AdminDashboard = () => {
         .from("payments")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(50);
 
       setPayments(paymentsList || []);
 
@@ -179,7 +221,7 @@ const AdminDashboard = () => {
           profile:profiles(name, avatar_url)
         `)
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(50);
 
       setVerificationRequests(verificationData || []);
 
@@ -198,6 +240,16 @@ const AdminDashboard = () => {
         .order("created_at", { ascending: false });
 
       setReportFeedback(feedbackData || []);
+
+      // Fetch broadcast history
+      const { data: broadcasts } = await supabase
+        .from("system_messages")
+        .select("*")
+        .eq("is_broadcast", true)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      setBroadcastHistory(broadcasts || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -206,6 +258,7 @@ const AdminDashboard = () => {
       });
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -350,20 +403,28 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-6 w-full">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-            <TabsTrigger value="verification">
-              Verification ({verificationRequests.filter(v => v.status === 'pending').length})
-            </TabsTrigger>
-            <TabsTrigger value="feedback">Feedback</TabsTrigger>
-            <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between mb-4">
+            <TabsList className="grid grid-cols-6 w-auto">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="reports">
+                Reports {stats.pendingReports > 0 && <Badge variant="destructive" className="ml-1">{stats.pendingReports}</Badge>}
+              </TabsTrigger>
+              <TabsTrigger value="verification">
+                Verification {stats.pendingVerifications > 0 && <Badge variant="default" className="ml-1">{stats.pendingVerifications}</Badge>}
+              </TabsTrigger>
+              <TabsTrigger value="payments">Payments</TabsTrigger>
+              <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
+            </TabsList>
+            <Button variant="outline" size="sm" onClick={fetchDashboardData} disabled={refreshing}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
 
           <TabsContent value="overview" className="space-y-6">
             {/* Stats Grid */}
-            <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
               <Card className="glass-card">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -371,6 +432,7 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalUsers}</div>
+                  <p className="text-xs text-muted-foreground">{stats.activeUsers} active now</p>
                 </CardContent>
               </Card>
 
@@ -397,33 +459,44 @@ const AdminDashboard = () => {
               <Card className="glass-card">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Pending Reports</CardTitle>
-                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                  <AlertCircle className="h-4 w-4 text-destructive" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.pendingReports}</div>
+                  <div className="text-2xl font-bold text-destructive">{stats.pendingReports}</div>
                 </CardContent>
               </Card>
 
               <Card className="glass-card">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Broadcasts Sent</CardTitle>
+                  <Megaphone className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalPosts}</div>
-                </CardContent>
-              </Card>
-
-              <Card className="glass-card">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Messages</CardTitle>
-                  <MessageCircleReply className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalMessages}</div>
+                  <div className="text-2xl font-bold">{stats.broadcastsSent}</div>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Quick Actions */}
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="text-lg">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-3">
+                <Button variant="outline" onClick={() => setActiveTab("reports")}>
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  Review Reports ({stats.pendingReports})
+                </Button>
+                <Button variant="outline" onClick={() => setActiveTab("verification")}>
+                  <FileCheck className="w-4 h-4 mr-2" />
+                  Verify Users ({stats.pendingVerifications})
+                </Button>
+                <Button variant="outline" onClick={() => setActiveTab("broadcast")}>
+                  <Megaphone className="w-4 h-4 mr-2" />
+                  Send Broadcast
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="users" className="space-y-4">

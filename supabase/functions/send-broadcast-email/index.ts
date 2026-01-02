@@ -71,6 +71,22 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    // Save the broadcast message to system_messages table for in-app display
+    const { error: insertError } = await supabase
+      .from("system_messages")
+      .insert({
+        content: message,
+        is_broadcast: true,
+        recipient_id: null, // null means it's for everyone
+        is_read: false,
+      });
+
+    if (insertError) {
+      console.error("Error saving broadcast message:", insertError);
+    } else {
+      console.log("Broadcast message saved to system_messages");
+    }
+
     // Get all users who have email notifications enabled
     const { data: users, error: usersError } = await supabase.auth.admin.listUsers();
 
@@ -86,7 +102,8 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ 
         success: true, 
         sent: 0,
-        message: "No users with email notifications enabled" 
+        saved: true,
+        message: "Broadcast saved. No users with email notifications enabled." 
       }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
