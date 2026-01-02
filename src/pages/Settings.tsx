@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
@@ -12,12 +12,14 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Shield, Bell, Eye, Trash2, Moon, Sun, AlertTriangle, ChevronDown, User, BadgeCheck, UserX, MessageSquare, Heart, Sparkles, X, Plus } from "lucide-react";
+import { Loader2, Shield, Bell, Eye, Trash2, Moon, Sun, AlertTriangle, ChevronDown, User, BadgeCheck, UserX, MessageSquare, Heart, Sparkles, X, Plus, MapPin } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { VerificationRequest } from "@/components/VerificationRequest";
 import { BlockedUsers } from "@/components/BlockedUsers";
 import { ReportFeedbackView } from "@/components/ReportFeedbackView";
+import { LocationPicker } from "@/components/LocationPicker";
+import { useHaptics } from "@/hooks/useHaptics";
 import {
   Collapsible,
   CollapsibleContent,
@@ -39,6 +41,11 @@ const Settings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { triggerHaptic } = useHaptics();
+  
+  const handleCollapsibleToggle = useCallback(() => {
+    triggerHaptic('selection');
+  }, [triggerHaptic]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<any>(null);
@@ -174,7 +181,7 @@ const Settings = () => {
           </div>
 
           {/* Profile Section */}
-          <Collapsible>
+          <Collapsible onOpenChange={handleCollapsibleToggle}>
             <Card className="glass-card overflow-hidden">
               <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
                 <div className="flex items-center gap-3">
@@ -199,8 +206,11 @@ const Settings = () => {
                       <Input id="gender" value={gender} onChange={(e)=>setGender(e.target.value)} className="glass" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="city">City</Label>
-                      <Input id="city" value={city} onChange={(e)=>setCity(e.target.value)} className="glass" />
+                      <Label htmlFor="city" className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        Location
+                      </Label>
+                      <LocationPicker value={city} onChange={setCity} placeholder="Search for your city..." />
                     </div>
                     <div className="space-y-2 sm:col-span-2">
                       <Label htmlFor="bio">Bio</Label>
@@ -258,7 +268,7 @@ const Settings = () => {
           </Collapsible>
 
           {/* Privacy & Security Section */}
-          <Collapsible>
+          <Collapsible onOpenChange={handleCollapsibleToggle}>
             <Card className="glass-card overflow-hidden">
               <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
                 <div className="flex items-center gap-3">
@@ -304,7 +314,7 @@ const Settings = () => {
           </Collapsible>
 
           {/* Verification Section */}
-          <Collapsible>
+          <Collapsible onOpenChange={handleCollapsibleToggle}>
             <Card className="glass-card overflow-hidden">
               <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
                 <div className="flex items-center gap-3">
@@ -322,7 +332,7 @@ const Settings = () => {
           </Collapsible>
 
           {/* Blocked Users Section */}
-          <Collapsible>
+          <Collapsible onOpenChange={handleCollapsibleToggle}>
             <Card className="glass-card overflow-hidden">
               <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
                 <div className="flex items-center gap-3">
@@ -340,7 +350,7 @@ const Settings = () => {
           </Collapsible>
 
           {/* Report Feedback Section */}
-          <Collapsible>
+          <Collapsible onOpenChange={handleCollapsibleToggle}>
             <Card className="glass-card overflow-hidden">
               <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
                 <div className="flex items-center gap-3">
@@ -358,7 +368,7 @@ const Settings = () => {
           </Collapsible>
 
           {/* Appearance Section */}
-          <Collapsible>
+          <Collapsible onOpenChange={handleCollapsibleToggle}>
             <Card className="glass-card overflow-hidden">
               <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
                 <div className="flex items-center gap-3">
@@ -382,7 +392,7 @@ const Settings = () => {
           </Collapsible>
 
           {/* Notifications Section */}
-          <Collapsible>
+          <Collapsible onOpenChange={handleCollapsibleToggle}>
             <Card className="glass-card overflow-hidden">
               <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
                 <div className="flex items-center gap-3">
@@ -414,7 +424,7 @@ const Settings = () => {
           </Collapsible>
 
           {/* Links Section */}
-          <Collapsible>
+          <Collapsible onOpenChange={handleCollapsibleToggle}>
             <Card className="glass-card overflow-hidden">
               <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
                 <div className="flex items-center gap-3">
@@ -439,7 +449,7 @@ const Settings = () => {
             </Card>
           </Collapsible>
 
-          <Collapsible>
+          <Collapsible onOpenChange={handleCollapsibleToggle}>
             <Card className="glass-card overflow-hidden">
               <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
                 <div className="flex items-center gap-3">
@@ -464,7 +474,7 @@ const Settings = () => {
             </Card>
           </Collapsible>
 
-          <Collapsible>
+          <Collapsible onOpenChange={handleCollapsibleToggle}>
             <Card className="glass-card overflow-hidden">
               <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
                 <div className="flex items-center gap-3">
@@ -502,7 +512,7 @@ const Settings = () => {
           </Collapsible>
 
           {/* Account Actions Section */}
-          <Collapsible>
+          <Collapsible onOpenChange={handleCollapsibleToggle}>
             <Card className="glass-card overflow-hidden border-destructive/20">
               <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
                 <div className="flex items-center gap-3">
