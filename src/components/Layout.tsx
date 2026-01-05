@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, User, Compass, Flame, Settings, Sparkles, Moon, Sun } from "lucide-react";
+import { Heart, MessageCircle, User, Compass, Flame, Settings, Moon, Sun } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Footer } from "./Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -165,12 +165,11 @@ export const Layout = ({ children }: LayoutProps) => {
               </svg>
             </Link>
 
-            {/* Center - Dynamic Title with Logo */}
+            {/* Center - Dynamic Title */}
             <div 
-              className="absolute left-1/2 -translate-x-1/2 cursor-default flex items-center gap-2"
+              className="absolute left-1/2 -translate-x-1/2 cursor-default"
               onClick={handleAdminClick}
             >
-              <Sparkles className="w-5 h-5 text-primary" />
               <h1 className="text-lg font-semibold text-foreground tracking-tight">{getPageTitle()}</h1>
             </div>
 
