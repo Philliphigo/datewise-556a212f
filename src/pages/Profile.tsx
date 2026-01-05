@@ -3,11 +3,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Loader2, Image as ImageIcon, CheckCircle, MapPin, Settings, ChevronLeft, ChevronRight, Heart, Edit3, Camera } from "lucide-react";
+import { LogOut, Loader2, CheckCircle, MapPin, ChevronLeft, ChevronRight, Heart, Edit3, Camera, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import defaultAvatar from "@/assets/default-avatar.jpg";
+import { PhotoManager } from "@/components/profile/PhotoManager";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Profile = () => {
   const { user, signOut } = useAuth();
@@ -16,6 +18,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [showPhotoManager, setShowPhotoManager] = useState(false);
   const [searchParams] = useSearchParams();
   const viewedId = searchParams.get("user");
   const isOwnProfile = !viewedId || viewedId === user?.id;
@@ -161,19 +164,14 @@ const Profile = () => {
                 </>
               )}
 
-              {/* Upload Button - iOS 26 Style */}
+              {/* Manage Photos Button - iOS 26 Style */}
               {isOwnProfile && (
-                <label className="absolute bottom-4 right-4 cursor-pointer">
-                  <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95 animate-glow-pulse">
-                    <Camera className="w-6 h-6 text-primary-foreground" />
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarUpload}
-                  />
-                </label>
+                <button 
+                  onClick={() => setShowPhotoManager(true)}
+                  className="absolute bottom-4 right-4 w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
+                >
+                  <ImageIcon className="w-6 h-6 text-primary-foreground" />
+                </button>
               )}
 
               {/* Gradient Overlay */}
@@ -270,6 +268,24 @@ const Profile = () => {
               </Button>
             </div>
           )}
+
+          {/* Photo Manager Dialog */}
+          <Dialog open={showPhotoManager} onOpenChange={setShowPhotoManager}>
+            <DialogContent className="liquid-glass max-w-md max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Manage Photos</DialogTitle>
+              </DialogHeader>
+              <PhotoManager
+                userId={user?.id || ""}
+                currentPhotos={profile?.photo_urls || []}
+                avatarUrl={profile?.avatar_url}
+                onUpdate={() => {
+                  fetchProfile();
+                  setShowPhotoManager(false);
+                }}
+              />
+            </DialogContent>
+          </Dialog>
 
         </div>
       </div>

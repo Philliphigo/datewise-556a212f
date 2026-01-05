@@ -32,6 +32,8 @@ import { UserManagement } from "@/components/admin/UserManagement";
 import { VerificationManagement } from "@/components/admin/VerificationManagement";
 import { BroadcastManagement } from "@/components/admin/BroadcastManagement";
 import { RevenueAnalytics } from "@/components/admin/RevenueAnalytics";
+import { ActivityLog } from "@/components/admin/ActivityLog";
+import { RealTimeCharts } from "@/components/admin/RealTimeCharts";
 
 interface DashboardStats {
   totalUsers: number;
@@ -359,60 +361,64 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Recent Activity Summary */}
+            {/* Activity Log and Summary */}
             <div className="grid md:grid-cols-2 gap-6">
-              <Card className="liquid-glass">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Heart className="w-5 h-5 text-destructive" />
-                    Platform Health
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Active Users</span>
-                    <span className="font-semibold text-success">{stats.activeUsers} online</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Matches Today</span>
-                    <span className="font-semibold">{stats.totalMatches}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Messages Sent</span>
-                    <span className="font-semibold">{stats.totalMessages}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Posts Created</span>
-                    <span className="font-semibold">{stats.totalPosts}</span>
-                  </div>
-                </CardContent>
-              </Card>
+              <ActivityLog />
 
-              <Card className="liquid-glass">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-success" />
-                    Revenue Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Total Revenue</span>
-                    <span className="font-semibold text-success">${stats.totalRevenue.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Transactions</span>
-                    <span className="font-semibold">{payments.length}</span>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    className="w-full mt-2 rounded-xl"
-                    onClick={() => setActiveTab("analytics")}
-                  >
-                    View Full Analytics
-                  </Button>
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                <Card className="liquid-glass">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Heart className="w-5 h-5 text-destructive" />
+                      Platform Health
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Active Users</span>
+                      <span className="font-semibold text-success">{stats.activeUsers} online</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Total Matches</span>
+                      <span className="font-semibold">{stats.totalMatches}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Messages Sent</span>
+                      <span className="font-semibold">{stats.totalMessages}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Posts Created</span>
+                      <span className="font-semibold">{stats.totalPosts}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="liquid-glass">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <DollarSign className="w-5 h-5 text-success" />
+                      Revenue Summary
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Total Revenue</span>
+                      <span className="font-semibold text-success">${stats.totalRevenue.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Transactions</span>
+                      <span className="font-semibold">{payments.length}</span>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="w-full mt-2 rounded-xl"
+                      onClick={() => setActiveTab("analytics")}
+                    >
+                      View Full Analytics
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </TabsContent>
 
@@ -498,7 +504,8 @@ const AdminDashboard = () => {
           </TabsContent>
 
           {/* Analytics Tab */}
-          <TabsContent value="analytics">
+          <TabsContent value="analytics" className="space-y-6">
+            <RealTimeCharts />
             <RevenueAnalytics payments={payments} totalRevenue={stats.totalRevenue} />
           </TabsContent>
         </Tabs>
