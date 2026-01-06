@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, User, Compass, Flame, Settings, Moon, Sun } from "lucide-react";
+import { Heart, MessageCircle, User, Compass, Flame, Settings, Moon, Sun, Ban } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Footer } from "./Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
 interface LayoutProps {
@@ -20,7 +21,7 @@ interface LayoutProps {
 
 export const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, signOut, suspension } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [clickCount, setClickCount] = useState(0);
@@ -148,6 +149,37 @@ export const Layout = ({ children }: LayoutProps) => {
   const isAdminRoute = location.pathname === '/admin';
 
   if (!user) return <>{children}</>;
+
+  if (suspension?.active) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <Card className="liquid-glass max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Ban className="w-5 h-5 text-destructive" />
+              Account Suspended
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Your account is currently suspended{`
+              `}{suspension.until ? `until ${new Date(suspension.until).toLocaleString()}.` : "indefinitely."}
+            </p>
+            {suspension.reason && (
+              <p className="text-sm">
+                <span className="text-muted-foreground">Reason:</span> {suspension.reason}
+              </p>
+            )}
+            <div className="pt-2">
+              <Button variant="outline" className="w-full rounded-2xl" onClick={signOut}>
+                Sign out
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

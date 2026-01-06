@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Ban, Eye, CheckCircle, XCircle, Shield, Loader2 } from "lucide-react";
+import { Search, Ban, Eye, CheckCircle, Loader2, Clock, ShieldOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 import { format } from "date-fns";
 
@@ -18,34 +19,72 @@ interface UserManagementProps {
 
 export const UserManagement = ({ users, onRefresh }: UserManagementProps) => {
   const { toast } = useToast();
+  const { user: adminUser } = useAuth();
+
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showUserDialog, setShowUserDialog] = useState(false);
-  const [banning, setBanning] = useState(false);
 
-  const filteredUsers = users.filter((user) =>
-    user.name?.toLowerCase().includes(search.toLowerCase()) ||
-    user.city?.toLowerCase().includes(search.toLowerCase())
-  );
+  const [latestSuspension, setLatestSuspension] = useState<any>(null);
+  const [loadingSuspension, setLoadingSuspension] = useState(false);
+  const [suspending, setSuspending] = useState(false);
 
-  const handleBanUser = async (userId: string, isBanned: boolean) => {
-    setBanning(true);
+  const filteredUsers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter((u) =>
+      u.name?.toLowerCase().includes(q) || u.city?.toLowerCase().includes(q)
+    );
+  }, [users, search]);
+
+  const isSuspended = useMemo(() => {
+    if (!latestSuspension) return false;
+    return (
+      latestSuspension.suspended_until === null ||
+      new Date(latestSuspension.suspended_until) > new Date()
+    );
+  }, [latestSuspension]);
+
+  const fetchLatestSuspension = async (userId: string) => {
+    setLoadingSuspension(true);
     try {
-      // For now, we'll use a simple approach - add to blocked_users from admin
-      // In production, you'd have a dedicated banned_users table
-      const { error } = await supabase
-        .from("profiles")
-        .update({ is_online: false }) // Force offline
-        .eq("id", userId);
+      const { data, error } = await supabase
+        .from("user_suspensions")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (error) throw error;
+      setLatestSuspension(data || null);
+    } catch {
+      setLatestSuspension(null);
+    } finally {
+      setLoadingSuspension(false);
+    }
+  };
+
+  const suspendUser = async (userId: string, suspendedUntil: string | null) => {
+    setSuspending(true);
+    try {
+      const { error: insertError } = await supabase.from("user_suspensions").insert({
+        user_id: userId,
+        suspended_until: suspendedUntil,
+        created_by: adminUser?.id ?? null,
+      });
+
+      if (insertError) throw insertError;
+
+      // Force offline (best-effort)
+      await supabase.from("profiles").update({ is_online: false }).eq("id", userId);
 
       toast({
-        title: isBanned ? "User Suspended" : "Action Taken",
-        description: isBanned ? "User has been suspended from the platform" : "Action completed",
+        title: "User suspended",
+        description: suspendedUntil ? "Suspension applied." : "Permanent suspension applied.",
       });
-      
-      setShowUserDialog(false);
+
+      await fetchLatestSuspension(userId);
       onRefresh();
     } catch (error: any) {
       toast({
@@ -54,7 +93,31 @@ export const UserManagement = ({ users, onRefresh }: UserManagementProps) => {
         variant: "destructive",
       });
     } finally {
-      setBanning(false);
+      setSuspending(false);
+    }
+  };
+
+  const liftSuspension = async (userId: string) => {
+    setSuspending(true);
+    try {
+      const { error } = await supabase.from("user_suspensions").delete().eq("user_id", userId);
+      if (error) throw error;
+
+      toast({
+        title: "Suspension lifted",
+        description: "User can access the app again.",
+      });
+
+      setLatestSuspension(null);
+      onRefresh();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSuspending(false);
     }
   };
 
@@ -114,9 +177,10 @@ export const UserManagement = ({ users, onRefresh }: UserManagementProps) => {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => {
+                    onClick={async () => {
                       setSelectedUser(user);
                       setShowUserDialog(true);
+                      await fetchLatestSuspension(user.id);
                     }}
                   >
                     <Eye className="w-4 h-4" />
@@ -172,18 +236,74 @@ export const UserManagement = ({ users, onRefresh }: UserManagementProps) => {
                   <p className="text-muted-foreground">Joined</p>
                   <p className="font-medium">{format(new Date(selectedUser.created_at), "MMM d, yyyy")}</p>
                 </div>
+
+                <div className="col-span-2 p-3 rounded-lg bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <p className="text-muted-foreground">Suspension</p>
+                    {loadingSuspension ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                    ) : isSuspended ? (
+                      <Badge className="bg-destructive">Suspended</Badge>
+                    ) : (
+                      <Badge variant="outline">Active</Badge>
+                    )}
+                  </div>
+                  {isSuspended && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {latestSuspension?.suspended_until
+                        ? `Until ${new Date(latestSuspension.suspended_until).toLocaleString()}`
+                        : "Permanent"}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t border-border">
-                <Button
-                  variant="destructive"
-                  className="flex-1"
-                  onClick={() => handleBanUser(selectedUser.id, true)}
-                  disabled={banning}
-                >
-                  {banning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4 mr-2" />}
-                  Suspend User
-                </Button>
+              <div className="flex flex-col gap-2 pt-4 border-t border-border">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => {
+                      const until = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+                      suspendUser(selectedUser.id, until);
+                    }}
+                    disabled={suspending}
+                  >
+                    {suspending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Clock className="w-4 h-4 mr-2" />}
+                    24h
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => {
+                      const until = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+                      suspendUser(selectedUser.id, until);
+                    }}
+                    disabled={suspending}
+                  >
+                    {suspending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4 mr-2" />}
+                    7d
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => suspendUser(selectedUser.id, null)}
+                    disabled={suspending}
+                  >
+                    {suspending ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldOff className="w-4 h-4 mr-2" />}
+                    Permanent
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => liftSuspension(selectedUser.id)}
+                    disabled={suspending}
+                  >
+                    Lift
+                  </Button>
+                </div>
               </div>
             </div>
           )}

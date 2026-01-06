@@ -22,6 +22,10 @@ export const BroadcastManagement = ({ broadcasts, onRefresh }: BroadcastManageme
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+
   const handleSendBroadcast = async () => {
     if (!message.trim()) {
       toast({
@@ -60,12 +64,17 @@ export const BroadcastManagement = ({ broadcasts, onRefresh }: BroadcastManageme
   const handleDeleteBroadcast = async (id: string) => {
     setDeleting(id);
     try {
-      const { error } = await supabase
-        .from("system_messages")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.functions.invoke("manage-broadcast", {
+        body: { action: "delete", id },
+      });
 
       if (error) throw error;
+
+      if (selectedBroadcast?.id === id) {
+        setSelectedBroadcast(null);
+        setShowViewDialog(false);
+        setShowEditDialog(false);
+      }
 
       toast({
         title: "Deleted",
@@ -80,6 +89,42 @@ export const BroadcastManagement = ({ broadcasts, onRefresh }: BroadcastManageme
       });
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const handleUpdateBroadcast = async (id: string, content: string) => {
+    if (!content.trim()) {
+      toast({
+        title: "Error",
+        description: "Message cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSavingEdit(true);
+    try {
+      const { error } = await supabase.functions.invoke("manage-broadcast", {
+        body: { action: "update", id, content },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Saved",
+        description: "Broadcast updated successfully",
+      });
+
+      setShowEditDialog(false);
+      onRefresh();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -168,6 +213,17 @@ export const BroadcastManagement = ({ broadcasts, onRefresh }: BroadcastManageme
                       <Button
                         size="sm"
                         variant="ghost"
+                        onClick={() => {
+                          setSelectedBroadcast(broadcast);
+                          setEditContent(broadcast.content || "");
+                          setShowEditDialog(true);
+                        }}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         className="text-destructive hover:text-destructive"
                         onClick={() => handleDeleteBroadcast(broadcast.id)}
                         disabled={deleting === broadcast.id}
@@ -203,6 +259,16 @@ export const BroadcastManagement = ({ broadcasts, onRefresh }: BroadcastManageme
               </div>
               <div className="flex justify-end gap-2">
                 <Button
+                  variant="outline"
+                  onClick={() => {
+                    setEditContent(selectedBroadcast.content || "");
+                    setShowEditDialog(true);
+                  }}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+                <Button
                   variant="destructive"
                   onClick={() => {
                     handleDeleteBroadcast(selectedBroadcast.id);
@@ -215,6 +281,36 @@ export const BroadcastManagement = ({ broadcasts, onRefresh }: BroadcastManageme
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Broadcast Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="liquid-glass">
+          <DialogHeader>
+            <DialogTitle>Edit Broadcast</DialogTitle>
+            <DialogDescription>Update the broadcast message (users will see the new text).</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="min-h-[140px] liquid-glass"
+              placeholder="Edit your broadcast..."
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => selectedBroadcast && handleUpdateBroadcast(selectedBroadcast.id, editContent)}
+                disabled={savingEdit || !editContent.trim()}
+              >
+                {savingEdit ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Edit className="w-4 h-4 mr-2" />}
+                Save
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
