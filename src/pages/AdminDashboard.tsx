@@ -149,11 +149,38 @@ const AdminDashboard = () => {
         supabase.from("profiles").select("id, name, verified, created_at, subscription_tier, age, city, is_online, avatar_url").order("created_at", { ascending: false }).limit(100),
         supabase.from("reports").select("*").order("created_at", { ascending: false }).limit(50),
         supabase.from("payments").select("*").order("created_at", { ascending: false }).limit(50),
-        supabase.from("verification_requests").select("*, profile:profiles(name, avatar_url)").order("created_at", { ascending: false }).limit(50),
+        supabase.from("verification_requests").select("*").order("created_at", { ascending: false }).limit(50),
         supabase.from("system_messages").select("*").eq("is_broadcast", true).order("created_at", { ascending: false }).limit(20),
       ]);
 
       const totalRevenue = paymentsData?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+
+      // verification_requests -> profiles join isn't guaranteed unless a FK exists, so enrich manually
+      const rawVerificationRequests = verificationData || [];
+      let verificationRequestsWithProfiles = rawVerificationRequests;
+
+      if (rawVerificationRequests.length > 0) {
+        const userIds = Array.from(
+          new Set(rawVerificationRequests.map((r: any) => r.user_id).filter(Boolean))
+        );
+
+        if (userIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from("profiles")
+            .select("id, name, avatar_url")
+            .in("id", userIds);
+
+          if (profilesError) {
+            console.warn("Failed to enrich verification requests with profiles:", profilesError);
+          } else {
+            const profileMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
+            verificationRequestsWithProfiles = rawVerificationRequests.map((r: any) => ({
+              ...r,
+              profile: profileMap.get(r.user_id) || null,
+            }));
+          }
+        }
+      }
 
       setStats({
         totalUsers: userCount || 0,
@@ -170,7 +197,7 @@ const AdminDashboard = () => {
       setUsers(usersData || []);
       setReports(reportsData || []);
       setPayments(paymentsList || []);
-      setVerificationRequests(verificationData || []);
+      setVerificationRequests(verificationRequestsWithProfiles || []);
       setBroadcastHistory(broadcasts || []);
     } catch (error: any) {
       toast({
