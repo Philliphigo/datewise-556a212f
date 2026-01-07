@@ -1,45 +1,21 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, CreditCard, Smartphone, DollarSign, Bitcoin, Check, Crown, Star, Zap } from "lucide-react";
-
-declare global {
-  interface Window {
-    paypal?: {
-      HostedButtons: (config: { hostedButtonId: string }) => {
-        render: (container: string) => Promise<void>;
-      };
-    };
-  }
-}
+import { Heart, CreditCard, Smartphone, DollarSign, Bitcoin, Check, Crown, Star, Zap, Clock } from "lucide-react";
 
 const Donate = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
-  const [amount, setAmount] = useState("");
   const [processing, setProcessing] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
-
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8299009369780520";
-    script.async = true;
-    script.crossOrigin = "anonymous";
-    document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(script);
-    };
-  }, []);
+  const [paymentMethod, setPaymentMethod] = useState<"mobile" | "card" | "paypal" | "crypto">("mobile");
 
   const tiers = [
     {
@@ -121,8 +97,9 @@ const Donate = () => {
     }
 
     // Validate phone number format for Malawi (Airtel: 099x, TNM: 088x)
+    const cleanPhone = phoneNumber.replace(/\s/g, '');
     const phoneRegex = /^(099|088)\d{7}$/;
-    if (!phoneRegex.test(phoneNumber.replace(/\s/g, ''))) {
+    if (!phoneRegex.test(cleanPhone)) {
       toast({
         title: "Invalid Phone Number",
         description: "Please enter a valid Malawi mobile number (e.g., 0991234567 for Airtel or 0881234567 for TNM)",
@@ -148,6 +125,7 @@ const Donate = () => {
           email: user.email || "donor@example.com",
           firstName: profile?.name?.split(" ")[0] || "Donor",
           lastName: profile?.name?.split(" ").slice(1).join(" ") || "User",
+          phoneNumber: cleanPhone,
         },
       });
 
@@ -172,109 +150,21 @@ const Donate = () => {
     }
   };
 
-  // PayPal Hosted Button Component
-  const PayPalHostedButton = () => {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const renderedRef = useRef(false);
-
-    useEffect(() => {
-      if (renderedRef.current) return;
-
-      const renderButton = () => {
-        if (window.paypal && containerRef.current && !renderedRef.current) {
-          renderedRef.current = true;
-          window.paypal
-            .HostedButtons({
-              hostedButtonId: "YCL6N68UMH78C",
-            })
-            .render("#paypal-hosted-btn")
-            .catch((err) => {
-              console.error("PayPal button render error:", err);
-              renderedRef.current = false;
-            });
-        }
-      };
-
-      if (window.paypal) {
-        renderButton();
-      } else {
-        const checkPayPal = setInterval(() => {
-          if (window.paypal) {
-            clearInterval(checkPayPal);
-            renderButton();
-          }
-        }, 100);
-
-        const timeout = setTimeout(() => clearInterval(checkPayPal), 10000);
-
-        return () => {
-          clearInterval(checkPayPal);
-          clearTimeout(timeout);
-        };
-      }
-    }, []);
-
-    return (
-      <div 
-        id="paypal-hosted-btn" 
-        ref={containerRef}
-        className="w-full min-h-[150px] flex items-center justify-center"
-      />
-    );
-  };
-
-  const handleStripePayment = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to make a payment",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!selectedTier) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a tier",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setProcessing(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke("process-stripe-payment", {
-        body: {
-          amount: getTierAmount(selectedTier, 'USD'),
-          currency: "USD",
-          tier: selectedTier,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.success && data?.checkout_url) {
-        toast({
-          title: "Payment Processing",
-          description: "Redirecting to secure payment page...",
-        });
-        window.location.href = data.checkout_url as string;
-      } else {
-        throw new Error("Failed to create checkout session");
-      }
-    } catch (error: any) {
-      console.error("Stripe payment error:", error);
-      toast({
-        title: "Payment Failed",
-        description: error.message || "Failed to process card payment",
-        variant: "destructive",
-      });
-    } finally {
-      setProcessing(false);
-    }
-  };
+  const ComingSoonCard = ({ icon: Icon, title, description }: { icon: any, title: string, description: string }) => (
+    <Card className="glass-card p-6 text-center space-y-4 opacity-60">
+      <div className="w-16 h-16 mx-auto rounded-full bg-muted/20 flex items-center justify-center">
+        <Icon className="w-8 h-8 text-muted-foreground" />
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold">{title}</h3>
+        <p className="text-muted-foreground text-sm mt-1">{description}</p>
+      </div>
+      <div className="flex items-center justify-center gap-2 text-primary">
+        <Clock className="w-4 h-4" />
+        <span className="text-sm font-medium">Coming Soon</span>
+      </div>
+    </Card>
+  );
 
   return (
     <Layout>
@@ -341,130 +231,116 @@ const Donate = () => {
                 Choose Payment Method
               </h2>
 
-              <Tabs defaultValue="mobile" className="space-y-6">
-                <TabsList className="grid grid-cols-4 glass">
-                  <TabsTrigger value="mobile">Mobile Money</TabsTrigger>
-                  <TabsTrigger value="card">Card</TabsTrigger>
-                  <TabsTrigger value="paypal">PayPal</TabsTrigger>
-                  <TabsTrigger value="crypto">Crypto</TabsTrigger>
-                </TabsList>
+              {/* Payment Method Tabs */}
+              <div className="grid grid-cols-4 gap-2 mb-6">
+                {[
+                  { id: "mobile", label: "Mobile Money", icon: Smartphone },
+                  { id: "card", label: "Card", icon: CreditCard },
+                  { id: "paypal", label: "PayPal", icon: DollarSign },
+                  { id: "crypto", label: "Crypto", icon: Bitcoin },
+                ].map((method) => (
+                  <button
+                    key={method.id}
+                    onClick={() => setPaymentMethod(method.id as any)}
+                    className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${
+                      paymentMethod === method.id
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-white/5 hover:bg-white/10 text-muted-foreground"
+                    }`}
+                  >
+                    <method.icon className="w-5 h-5" />
+                    <span className="text-xs font-medium">{method.label}</span>
+                  </button>
+                ))}
+              </div>
 
-                {/* Mobile Money */}
-                <TabsContent value="mobile" className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="glass p-4 rounded-lg bg-primary/5 border border-primary/20">
-                      <p className="text-sm font-semibold mb-2">Amount to Pay:</p>
-                      <p className="text-3xl font-bold gradient-text">
-                        MWK {getTierAmount(selectedTier, 'MWK').toLocaleString()}
-                      </p>
-                    </div>
-
-                    <div className="glass p-4 rounded-lg space-y-2">
-                      <p className="text-sm font-medium">Secure Payment Gateway</p>
-                      <p className="text-xs text-muted-foreground">
-                        You'll be redirected to a secure payment page where you can choose:
-                      </p>
-                      <ul className="text-xs text-muted-foreground space-y-1 ml-4">
-                        <li>• Airtel Money</li>
-                        <li>• TNM Mpamba</li>
-                        <li>• Bank Transfer</li>
-                      </ul>
-                    </div>
-                    
-                    <Button
-                      onClick={handleMobileMoneyPayment}
-                      disabled={processing}
-                      className="w-full gradient-romantic text-white"
-                      size="lg"
-                    >
-                      <Smartphone className="w-5 h-5 mr-2" />
-                      {processing ? "Redirecting..." : "Proceed to Payment"}
-                    </Button>
-
-                    <div className="glass p-3 rounded-lg text-xs text-muted-foreground">
-                      <p className="font-semibold mb-1">How it works:</p>
-                      <ol className="list-decimal list-inside space-y-1">
-                        <li>Click "Proceed to Payment" button</li>
-                        <li>You'll be redirected to PayChangu's secure checkout</li>
-                        <li>Select your payment method (Airtel, TNM, or Bank)</li>
-                        <li>Complete the payment on your phone or online</li>
-                        <li>Return to DateWise after successful payment</li>
-                      </ol>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {/* Card Payment */}
-                <TabsContent value="card" className="space-y-4">
-                  <Card className="glass p-6 text-center space-y-4">
-                    <CreditCard className="w-12 h-12 mx-auto text-primary" />
-                    <p className="text-muted-foreground">
-                      Secure card payments powered by Stripe
-                    </p>
-                    <Button
-                      onClick={handleStripePayment}
-                      disabled={processing}
-                      className="w-full gradient-romantic text-white"
-                    >
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      Pay with Card
-                    </Button>
-                  </Card>
-                </TabsContent>
-
-                {/* PayPal */}
-                <TabsContent value="paypal" className="space-y-4">
-                  <Card className="glass p-6 space-y-4">
-                    <div className="text-center space-y-2">
-                      <div className="w-16 h-16 mx-auto bg-[#0070ba] rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-xl">P</span>
-                      </div>
-                      <p className="text-muted-foreground">
-                        Pay securely with PayPal - use your balance, bank, or card
-                      </p>
-                      <p className="text-lg font-semibold">
-                        ${getTierAmount(selectedTier, 'USD')} USD
-                      </p>
-                    </div>
-                    <div className="flex justify-center">
-                      <PayPalHostedButton />
-                    </div>
-                    <p className="text-xs text-center text-muted-foreground">
-                      Click the PayPal button above to complete your payment securely
-                    </p>
-                  </Card>
-                </TabsContent>
-
-                {/* Crypto */}
-                <TabsContent value="crypto" className="space-y-4">
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground text-center">
-                      Send crypto to the addresses below and verify your payment
-                    </p>
-                    <Card className="glass p-4 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Bitcoin className="w-5 h-5 text-primary" />
-                        <h3 className="font-semibold">Bitcoin (BTC)</h3>
-                      </div>
-                      <code className="text-xs break-all text-muted-foreground block select-all">
-                        bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
-                      </code>
-                    </Card>
-                    <Card className="glass p-4 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-5 h-5 text-primary" />
-                        <h3 className="font-semibold">USDT (TRC20)</h3>
-                      </div>
-                      <code className="text-xs break-all text-muted-foreground block select-all">
-                        TJRyWwFs9wTFGZg3JbrVriFbNfCug5tDeC
-                      </code>
-                    </Card>
-                    <p className="text-xs text-center text-muted-foreground">
-                      After sending payment, contact support with your transaction ID
+              {/* Mobile Money - Active */}
+              {paymentMethod === "mobile" && (
+                <div className="space-y-4">
+                  <div className="glass p-4 rounded-lg bg-primary/5 border border-primary/20">
+                    <p className="text-sm font-semibold mb-2">Amount to Pay:</p>
+                    <p className="text-3xl font-bold gradient-text">
+                      MWK {getTierAmount(selectedTier, 'MWK').toLocaleString()}
                     </p>
                   </div>
-                </TabsContent>
-              </Tabs>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Mobile Money Number</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="e.g., 0991234567 (Airtel) or 0881234567 (TNM)"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="bg-white/5 border-white/10"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Enter your Airtel Money (099x) or TNM Mpamba (088x) number
+                    </p>
+                  </div>
+
+                  <div className="glass p-4 rounded-lg space-y-2">
+                    <p className="text-sm font-medium">Secure Payment Gateway</p>
+                    <p className="text-xs text-muted-foreground">
+                      You'll be redirected to a secure payment page where you can complete:
+                    </p>
+                    <ul className="text-xs text-muted-foreground space-y-1 ml-4">
+                      <li>• Airtel Money</li>
+                      <li>• TNM Mpamba</li>
+                      <li>• Bank Transfer</li>
+                    </ul>
+                  </div>
+                  
+                  <Button
+                    onClick={handleMobileMoneyPayment}
+                    disabled={processing || !phoneNumber.trim()}
+                    className="w-full gradient-romantic text-white"
+                    size="lg"
+                  >
+                    <Smartphone className="w-5 h-5 mr-2" />
+                    {processing ? "Redirecting..." : "Proceed to Payment"}
+                  </Button>
+
+                  <div className="glass p-3 rounded-lg text-xs text-muted-foreground">
+                    <p className="font-semibold mb-1">How it works:</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Enter your mobile money number above</li>
+                      <li>Click "Proceed to Payment" button</li>
+                      <li>You'll be redirected to PayChangu's secure checkout</li>
+                      <li>Select your payment method (Airtel, TNM, or Bank)</li>
+                      <li>Complete the payment on your phone or online</li>
+                      <li>Return to DateWise after successful payment</li>
+                    </ol>
+                  </div>
+                </div>
+              )}
+
+              {/* Card Payment - Coming Soon */}
+              {paymentMethod === "card" && (
+                <ComingSoonCard
+                  icon={CreditCard}
+                  title="Card Payments"
+                  description="Pay with Visa, Mastercard, or other cards. We're working on integrating this payment method."
+                />
+              )}
+
+              {/* PayPal - Coming Soon */}
+              {paymentMethod === "paypal" && (
+                <ComingSoonCard
+                  icon={DollarSign}
+                  title="PayPal"
+                  description="Pay securely with your PayPal account. This feature will be available soon."
+                />
+              )}
+
+              {/* Crypto - Coming Soon */}
+              {paymentMethod === "crypto" && (
+                <ComingSoonCard
+                  icon={Bitcoin}
+                  title="Cryptocurrency"
+                  description="Pay with Bitcoin, USDT, or other cryptocurrencies. Coming soon!"
+                />
+              )}
             </Card>
           )}
 
