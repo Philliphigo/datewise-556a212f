@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Heart, CreditCard, Smartphone, DollarSign, Bitcoin, Check, Crown, Star, Zap } from "lucide-react";
+
+declare global {
+  interface Window {
+    paypal?: {
+      HostedButtons: (config: { hostedButtonId: string }) => {
+        render: (container: string) => Promise<void>;
+      };
+    };
+  }
+}
 
 const Donate = () => {
   const { toast } = useToast();
@@ -162,49 +172,55 @@ const Donate = () => {
     }
   };
 
-  const handlePayPalPayment = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to make a payment",
-        variant: "destructive",
-      });
-      return;
-    }
+  // PayPal Hosted Button Component
+  const PayPalHostedButton = () => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const renderedRef = useRef(false);
 
-    if (!selectedTier) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a tier",
-        variant: "destructive",
-      });
-      return;
-    }
+    useEffect(() => {
+      if (renderedRef.current) return;
 
-    setProcessing(true);
+      const renderButton = () => {
+        if (window.paypal && containerRef.current && !renderedRef.current) {
+          renderedRef.current = true;
+          window.paypal
+            .HostedButtons({
+              hostedButtonId: "YCL6N68UMH78C",
+            })
+            .render("#paypal-hosted-btn")
+            .catch((err) => {
+              console.error("PayPal button render error:", err);
+              renderedRef.current = false;
+            });
+        }
+      };
 
-    try {
-      const { data, error } = await supabase.functions.invoke("process-paypal-payment", {
-        body: {
-          amount: getTierAmount(selectedTier, 'USD'),
-          tier: selectedTier,
-        },
-      });
+      if (window.paypal) {
+        renderButton();
+      } else {
+        const checkPayPal = setInterval(() => {
+          if (window.paypal) {
+            clearInterval(checkPayPal);
+            renderButton();
+          }
+        }, 100);
 
-      if (error) throw error;
+        const timeout = setTimeout(() => clearInterval(checkPayPal), 10000);
 
-      if (data.approvalUrl) {
-        window.location.href = data.approvalUrl;
+        return () => {
+          clearInterval(checkPayPal);
+          clearTimeout(timeout);
+        };
       }
-    } catch (error: any) {
-      console.error("PayPal payment error:", error);
-      toast({
-        title: "Payment Failed",
-        description: error.message || "Failed to initiate PayPal payment",
-        variant: "destructive",
-      });
-      setProcessing(false);
-    }
+    }, []);
+
+    return (
+      <div 
+        id="paypal-hosted-btn" 
+        ref={containerRef}
+        className="w-full min-h-[150px] flex items-center justify-center"
+      />
+    );
   };
 
   const handleStripePayment = async () => {
@@ -398,18 +414,24 @@ const Donate = () => {
 
                 {/* PayPal */}
                 <TabsContent value="paypal" className="space-y-4">
-                  <Card className="glass p-6 text-center space-y-4">
-                    <DollarSign className="w-12 h-12 mx-auto text-primary" />
-                    <p className="text-muted-foreground">
-                      You will be redirected to PayPal to complete your payment securely
+                  <Card className="glass p-6 space-y-4">
+                    <div className="text-center space-y-2">
+                      <div className="w-16 h-16 mx-auto bg-[#0070ba] rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-xl">P</span>
+                      </div>
+                      <p className="text-muted-foreground">
+                        Pay securely with PayPal - use your balance, bank, or card
+                      </p>
+                      <p className="text-lg font-semibold">
+                        ${getTierAmount(selectedTier, 'USD')} USD
+                      </p>
+                    </div>
+                    <div className="flex justify-center">
+                      <PayPalHostedButton />
+                    </div>
+                    <p className="text-xs text-center text-muted-foreground">
+                      Click the PayPal button above to complete your payment securely
                     </p>
-                    <Button
-                      onClick={handlePayPalPayment}
-                      disabled={processing}
-                      className="w-full gradient-romantic text-white"
-                    >
-                      {processing ? "Processing..." : "Continue with PayPal"}
-                    </Button>
                   </Card>
                 </TabsContent>
 
