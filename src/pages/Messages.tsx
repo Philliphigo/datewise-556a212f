@@ -48,6 +48,57 @@ interface MatchInfo {
   };
 }
 
+// Component to load and display chat images from storage
+const ChatImage = ({ filePath }: { filePath: string }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const loadImage = async () => {
+      try {
+        const { data, error: urlError } = await supabase.storage
+          .from('chat-attachments')
+          .createSignedUrl(filePath, 3600);
+        
+        if (urlError) throw urlError;
+        setImageUrl(data.signedUrl);
+      } catch (err) {
+        console.error('Failed to load image:', err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadImage();
+  }, [filePath]);
+
+  if (loading) {
+    return (
+      <div className="w-48 h-32 rounded-xl bg-white/10 animate-pulse flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error || !imageUrl) {
+    return (
+      <div className="w-48 h-32 rounded-xl bg-white/10 flex items-center justify-center text-muted-foreground text-xs">
+        Failed to load image
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={imageUrl} 
+      alt="Shared image" 
+      className="max-w-full rounded-xl max-h-60 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+      onClick={() => window.open(imageUrl, '_blank')}
+    />
+  );
+};
+
 const CHAT_THEMES = [
   { name: "Pink", gradient: "linear-gradient(135deg, hsl(338, 100%, 48%), hsl(338, 100%, 60%))" },
   { name: "Ocean", gradient: "linear-gradient(135deg, hsl(200, 80%, 50%), hsl(220, 70%, 60%))" },
@@ -313,30 +364,38 @@ const Messages = () => {
     const file = e.target.files?.[0];
     if (!file || !selectedMatch || !user) return;
 
+    // Validate file type and size
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: 'Invalid file type', description: 'Please upload an image (JPEG, PNG, GIF, or WebP)', variant: 'destructive' });
+      return;
+    }
+    
+    if (file.size > maxSize) {
+      toast({ title: 'File too large', description: 'Please upload an image smaller than 10MB', variant: 'destructive' });
+      return;
+    }
+
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop();
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const filePath = `${user.id}/${selectedMatch}/${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from('chat-attachments')
-        .upload(filePath, file, { upsert: false });
+        .upload(filePath, file, { upsert: false, contentType: file.type });
       if (uploadError) throw uploadError;
 
-      const { data: signedUrlData, error: urlError } = await supabase.storage
-        .from('chat-attachments')
-        .createSignedUrl(filePath, 3600);
-      
-      if (urlError) throw urlError;
-      const url = signedUrlData.signedUrl;
-
+      // Store as [IMAGE] prefix to identify it as an image later
       const { error: insertError } = await supabase.from('messages').insert({
         match_id: selectedMatch,
         sender_id: user.id,
-        content: url,
+        content: `[IMAGE]${filePath}`,
       });
       if (insertError) throw insertError;
 
-      toast({ title: 'File sent', description: file.name });
+      toast({ title: 'Photo sent', description: 'Your image was sent successfully' });
     } catch (error: any) {
       toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
     } finally {
@@ -544,6 +603,9 @@ const Messages = () => {
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {messages.map((message, index) => {
                   const isOwn = message.sender_id === user?.id;
+                  const isImage = message.content.startsWith('[IMAGE]');
+                  const imagePath = isImage ? message.content.replace('[IMAGE]', '') : null;
+                  
                   return (
                     <div
                       key={message.id}
@@ -556,12 +618,14 @@ const Messages = () => {
                         }`}
                         style={isOwn ? { background: chatTheme.gradient } : {}}
                       >
-                        {/^https?:\/\//.test(message.content) ? (
-                          /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(message.content) ? (
+                        {isImage && imagePath ? (
+                          <ChatImage filePath={imagePath} />
+                        ) : /^https?:\/\//.test(message.content) ? (
+                          /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(message.content) ? (
                             <img src={message.content} alt="attachment" className="max-w-full rounded-xl max-h-60 object-cover" />
                           ) : (
-                            <a href={message.content} target="_blank" rel="noopener noreferrer" className="underline text-sm">
-                              {message.content}
+                            <a href={message.content} target="_blank" rel="noopener noreferrer" className="underline text-sm break-all">
+                              View Attachment
                             </a>
                           )
                         ) : (
