@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator, PullToRefreshContainer } from "@/components/PullToRefresh";
+import { AdPlaceholder } from "@/components/AdPlaceholder";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 
 interface Profile {
@@ -524,6 +525,9 @@ const Discover = () => {
             <MessageCircle className="w-5 h-5 text-boost" />
           </button>
         </div>
+        
+        {/* Ad placeholder below action buttons */}
+        <AdPlaceholder variant="banner" className="mx-4 mb-4" />
       </div>
     </Layout>
   );

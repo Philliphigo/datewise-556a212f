@@ -91,11 +91,12 @@ serve(async (req) => {
     if (paymentStatus === "successful") {
       const tier = payment.metadata?.tier;
       const userId = payment.user_id;
+      const subscriptionDays = payment.metadata?.subscriptionDays || 30;
 
       if (tier && userId) {
-        // Calculate subscription end date (30 days from now)
+        // Calculate subscription end date based on payment amount
         const endDate = new Date();
-        endDate.setDate(endDate.getDate() + 30);
+        endDate.setDate(endDate.getDate() + subscriptionDays);
 
         // Create or update subscription
         const { error: subError } = await supabase.from("subscriptions").upsert({

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, CreditCard, Smartphone, DollarSign, Bitcoin, Check, Crown, Star, Zap, Clock } from "lucide-react";
+import { Heart, CreditCard, Smartphone, DollarSign, Bitcoin, Check, Crown, Star, Zap, Clock, Coins } from "lucide-react";
 
 const Donate = () => {
   const { toast } = useToast();
@@ -16,6 +16,7 @@ const Donate = () => {
   const [processing, setProcessing] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"mobile" | "card" | "paypal" | "crypto">("mobile");
+  const [customAmount, setCustomAmount] = useState("");
 
   const tiers = [
     {
@@ -57,15 +58,33 @@ const Donate = () => {
         "Advanced Filters",
       ],
     },
+    {
+      id: "custom",
+      name: "Custom",
+      price: "Your choice",
+      priceUsd: "Any amount",
+      icon: Coins,
+      color: "text-emerald-500",
+      features: ["Support DateWise", "1 day per MWK 167", "Flexible donation"],
+    },
   ];
 
   const getTierAmount = (tierId: string, currency: 'MWK' | 'USD' = 'MWK') => {
+    if (tierId === "custom") {
+      const amount = parseInt(customAmount) || 0;
+      return currency === 'MWK' ? amount : Math.round(amount / 1000); // Rough conversion
+    }
     const prices: { [key: string]: { MWK: number; USD: number } } = {
       supporter: { MWK: 5000, USD: 5 },
       premium: { MWK: 15000, USD: 15 },
       vip: { MWK: 30000, USD: 30 },
     };
     return prices[tierId]?.[currency] || 0;
+  };
+
+  // Calculate subscription days based on amount (MWK 5000 = 30 days)
+  const getSubscriptionDays = (amount: number) => {
+    return Math.floor((amount / 5000) * 30);
   };
 
   const handleMobileMoneyPayment = async () => {
@@ -108,6 +127,19 @@ const Donate = () => {
       return;
     }
 
+    // Validate custom amount
+    if (selectedTier === "custom") {
+      const amount = parseInt(customAmount);
+      if (!amount || amount < 500) {
+        toast({
+          title: "Invalid Amount",
+          description: "Minimum donation is MWK 500",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setProcessing(true);
 
     try {
@@ -117,15 +149,19 @@ const Donate = () => {
         .eq("id", user.id)
         .single();
 
+      const amount = getTierAmount(selectedTier, 'MWK');
+      const tierToSend = selectedTier === "custom" ? "supporter" : selectedTier; // Use supporter tier for custom amounts
+
       const { data, error } = await supabase.functions.invoke("process-paychangu-payment", {
         body: {
-          amount: getTierAmount(selectedTier, 'MWK'),
+          amount,
           currency: "MWK",
-          tier: selectedTier,
+          tier: tierToSend,
           email: user.email || "donor@example.com",
           firstName: profile?.name?.split(" ")[0] || "Donor",
           lastName: profile?.name?.split(" ").slice(1).join(" ") || "User",
           phoneNumber: cleanPhone,
+          customAmount: selectedTier === "custom" ? amount : undefined,
         },
       });
 
@@ -257,11 +293,40 @@ const Donate = () => {
               {/* Mobile Money - Active */}
               {paymentMethod === "mobile" && (
                 <div className="space-y-4">
+                  {/* Custom Amount Input */}
+                  {selectedTier === "custom" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="customAmount">Enter Amount (MWK)</Label>
+                      <Input
+                        id="customAmount"
+                        type="number"
+                        placeholder="e.g., 10000"
+                        value={customAmount}
+                        onChange={(e) => setCustomAmount(e.target.value)}
+                        className="bg-white/5 border-white/10 text-2xl font-bold"
+                        min={500}
+                      />
+                      {customAmount && parseInt(customAmount) >= 500 && (
+                        <p className="text-sm text-primary">
+                          ≈ {getSubscriptionDays(parseInt(customAmount))} days of ad-free access
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Minimum: MWK 500
+                      </p>
+                    </div>
+                  )}
+
                   <div className="glass p-4 rounded-lg bg-primary/5 border border-primary/20">
                     <p className="text-sm font-semibold mb-2">Amount to Pay:</p>
                     <p className="text-3xl font-bold gradient-text">
                       MWK {getTierAmount(selectedTier, 'MWK').toLocaleString()}
                     </p>
+                    {selectedTier === "custom" && parseInt(customAmount) >= 500 && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {getSubscriptionDays(parseInt(customAmount))} days subscription
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -293,7 +358,7 @@ const Donate = () => {
                   
                   <Button
                     onClick={handleMobileMoneyPayment}
-                    disabled={processing || !phoneNumber.trim()}
+                    disabled={processing || !phoneNumber.trim() || (selectedTier === "custom" && (!customAmount || parseInt(customAmount) < 500))}
                     className="w-full gradient-romantic text-white"
                     size="lg"
                   >

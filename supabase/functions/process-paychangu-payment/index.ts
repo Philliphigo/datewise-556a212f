@@ -17,7 +17,15 @@ const SUBSCRIPTION_TIERS = {
   vip: { mwk: 30000, usd: 30 },
 } as const;
 
-function validatePayment(tier: string, amount: number, currency: string): void {
+function validatePayment(tier: string, amount: number, currency: string, isCustom: boolean = false): void {
+  // For custom amounts, just validate minimum
+  if (isCustom) {
+    if (amount < 500) {
+      throw new Error('Minimum donation is MWK 500');
+    }
+    return;
+  }
+
   const tierPricing = SUBSCRIPTION_TIERS[tier as keyof typeof SUBSCRIPTION_TIERS];
   if (!tierPricing) {
     throw new Error('Invalid subscription tier');
@@ -56,8 +64,9 @@ serve(async (req) => {
       );
     }
 
-    const { amount, currency = 'MWK', tier, email, firstName, lastName, phoneNumber } = await req.json();
+    const { amount, currency = 'MWK', tier, email, firstName, lastName, phoneNumber, customAmount } = await req.json();
     const userId = user.id; // Use verified user ID from JWT
+    const isCustomPayment = !!customAmount;
     
     // Validate phone number format for Malawi mobile money
     if (phoneNumber) {
@@ -70,8 +79,8 @@ serve(async (req) => {
       }
     }
     
-    // Validate payment amount matches tier
-    validatePayment(tier, amount, currency);
+    // Validate payment amount matches tier (or custom amount)
+    validatePayment(tier, amount, currency, isCustomPayment);
 
     // Generate unique transaction reference
     const txRef = `DONATION-${userId}-${Date.now()}`;
@@ -112,6 +121,7 @@ serve(async (req) => {
     }
 
     // Record payment in database with pending status
+    const subscriptionDays = isCustomPayment ? Math.floor((amount / 5000) * 30) : 30;
     const { error: paymentError } = await supabase.from("payments").insert({
       user_id: userId,
       amount,
@@ -119,7 +129,7 @@ serve(async (req) => {
       payment_method: "paychangu",
       transaction_id: txRef,
       status: "pending",
-      metadata: { tier, email, mode: paymentData.data?.mode || "live" },
+      metadata: { tier, email, mode: paymentData.data?.mode || "live", isCustom: isCustomPayment, subscriptionDays },
     });
 
     if (paymentError) {
