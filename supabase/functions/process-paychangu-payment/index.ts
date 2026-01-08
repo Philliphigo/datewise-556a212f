@@ -84,14 +84,16 @@ serve(async (req) => {
       throw new Error("PayChangu secret key not configured");
     }
 
+    const origin = req.headers.get('origin') || 'https://datewise.lovable.app';
+
     const paymentResponse = await fetch("https://api.paychangu.com/payment", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Accept": "application/json",
+        "Authorization": `Bearer ${payChanguSecretKey}`,
       },
       body: JSON.stringify({
-        secret_key: payChanguSecretKey,
         amount,
         currency,
         tx_ref: txRef,
@@ -99,7 +101,7 @@ serve(async (req) => {
         first_name: firstName,
         last_name: lastName,
         callback_url: `${supabaseUrl}/functions/v1/paychangu-webhook`,
-        return_url: `${req.headers.get('origin') || supabaseUrl.replace('.supabase.co', '.lovable.app')}/donate?status=success`,
+        return_url: `${origin}/payment-success?tx_ref=${txRef}&tier=${tier}`,
       }),
     });
 
