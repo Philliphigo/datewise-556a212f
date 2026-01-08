@@ -12,6 +12,7 @@ import { FeedCategories } from "@/components/FeedCategories";
 import { useNavigate } from "react-router-dom";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator, PullToRefreshContainer } from "@/components/PullToRefresh";
+import { AdPlaceholder } from "@/components/AdPlaceholder";
 import {
   Collapsible,
   CollapsibleContent,
@@ -410,6 +411,9 @@ const Feed = () => {
 
         {/* Posts Feed */}
         <div className="space-y-4">
+          {/* Ad placeholder at top of feed */}
+          <AdPlaceholder variant="banner" />
+          
           {posts.length === 0 ? (
             <div className="liquid-glass rounded-3xl p-12 text-center animate-spring-in">
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -419,73 +423,78 @@ const Feed = () => {
             </div>
           ) : (
             posts.map((post, index) => (
-              <div
-                key={post.id}
-                className="liquid-glass rounded-3xl overflow-hidden animate-spring-in"
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                <div className="p-5 space-y-4">
-                  {/* Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-11 h-11 border-2 border-primary/20">
-                        <img
-                          src={post.profile?.avatar_url || defaultAvatar}
-                          alt={post.profile?.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold">{post.profile?.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                        </p>
+              <div key={post.id}>
+                {/* Show ad every 5 posts */}
+                {index > 0 && index % 5 === 0 && (
+                  <AdPlaceholder variant="inline" className="mb-4" />
+                )}
+                <div
+                  className="liquid-glass rounded-3xl overflow-hidden animate-spring-in"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className="p-5 space-y-4">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-11 h-11 border-2 border-primary/20">
+                          <img
+                            src={post.profile?.avatar_url || defaultAvatar}
+                            alt={post.profile?.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </Avatar>
+                        <div>
+                          <p className="font-semibold">{post.profile?.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                          </p>
+                        </div>
                       </div>
+                      {post.user_id === user?.id && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
+                              <MoreVertical className="w-5 h-5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="liquid-glass rounded-2xl border-white/10">
+                            <DropdownMenuItem onClick={() => handleDeletePost(post.id)} className="text-destructive rounded-xl">
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
-                    {post.user_id === user?.id && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
-                            <MoreVertical className="w-5 h-5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="liquid-glass rounded-2xl border-white/10">
-                          <DropdownMenuItem onClick={() => handleDeletePost(post.id)} className="text-destructive rounded-xl">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+
+                    {/* Content */}
+                    <p className="text-foreground/90 leading-relaxed">{post.content}</p>
+
+                    {/* Image */}
+                    {post.image_url && (
+                      <img 
+                        src={post.image_url} 
+                        alt="Post" 
+                        className="w-full rounded-2xl max-h-96 object-cover" 
+                      />
                     )}
-                  </div>
 
-                  {/* Content */}
-                  <p className="text-foreground/90 leading-relaxed">{post.content}</p>
-
-                  {/* Image */}
-                  {post.image_url && (
-                    <img 
-                      src={post.image_url} 
-                      alt="Post" 
-                      className="w-full rounded-2xl max-h-96 object-cover" 
-                    />
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-6 pt-3 border-t border-white/10">
-                    <PostReactions
-                      onReact={(type) => handleLike(post.id, type)}
-                      userReaction={post.userReaction || undefined}
-                      count={post.likes_count}
-                      reactionCounts={post.reactionCounts}
-                    />
-                    <button 
-                      onClick={() => navigate(`/post/${post.id}`)}
-                      className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <MessageCircle className="w-5 h-5" />
-                      <span className="text-sm">{post.comments_count}</span>
-                    </button>
+                    {/* Actions */}
+                    <div className="flex items-center gap-6 pt-3 border-t border-white/10">
+                      <PostReactions
+                        onReact={(type) => handleLike(post.id, type)}
+                        userReaction={post.userReaction || undefined}
+                        count={post.likes_count}
+                        reactionCounts={post.reactionCounts}
+                      />
+                      <button 
+                        onClick={() => navigate(`/post/${post.id}`)}
+                        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                        <span className="text-sm">{post.comments_count}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
