@@ -18,6 +18,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import DiscoverySettings from "./pages/DiscoverySettingsNew";
 import FeedPost from "./pages/FeedPost";
 import NotFound from "./pages/NotFound";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Help from "./pages/Help";
@@ -47,6 +48,7 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/discovery-settings" element={<DiscoverySettings />} />
           <Route path="/post/:postId" element={<FeedPost />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/help" element={<Help />} />

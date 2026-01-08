@@ -3,19 +3,21 @@ import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Loader2, CheckCircle, MapPin, ChevronLeft, ChevronRight, Heart, Edit3, Camera, Image as ImageIcon } from "lucide-react";
+import { LogOut, Loader2, CheckCircle, MapPin, ChevronLeft, ChevronRight, Heart, Edit3, Camera, Image as ImageIcon, Crown, Star, Calendar, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 import { PhotoManager } from "@/components/profile/PhotoManager";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { format } from "date-fns";
 
 const Profile = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
+  const [subscription, setSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [showPhotoManager, setShowPhotoManager] = useState(false);
@@ -33,14 +35,27 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
+      const profileId = viewedId || user?.id;
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", viewedId || user?.id)
+        .eq("id", profileId)
         .single();
 
       if (error) throw error;
       setProfile(data);
+
+      // Fetch subscription if viewing own profile
+      if (isOwnProfile && user) {
+        const { data: subData } = await supabase
+          .from("subscriptions")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .single();
+        
+        setSubscription(subData);
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -49,6 +64,22 @@ const Profile = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getTierIcon = (tier: string) => {
+    switch (tier) {
+      case "vip": return Crown;
+      case "premium": return Star;
+      default: return Heart;
+    }
+  };
+
+  const getTierColor = (tier: string) => {
+    switch (tier) {
+      case "vip": return "from-yellow-500 to-amber-600";
+      case "premium": return "from-primary to-primary-soft";
+      default: return "from-pink-500 to-rose-600";
     }
   };
 
@@ -201,14 +232,48 @@ const Profile = () => {
 
             {/* Profile Details */}
             <div className="p-6 space-y-6">
-              {/* Subscription Badge */}
-              {profile?.subscription_tier && profile.subscription_tier !== 'free' && (
-                <div className="flex justify-center">
-                  <Badge className="bg-gradient-to-r from-primary to-primary-soft text-primary-foreground border-0 px-5 py-2 text-sm font-semibold rounded-full shadow-lg animate-shimmer">
-                    <Heart className="w-4 h-4 mr-2 fill-current" />
-                    {profile.subscription_tier.toUpperCase()} Member
-                  </Badge>
+              {/* Subscription Status Card */}
+              {isOwnProfile && subscription && (
+                <div className={`rounded-2xl p-4 bg-gradient-to-r ${getTierColor(subscription.tier)} text-white shadow-lg`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    {(() => {
+                      const TierIcon = getTierIcon(subscription.tier);
+                      return <TierIcon className="w-8 h-8" />;
+                    })()}
+                    <div>
+                      <h3 className="text-lg font-bold capitalize">{subscription.tier} Member</h3>
+                      <div className="flex items-center gap-1 text-white/90 text-sm">
+                        <Sparkles className="w-3 h-3" />
+                        <span>Ad-free experience</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-white/90 text-sm">
+                    <Calendar className="w-4 h-4" />
+                    <span>
+                      Expires: {format(new Date(subscription.end_date), "MMMM d, yyyy")}
+                    </span>
+                  </div>
                 </div>
+              )}
+
+              {/* Upgrade prompt for free users */}
+              {isOwnProfile && (!profile?.subscription_tier || profile.subscription_tier === 'free') && (
+                <button
+                  onClick={() => navigate('/donate')}
+                  className="w-full rounded-2xl p-4 bg-gradient-to-r from-primary/10 to-primary-soft/10 border border-primary/20 text-left hover:bg-primary/15 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Crown className="w-6 h-6 text-primary" />
+                      <div>
+                        <h3 className="font-semibold text-foreground">Upgrade to Premium</h3>
+                        <p className="text-sm text-muted-foreground">Get ad-free experience & more</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                </button>
               )}
 
               {/* Bio */}
