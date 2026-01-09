@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 import { formatDistanceToNow } from "date-fns";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 interface Match {
   id: string;
@@ -152,11 +153,7 @@ const Matches = () => {
                           {match.profile.name}
                         </h3>
                         <span className="text-white/80">{match.profile.age}</span>
-                        {match.profile.verified && (
-                          <div className="w-5 h-5 rounded-full bg-info flex items-center justify-center">
-                            <span className="text-white text-xs">✓</span>
-                          </div>
-                        )}
+                        {match.profile.verified && <VerifiedBadge size="md" />}
                       </div>
                       {match.profile.city && (
                         <p className="text-white/70 text-sm">{match.profile.city}</p>

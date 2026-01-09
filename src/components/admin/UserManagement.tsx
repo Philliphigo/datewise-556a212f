@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Ban, Eye, CheckCircle, Loader2, Clock, ShieldOff } from "lucide-react";
+import { Search, Ban, Eye, Loader2, Clock, ShieldOff } from "lucide-react";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -155,9 +156,7 @@ export const UserManagement = ({ users, onRefresh }: UserManagementProps) => {
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{user.name}</p>
-                      {user.verified && (
-                        <CheckCircle className="w-4 h-4 text-info fill-info" />
-                      )}
+                      {user.verified && <VerifiedBadge size="sm" />}
                       {user.is_online && (
                         <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
                       )}
@@ -209,9 +208,7 @@ export const UserManagement = ({ users, onRefresh }: UserManagementProps) => {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-lg">{selectedUser.name}</h3>
-                    {selectedUser.verified && (
-                      <CheckCircle className="w-5 h-5 text-info fill-info" />
-                    )}
+                    {selectedUser.verified && <VerifiedBadge size="md" />}
                   </div>
                   <p className="text-muted-foreground">
                     {selectedUser.age} years old • {selectedUser.city || "Location not set"}

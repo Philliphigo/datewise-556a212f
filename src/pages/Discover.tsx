@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
-import { Heart, X, Loader2, CheckCircle, Star, RotateCcw, MessageCircle, ChevronUp, ChevronDown, MapPin } from "lucide-react";
+import { Heart, X, Loader2, Star, RotateCcw, MessageCircle, ChevronUp, ChevronDown, MapPin } from "lucide-react";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -394,11 +395,7 @@ const Discover = () => {
                   {currentProfile.name}
                 </h2>
                 <span className="text-2xl font-light text-white/90">{currentProfile.age}</span>
-                {currentProfile.verified && (
-                  <div className="w-7 h-7 rounded-full bg-info flex items-center justify-center shadow-md">
-                    <CheckCircle className="w-5 h-5 text-white fill-white" />
-                  </div>
-                )}
+                {currentProfile.verified && <VerifiedBadge size="lg" />}
               </div>
 
               {/* Location */}

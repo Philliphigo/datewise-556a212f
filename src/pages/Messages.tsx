@@ -13,6 +13,7 @@ import { SystemInbox } from "@/components/SystemInbox";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -504,11 +505,7 @@ const Messages = () => {
                       <div className="flex-1 text-left">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold">{match.profile.name}</span>
-                          {match.profile.verified && (
-                            <span className="w-4 h-4 rounded-full bg-info flex items-center justify-center">
-                              <span className="text-white text-[10px]">✓</span>
-                            </span>
-                          )}
+                          {match.profile.verified && <VerifiedBadge size="sm" />}
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {match.profile.is_online ? "Online now" : 
@@ -555,8 +552,8 @@ const Messages = () => {
                     className="w-11 h-11 rounded-full object-cover"
                   />
                   {currentMatch?.profile.verified && (
-                    <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-info rounded-full flex items-center justify-center border-2 border-background">
-                      <span className="text-white text-xs">✓</span>
+                    <span className="absolute -bottom-1 -right-1">
+                      <VerifiedBadge size="sm" />
                     </span>
                   )}
                 </div>
