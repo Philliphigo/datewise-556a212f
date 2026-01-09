@@ -3,7 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Loader2, CheckCircle, MapPin, ChevronLeft, ChevronRight, Heart, Edit3, Camera, Image as ImageIcon, Crown, Star, Calendar, Sparkles } from "lucide-react";
+import { LogOut, Loader2, MapPin, ChevronLeft, ChevronRight, Heart, Edit3, Image as ImageIcon, Crown, Star, Calendar, Sparkles } from "lucide-react";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -215,11 +216,7 @@ const Profile = () => {
                     {profile?.name}
                   </h1>
                   <span className="text-2xl text-white/85 font-light">{profile?.age}</span>
-                  {profile?.verified && (
-                    <div className="w-7 h-7 rounded-full bg-info flex items-center justify-center shadow-md">
-                      <CheckCircle className="w-5 h-5 text-white fill-white" />
-                    </div>
-                  )}
+                  {profile?.verified && <VerifiedBadge size="lg" />}
                 </div>
                 {profile?.city && (
                   <div className="flex items-center gap-1.5 text-white/85">
