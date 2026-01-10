@@ -189,45 +189,59 @@ export const PhotoManager = ({ userId, currentPhotos, avatarUrl, onUpdate }: Pho
                 </div>
               )}
               
-              {/* Hover overlay */}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                {photo !== avatarUrl && (
+              {/* Always visible overlay for mobile - tap friendly */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col items-center justify-end gap-2 p-3 opacity-100 md:opacity-0 md:bg-black/50 md:from-transparent md:justify-center group-hover:opacity-100 transition-opacity">
+                <div className="flex gap-2 w-full justify-center">
+                  {photo !== avatarUrl && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="rounded-full text-xs px-4 py-2 h-auto touch-manipulation"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSetAsMain(photo);
+                      }}
+                    >
+                      Set Main
+                    </Button>
+                  )}
                   <Button
                     size="sm"
-                    variant="secondary"
-                    className="rounded-full text-xs"
-                    onClick={() => handleSetAsMain(photo)}
+                    variant="destructive"
+                    className="rounded-full px-4 py-2 h-auto touch-manipulation"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemovePhoto(photo);
+                    }}
+                    disabled={deleting === photo}
                   >
-                    Set Main
+                    {deleting === photo ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <X className="w-4 h-4 mr-1" />
+                        Remove
+                      </>
+                    )}
                   </Button>
-                )}
-                <Button
-                  size="icon"
-                  variant="destructive"
-                  className="rounded-full w-8 h-8"
-                  onClick={() => handleRemovePhoto(photo)}
-                  disabled={deleting === photo}
-                >
-                  {deleting === photo ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <X className="w-4 h-4" />
-                  )}
-                </Button>
+                </div>
               </div>
             </div>
           ))}
 
-          {/* Add photo button */}
+          {/* Add photo button - Large touch target for mobile */}
           {allPhotos.length < maxPhotos && (
-            <label className="cursor-pointer">
-              <div className="aspect-square rounded-xl border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center hover:bg-muted/50 transition-colors">
+            <label className="cursor-pointer touch-manipulation">
+              <div className="aspect-square rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 flex flex-col items-center justify-center hover:bg-primary/10 active:bg-primary/20 transition-colors">
                 {uploading ? (
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 ) : (
                   <>
-                    <Plus className="w-6 h-6 text-muted-foreground mb-1" />
-                    <span className="text-xs text-muted-foreground">Add Photo</span>
+                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-2">
+                      <Plus className="w-6 h-6 text-primary" />
+                    </div>
+                    <span className="text-sm font-medium text-primary">Add Photo</span>
+                    <span className="text-xs text-muted-foreground mt-0.5">Tap to upload</span>
                   </>
                 )}
               </div>

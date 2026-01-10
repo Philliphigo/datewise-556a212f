@@ -72,7 +72,14 @@ serve(async (req) => {
     });
   } catch (error: any) {
     console.error("delete-account error:", error);
-    return new Response(JSON.stringify({ error: error.message || "Unknown error" }), {
+    
+    const safeErrors = ['Authentication required', 'Invalid authentication'];
+    let message = 'Account deletion failed. Please try again or contact support.';
+    if (error.message && safeErrors.some(s => error.message.includes(s))) {
+      message = error.message;
+    }
+    
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

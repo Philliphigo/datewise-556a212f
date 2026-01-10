@@ -152,8 +152,17 @@ serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Error in process-paypal-payment:", error);
+    
+    const safeErrors = [
+      'Invalid amount', 'Authentication required', 'Invalid authentication', 'Invalid subscription tier'
+    ];
+    let message = 'Payment processing failed. Please try again or contact support.';
+    if (error.message && safeErrors.some(s => error.message.includes(s))) {
+      message = error.message;
+    }
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
