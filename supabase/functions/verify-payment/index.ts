@@ -102,8 +102,15 @@ serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Error in verify-payment:", error);
+    
+    const safeErrors = ['Authentication required', 'Invalid authentication'];
+    let message = 'Payment verification failed. Please contact support if you were charged.';
+    if (error.message && safeErrors.some(s => error.message.includes(s))) {
+      message = error.message;
+    }
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

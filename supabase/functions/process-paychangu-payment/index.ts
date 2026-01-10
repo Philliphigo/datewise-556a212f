@@ -149,8 +149,20 @@ serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Error in process-paychangu-payment:", error);
+    
+    // Only expose safe, user-friendly error messages
+    const safeErrors = [
+      'Invalid amount', 'Invalid phone number', 'Minimum donation',
+      'Authentication required', 'Invalid authentication', 'Invalid subscription tier'
+    ];
+    
+    let message = 'Payment processing failed. Please try again or contact support.';
+    if (error.message && safeErrors.some(s => error.message.includes(s))) {
+      message = error.message;
+    }
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

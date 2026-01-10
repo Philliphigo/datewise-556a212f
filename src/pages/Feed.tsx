@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
@@ -11,7 +11,7 @@ import { PostReactions } from "@/components/PostReactions";
 import { FeedCategories } from "@/components/FeedCategories";
 import { useNavigate } from "react-router-dom";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import { PullToRefreshIndicator, PullToRefreshContainer } from "@/components/PullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefresh";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
 import {
   Collapsible,
@@ -43,6 +43,102 @@ interface Post {
   reactionCounts: { [key: string]: number };
 }
 
+// Memoized Post Card Component for better performance
+const PostCard = memo(({ 
+  post, 
+  userId, 
+  onLike, 
+  onDelete, 
+  onNavigate,
+  index 
+}: { 
+  post: Post; 
+  userId: string | undefined;
+  onLike: (postId: string, reactionType: string) => void;
+  onDelete: (postId: string) => void;
+  onNavigate: (path: string) => void;
+  index: number;
+}) => {
+  return (
+    <div
+      className="liquid-glass rounded-3xl overflow-hidden animate-spring-in"
+      style={{ animationDelay: `${Math.min(index * 0.03, 0.3)}s` }}
+    >
+      <div className="p-5 space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div 
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => onNavigate(`/profile?user=${post.user_id}`)}
+          >
+            <Avatar className="w-11 h-11 border-2 border-primary/20">
+              <img
+                src={post.profile?.avatar_url || defaultAvatar}
+                alt={post.profile?.name}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </Avatar>
+            <div>
+              <p className="font-semibold">{post.profile?.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+              </p>
+            </div>
+          </div>
+          {post.user_id === userId && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
+                  <MoreVertical className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="liquid-glass rounded-2xl border-white/10">
+                <DropdownMenuItem onClick={() => onDelete(post.id)} className="text-destructive rounded-xl">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+
+        {/* Content */}
+        <p className="text-foreground/90 leading-relaxed whitespace-pre-wrap break-words">{post.content}</p>
+
+        {/* Image with lazy loading */}
+        {post.image_url && (
+          <img 
+            src={post.image_url} 
+            alt="Post" 
+            className="w-full rounded-2xl max-h-96 object-cover"
+            loading="lazy"
+          />
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center gap-6 pt-3 border-t border-white/10">
+          <PostReactions
+            onReact={(type) => onLike(post.id, type)}
+            userReaction={post.userReaction || undefined}
+            count={post.likes_count}
+            reactionCounts={post.reactionCounts}
+          />
+          <button 
+            onClick={() => onNavigate(`/post/${post.id}`)}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
+          >
+            <MessageCircle className="w-5 h-5" />
+            <span className="text-sm">{post.comments_count}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+PostCard.displayName = 'PostCard';
+
 const Feed = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -62,7 +158,7 @@ const Feed = () => {
         .from("posts")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(30);
 
       if (selectedCategory !== "all") {
         query = query.eq("category", selectedCategory);
@@ -72,47 +168,52 @@ const Feed = () => {
 
       if (error) throw error;
 
-      const postsWithProfiles = await Promise.all(
-        (postsData || []).map(async (post) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("name, avatar_url")
-            .eq("id", post.user_id)
-            .single();
+      // Batch fetch profiles for all posts
+      const userIds = [...new Set((postsData || []).map(p => p.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, name, avatar_url")
+        .in("id", userIds);
 
-          // Get user's reaction
-          const { data: userLike } = await supabase
-            .from("post_likes")
-            .select("id, reaction_type")
-            .eq("post_id", post.id)
-            .eq("user_id", user?.id)
-            .maybeSingle();
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
 
-          // Get reaction counts by type
-          const { data: allLikes } = await supabase
-            .from("post_likes")
-            .select("reaction_type")
-            .eq("post_id", post.id);
+      // Batch fetch reactions for current user
+      const postIds = (postsData || []).map(p => p.id);
+      const { data: userLikes } = await supabase
+        .from("post_likes")
+        .select("post_id, reaction_type")
+        .in("post_id", postIds)
+        .eq("user_id", user?.id || '');
 
-          const reactionCounts: { [key: string]: number } = {};
-          (allLikes || []).forEach((like: { reaction_type: string }) => {
-            reactionCounts[like.reaction_type] = (reactionCounts[like.reaction_type] || 0) + 1;
-          });
+      const userLikeMap = new Map(userLikes?.map(l => [l.post_id, l.reaction_type]) || []);
 
-          return {
-            ...post,
-            profile,
-            userReaction: userLike?.reaction_type || null,
-            reactionCounts,
-          };
-        })
-      );
+      // Batch fetch all reactions for counts
+      const { data: allLikes } = await supabase
+        .from("post_likes")
+        .select("post_id, reaction_type")
+        .in("post_id", postIds);
 
-      setPosts(postsWithProfiles);
+      const reactionCountsMap = new Map<string, { [key: string]: number }>();
+      (allLikes || []).forEach((like) => {
+        if (!reactionCountsMap.has(like.post_id)) {
+          reactionCountsMap.set(like.post_id, {});
+        }
+        const counts = reactionCountsMap.get(like.post_id)!;
+        counts[like.reaction_type] = (counts[like.reaction_type] || 0) + 1;
+      });
+
+      const postsWithData = (postsData || []).map((post) => ({
+        ...post,
+        profile: profileMap.get(post.user_id) || { name: 'Unknown', avatar_url: null },
+        userReaction: userLikeMap.get(post.id) || null,
+        reactionCounts: reactionCountsMap.get(post.id) || {},
+      }));
+
+      setPosts(postsWithData);
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to load posts",
         variant: "destructive",
       });
     } finally {
@@ -149,7 +250,7 @@ const Feed = () => {
     fetchPosts();
   }, [user, navigate, fetchPosts]);
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
@@ -168,18 +269,18 @@ const Feed = () => {
 
       toast({
         title: "Success",
-        description: "Image uploaded successfully",
+        description: "Image uploaded",
       });
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to upload image",
         variant: "destructive",
       });
     }
-  };
+  }, [user, toast]);
 
-  const handleCreatePost = async () => {
+  const handleCreatePost = useCallback(async () => {
     if (!user || !newPost.trim() || posting) return;
 
     if (newPost.length > 5000) {
@@ -194,7 +295,7 @@ const Feed = () => {
     setPosting(true);
     try {
       const { error } = await supabase.from("posts").insert({
-        content: newPost,
+        content: newPost.trim(),
         user_id: user.id,
         image_url: uploadedImage,
         category: postCategory || null,
@@ -214,79 +315,143 @@ const Feed = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to create post",
         variant: "destructive",
       });
     } finally {
       setPosting(false);
     }
-  };
+  }, [user, newPost, posting, uploadedImage, postCategory, toast, fetchPosts]);
 
-  const handleLike = async (postId: string, reactionType: string = "like") => {
+  const handleLike = useCallback(async (postId: string, reactionType: string = "like") => {
     if (!user) return;
 
     const post = posts.find((p) => p.id === postId);
     if (!post) return;
 
+    // Optimistic update
+    setPosts(prevPosts => prevPosts.map(p => {
+      if (p.id !== postId) return p;
+      
+      const newReactionCounts = { ...p.reactionCounts };
+      
+      if (p.userReaction === reactionType) {
+        // Removing reaction
+        newReactionCounts[reactionType] = Math.max(0, (newReactionCounts[reactionType] || 1) - 1);
+        return { ...p, userReaction: null, reactionCounts: newReactionCounts, likes_count: Math.max(0, p.likes_count - 1) };
+      } else {
+        // Adding or changing reaction
+        if (p.userReaction) {
+          newReactionCounts[p.userReaction] = Math.max(0, (newReactionCounts[p.userReaction] || 1) - 1);
+        } else {
+          // New reaction
+          return { 
+            ...p, 
+            userReaction: reactionType, 
+            reactionCounts: { ...newReactionCounts, [reactionType]: (newReactionCounts[reactionType] || 0) + 1 },
+            likes_count: p.likes_count + 1
+          };
+        }
+        newReactionCounts[reactionType] = (newReactionCounts[reactionType] || 0) + 1;
+        return { ...p, userReaction: reactionType, reactionCounts: newReactionCounts };
+      }
+    }));
+
     try {
       if (post.userReaction === reactionType) {
-        // Remove reaction if clicking same type
         await supabase
           .from("post_likes")
           .delete()
           .eq("post_id", postId)
           .eq("user_id", user.id);
       } else if (post.userReaction) {
-        // Update existing reaction to new type
         await supabase
           .from("post_likes")
           .update({ reaction_type: reactionType })
           .eq("post_id", postId)
           .eq("user_id", user.id);
       } else {
-        // Insert new reaction
         await supabase.from("post_likes").insert({
           post_id: postId,
           user_id: user.id,
           reaction_type: reactionType,
         });
       }
-
-      fetchPosts();
     } catch (error: any) {
+      // Revert on error
+      fetchPosts();
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to react",
         variant: "destructive",
       });
     }
-  };
+  }, [user, posts, fetchPosts, toast]);
 
-  const handleDeletePost = async (postId: string) => {
+  const handleDeletePost = useCallback(async (postId: string) => {
+    // Optimistic update
+    setPosts(prevPosts => prevPosts.filter(p => p.id !== postId));
+    
     try {
       const { error } = await supabase.from("posts").delete().eq("id", postId);
-
       if (error) throw error;
 
       toast({
         title: "Deleted",
         description: "Your post has been removed",
       });
-      fetchPosts();
     } catch (error: any) {
+      fetchPosts();
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to delete post",
         variant: "destructive",
       });
     }
-  };
+  }, [fetchPosts, toast]);
+
+  const handleNavigate = useCallback((path: string) => {
+    navigate(path);
+  }, [navigate]);
+
+  // Memoize rendered posts
+  const renderedPosts = useMemo(() => {
+    if (posts.length === 0) {
+      return (
+        <div className="liquid-glass rounded-3xl p-12 text-center animate-spring-in">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <Heart className="w-8 h-8 text-primary" />
+          </div>
+          <p className="text-muted-foreground">No posts yet. Be the first to share!</p>
+        </div>
+      );
+    }
+
+    return posts.map((post, index) => (
+      <div key={post.id}>
+        {index > 0 && index % 5 === 0 && (
+          <AdPlaceholder variant="inline" className="mb-4" />
+        )}
+        <PostCard
+          post={post}
+          userId={user?.id}
+          onLike={handleLike}
+          onDelete={handleDeletePost}
+          onNavigate={handleNavigate}
+          index={index}
+        />
+      </div>
+    ));
+  }, [posts, user?.id, handleLike, handleDeletePost, handleNavigate]);
 
   if (loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[calc(100vh-140px)]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-muted-foreground text-sm">Loading posts...</p>
+          </div>
         </div>
       </Layout>
     );
@@ -327,7 +492,7 @@ const Feed = () => {
         {/* Create Post - Collapsible */}
         <Collapsible open={showCreatePost} onOpenChange={setShowCreatePost}>
           <div className="liquid-glass rounded-3xl overflow-hidden animate-spring-in">
-            <CollapsibleTrigger className="w-full p-5 flex items-center justify-between transition-colors hover:bg-white/5">
+            <CollapsibleTrigger className="w-full p-5 flex items-center justify-between transition-colors hover:bg-white/5 touch-manipulation">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                   <Plus className="w-5 h-5 text-primary" />
@@ -380,7 +545,7 @@ const Feed = () => {
                       <option value="adventure">Adventure</option>
                       <option value="long-term">Long Term</option>
                     </select>
-                    <label className="cursor-pointer">
+                    <label className="cursor-pointer touch-manipulation">
                       <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
                         <Image className="w-4 h-4 text-primary" />
                         <span className="text-sm">Photo</span>
@@ -414,92 +579,7 @@ const Feed = () => {
           {/* Ad placeholder at top of feed */}
           <AdPlaceholder variant="banner" />
           
-          {posts.length === 0 ? (
-            <div className="liquid-glass rounded-3xl p-12 text-center animate-spring-in">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Heart className="w-8 h-8 text-primary" />
-              </div>
-              <p className="text-muted-foreground">No posts yet. Be the first to share!</p>
-            </div>
-          ) : (
-            posts.map((post, index) => (
-              <div key={post.id}>
-                {/* Show ad every 5 posts */}
-                {index > 0 && index % 5 === 0 && (
-                  <AdPlaceholder variant="inline" className="mb-4" />
-                )}
-                <div
-                  className="liquid-glass rounded-3xl overflow-hidden animate-spring-in"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  <div className="p-5 space-y-4">
-                    {/* Header */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-11 h-11 border-2 border-primary/20">
-                          <img
-                            src={post.profile?.avatar_url || defaultAvatar}
-                            alt={post.profile?.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </Avatar>
-                        <div>
-                          <p className="font-semibold">{post.profile?.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                          </p>
-                        </div>
-                      </div>
-                      {post.user_id === user?.id && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
-                              <MoreVertical className="w-5 h-5" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="liquid-glass rounded-2xl border-white/10">
-                            <DropdownMenuItem onClick={() => handleDeletePost(post.id)} className="text-destructive rounded-xl">
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <p className="text-foreground/90 leading-relaxed">{post.content}</p>
-
-                    {/* Image */}
-                    {post.image_url && (
-                      <img 
-                        src={post.image_url} 
-                        alt="Post" 
-                        className="w-full rounded-2xl max-h-96 object-cover" 
-                      />
-                    )}
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-6 pt-3 border-t border-white/10">
-                      <PostReactions
-                        onReact={(type) => handleLike(post.id, type)}
-                        userReaction={post.userReaction || undefined}
-                        count={post.likes_count}
-                        reactionCounts={post.reactionCounts}
-                      />
-                      <button 
-                        onClick={() => navigate(`/post/${post.id}`)}
-                        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <MessageCircle className="w-5 h-5" />
-                        <span className="text-sm">{post.comments_count}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+          {renderedPosts}
         </div>
         </div>
       </div>

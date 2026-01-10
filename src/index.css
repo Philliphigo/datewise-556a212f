@@ -949,4 +949,26 @@
     transform: translateY(-4px);
     box-shadow: var(--shadow-xl), 0 0 40px hsla(42, 92%, 56%, 0.15);
   }
+
+  /* Confetti Animation */
+  @keyframes confetti {
+    0% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
+  .animate-confetti {
+    animation: confetti 3s ease-out forwards;
+  }
+
+  /* Touch manipulation for mobile */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
 }

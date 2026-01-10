@@ -120,7 +120,14 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (error: any) {
     console.error("Error in manage-broadcast:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    
+    const safeErrors = ['action and id are required', 'content is required', 'Invalid action', 'Admin access required'];
+    let message = 'Operation failed. Please try again.';
+    if (error.message && safeErrors.some(s => error.message.includes(s))) {
+      message = error.message;
+    }
+    
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
