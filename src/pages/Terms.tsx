@@ -55,7 +55,7 @@ const Terms = () => {
               <ul className="list-disc list-inside space-y-2 text-foreground/80">
                 <li>Subscription fees are charged in advance</li>
                 <li>Subscriptions auto-renew unless cancelled</li>
-                <li>Refunds are provided in accordance with our refund policy</li>
+                <li>All purchases are final. We do not offer refunds.</li>
                 <li>We reserve the right to change pricing with notice</li>
               </ul>
             </section>

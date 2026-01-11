@@ -34,6 +34,7 @@ import { BroadcastManagement } from "@/components/admin/BroadcastManagement";
 import { RevenueAnalytics } from "@/components/admin/RevenueAnalytics";
 import { ActivityLog } from "@/components/admin/ActivityLog";
 import { RealTimeCharts } from "@/components/admin/RealTimeCharts";
+import { FeedbackManagement } from "@/components/admin/FeedbackManagement";
 
 interface DashboardStats {
   totalUsers: number;
@@ -67,6 +68,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
+  const [contactMessages, setContactMessages] = useState<any[]>([]);
   const [verificationRequests, setVerificationRequests] = useState<any[]>([]);
   const [feedbackDialog, setFeedbackDialog] = useState(false);
   const [selectedReport, setSelectedReport] = useState<any>(null);
@@ -136,6 +138,7 @@ const AdminDashboard = () => {
         { data: paymentsList },
         { data: verificationData },
         { data: broadcasts },
+        { data: contactData },
       ] = await Promise.all([
         supabase.from("profiles").select("*", { count: "exact", head: true }),
         supabase.from("matches").select("*", { count: "exact", head: true }),
@@ -146,11 +149,16 @@ const AdminDashboard = () => {
         supabase.from("verification_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("system_messages").select("*", { count: "exact", head: true }).eq("is_broadcast", true),
         supabase.from("payments").select("amount").eq("status", "completed"),
-        supabase.from("profiles").select("id, name, verified, created_at, subscription_tier, age, city, is_online, avatar_url").order("created_at", { ascending: false }).limit(100),
+        supabase
+          .from("profiles")
+          .select("id, name, verified, created_at, subscription_tier, age, city, is_online, avatar_url")
+          .order("created_at", { ascending: false })
+          .limit(100),
         supabase.from("reports").select("*").order("created_at", { ascending: false }).limit(50),
         supabase.from("payments").select("*").order("created_at", { ascending: false }).limit(50),
         supabase.from("verification_requests").select("*").order("created_at", { ascending: false }).limit(50),
         supabase.from("system_messages").select("*").eq("is_broadcast", true).order("created_at", { ascending: false }).limit(20),
+        supabase.from("contact_messages").select("*").order("created_at", { ascending: false }).limit(100),
       ]);
 
       const totalRevenue = paymentsData?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
@@ -199,6 +207,7 @@ const AdminDashboard = () => {
       setPayments(paymentsList || []);
       setVerificationRequests(verificationRequestsWithProfiles || []);
       setBroadcastHistory(broadcasts || []);
+      setContactMessages(contactData || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -356,6 +365,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="analytics" className="rounded-lg">
               <BarChart3 className="w-4 h-4 mr-2" />
               Analytics
+            </TabsTrigger>
+            <TabsTrigger value="feedback" className="rounded-lg">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Feedback
             </TabsTrigger>
           </TabsList>
 
@@ -534,6 +547,11 @@ const AdminDashboard = () => {
           <TabsContent value="analytics" className="space-y-6">
             <RealTimeCharts />
             <RevenueAnalytics payments={payments} totalRevenue={stats.totalRevenue} />
+          </TabsContent>
+
+          {/* Feedback Tab */}
+          <TabsContent value="feedback">
+            <FeedbackManagement messages={contactMessages} onRefresh={fetchDashboardData} refreshing={refreshing} />
           </TabsContent>
         </Tabs>
 

@@ -13,6 +13,8 @@ import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
 import Feed from "./pages/Feed";
 import Settings from "./pages/Settings";
+import EditProfile from "./pages/EditProfile";
+import Inbox from "./pages/Inbox";
 import Donate from "./pages/Donate";
 import AdminDashboard from "./pages/AdminDashboard";
 import DiscoverySettings from "./pages/DiscoverySettingsNew";
@@ -38,23 +40,25 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/onboarding" element={<OnboardingWrapper />} />
-          <Route path="/discover" element={<Discover />} />
-          <Route path="/matches" element={<Matches />} />
-          <Route path="/feed" element={<Feed />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/donate" element={<Donate />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/discovery-settings" element={<DiscoverySettings />} />
-          <Route path="/post/:postId" element={<FeedPost />} />
-          <Route path="/payment-success" element={<PaymentSuccess />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/help" element={<Help />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="*" element={<NotFound />} />
+            <Route path="/discover" element={<Discover />} />
+            <Route path="/matches" element={<Matches />} />
+            <Route path="/feed" element={<Feed />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/edit-profile" element={<EditProfile />} />
+            <Route path="/inbox" element={<Inbox />} />
+            <Route path="/donate" element={<Donate />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/discovery-settings" element={<DiscoverySettings />} />
+            <Route path="/post/:postId" element={<FeedPost />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
