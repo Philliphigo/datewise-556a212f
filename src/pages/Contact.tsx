@@ -6,10 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const Contact = () => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
@@ -22,16 +24,43 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to send a message.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSending(true);
-    
-    setTimeout(() => {
+    try {
+      const { error } = await supabase.from("contact_messages").insert({
+        user_id: user.id,
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Message Sent!",
-        description: "We'll get back to you at datewiseapp@gmail.com within 24 hours.",
+        description: "Thanks — our team will get back to you within 24 hours.",
       });
+
       setFormData({ name: "", email: "", subject: "", message: "" });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error?.message ?? "Failed to send message",
+        variant: "destructive",
+      });
+    } finally {
       setSending(false);
-    }, 1000);
+    }
   };
 
   return (

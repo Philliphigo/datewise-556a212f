@@ -200,7 +200,7 @@ const Profile = () => {
               {isOwnProfile && (
                 <button 
                   onClick={() => setShowPhotoManager(true)}
-                  className="absolute bottom-4 right-4 w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
+                  className="absolute bottom-4 right-4 z-20 w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95 touch-manipulation"
                 >
                   <ImageIcon className="w-6 h-6 text-primary-foreground" />
                 </button>
@@ -312,7 +312,7 @@ const Profile = () => {
           {isOwnProfile && (
             <div className="space-y-3">
               <Button
-                onClick={() => navigate('/settings')}
+                onClick={() => navigate('/edit-profile')}
                 className="w-full liquid-glass border-white/20 text-foreground hover:bg-white/10 rounded-2xl h-14 text-base font-medium transition-all active:scale-[0.98]"
                 variant="outline"
               >

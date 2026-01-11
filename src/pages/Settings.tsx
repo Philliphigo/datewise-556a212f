@@ -418,6 +418,12 @@ const Settings = () => {
                     </div>
                     <LiquidToggle checked={emailNotifications} onCheckedChange={setEmailNotifications} />
                   </div>
+
+                  <Separator className="bg-border/50" />
+
+                  <Button variant="outline" className="w-full rounded-xl" onClick={() => navigate('/inbox')}>
+                    View Inbox & Records
+                  </Button>
                 </div>
               </CollapsibleContent>
             </Card>
