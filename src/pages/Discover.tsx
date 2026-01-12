@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator, PullToRefreshContainer } from "@/components/PullToRefresh";
-import { AdPlaceholder } from "@/components/AdPlaceholder";
+import { DiscoverAd } from "@/components/DiscoverAd";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 
 interface Profile {
@@ -42,6 +42,9 @@ const Discover = () => {
   const [touchDelta, setTouchDelta] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [history, setHistory] = useState<number[]>([]);
+  const [velocity, setVelocity] = useState(0);
+  const lastTouchTime = useRef(Date.now());
+  const lastTouchX = useRef(0);
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -217,22 +220,42 @@ const Discover = () => {
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+    if (isExpanded) return;
+    const touch = e.touches[0];
+    setTouchStart({ x: touch.clientX, y: touch.clientY });
     setIsDragging(true);
+    lastTouchTime.current = Date.now();
+    lastTouchX.current = touch.clientX;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    const deltaX = e.touches[0].clientX - touchStart.x;
-    const deltaY = e.touches[0].clientY - touchStart.y;
+    if (!isDragging || isExpanded) return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStart.x;
+    const deltaY = touch.clientY - touchStart.y;
+    
+    // Calculate velocity for flick detection
+    const now = Date.now();
+    const dt = now - lastTouchTime.current;
+    if (dt > 0) {
+      const dx = touch.clientX - lastTouchX.current;
+      setVelocity(dx / dt);
+    }
+    lastTouchTime.current = now;
+    lastTouchX.current = touch.clientX;
+    
     setTouchDelta({ x: deltaX, y: deltaY });
   };
 
   const handleTouchEnd = () => {
     if (!isDragging) return;
     
-    if (Math.abs(touchDelta.x) > 80) {
-      if (touchDelta.x > 0) {
+    // Check for swipe with velocity or distance
+    const swipeThreshold = 80;
+    const velocityThreshold = 0.5;
+    
+    if (Math.abs(touchDelta.x) > swipeThreshold || Math.abs(velocity) > velocityThreshold) {
+      if (touchDelta.x > 0 || velocity > velocityThreshold) {
         handleLike();
       } else {
         handlePass();
@@ -241,10 +264,50 @@ const Discover = () => {
     
     setTouchDelta({ x: 0, y: 0 });
     setIsDragging(false);
+    setVelocity(0);
+  };
+
+  // Mouse drag support for desktop
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isExpanded) return;
+    setTouchStart({ x: e.clientX, y: e.clientY });
+    setIsDragging(true);
+    lastTouchTime.current = Date.now();
+    lastTouchX.current = e.clientX;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || isExpanded) return;
+    const deltaX = e.clientX - touchStart.x;
+    const deltaY = e.clientY - touchStart.y;
+    
+    const now = Date.now();
+    const dt = now - lastTouchTime.current;
+    if (dt > 0) {
+      const dx = e.clientX - lastTouchX.current;
+      setVelocity(dx / dt);
+    }
+    lastTouchTime.current = now;
+    lastTouchX.current = e.clientX;
+    
+    setTouchDelta({ x: deltaX, y: deltaY });
+  };
+
+  const handleMouseUp = () => {
+    handleTouchEnd();
+  };
+
+  const handleMouseLeave = () => {
+    if (isDragging) {
+      setTouchDelta({ x: 0, y: 0 });
+      setIsDragging(false);
+      setVelocity(0);
+    }
   };
 
   const handlePhotoTap = (e: React.MouseEvent) => {
-    if (isExpanded) return;
+    if (isExpanded || isDragging) return;
+    if (Math.abs(touchDelta.x) > 5) return; // Ignore if swiping
     
     const card = cardRef.current;
     if (!card) return;
@@ -289,7 +352,7 @@ const Discover = () => {
     return (
       <Layout>
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] px-6 text-center">
-          <div className="w-28 h-28 rounded-full liquid-glass flex items-center justify-center mb-6 animate-bounce-in">
+          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 animate-bounce-in shadow-lg">
             <Heart className="w-14 h-14 text-primary animate-pulse-soft" />
           </div>
           <h2 className="text-2xl font-bold mb-3 animate-float-up">No More Profiles</h2>
@@ -306,10 +369,23 @@ const Discover = () => {
     : [currentProfile.avatar_url || defaultAvatar];
   const currentPhoto = photos[currentPhotoIndex] || defaultAvatar;
 
-  const cardStyle = isDragging && Math.abs(touchDelta.x) > 10 ? {
-    transform: `translateX(${touchDelta.x * 0.5}px) rotate(${touchDelta.x * 0.03}deg)`,
-    transition: 'none'
-  } : {};
+  // Calculate card transform based on drag with easing
+  const dragProgress = Math.min(Math.abs(touchDelta.x) / 150, 1);
+  const rotation = touchDelta.x * 0.08 * (1 - dragProgress * 0.3); // Reduce rotation at edges
+  const scale = 1 - dragProgress * 0.05;
+  
+  const cardStyle = isDragging && Math.abs(touchDelta.x) > 5 ? {
+    transform: `translateX(${touchDelta.x}px) rotate(${rotation}deg) scale(${scale})`,
+    transition: 'none',
+    cursor: 'grabbing'
+  } : {
+    transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+    cursor: 'grab'
+  };
+
+  // Overlay opacity based on swipe distance
+  const likeOpacity = Math.min(touchDelta.x / 100, 1);
+  const passOpacity = Math.min(-touchDelta.x / 100, 1);
 
   return (
     <Layout>
@@ -326,10 +402,10 @@ const Discover = () => {
           progress={progress}
         />
         
-        {/* Profile Card with transform for pull effect */}
+        {/* Profile Card with smooth drag */}
         <div 
           ref={cardRef}
-          className={`relative flex-1 profile-card overflow-hidden card-glow ${
+          className={`relative flex-1 rounded-3xl overflow-hidden shadow-2xl select-none ${
             swipeDirection === 'left' ? 'animate-swipe-left' : 
             swipeDirection === 'right' ? 'animate-swipe-right' : 
             'animate-spring-in'
@@ -339,22 +415,32 @@ const Discover = () => {
             transform: pullDistance > 0 
               ? `translateY(${pullDistance * 0.3}px) ${cardStyle.transform || ''}` 
               : cardStyle.transform,
-            transition: isRefreshing ? 'transform 0.3s ease' : cardStyle.transition,
           }}
           onTouchStart={(e) => {
             if (pullDistance === 0) handleTouchStart(e);
           }}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
           onClick={handlePhotoTap}
         >
+          {/* Ad Banner for Free Users */}
+          <DiscoverAd />
+
           {/* Photo Progress Indicators */}
           {photos.length > 1 && (
-            <div className="absolute top-4 left-0 right-0 z-20 photo-progress">
+            <div className="absolute top-16 left-4 right-4 z-20 flex gap-1.5">
               {photos.map((_, idx) => (
                 <div 
                   key={idx} 
-                  className={`photo-progress-segment ${idx === currentPhotoIndex ? 'active' : 'inactive'}`}
+                  className={`flex-1 h-1 rounded-full transition-all duration-300 ${
+                    idx === currentPhotoIndex 
+                      ? 'bg-white shadow-sm' 
+                      : 'bg-white/40'
+                  }`}
                 />
               ))}
             </div>
@@ -365,29 +451,50 @@ const Discover = () => {
             src={currentPhoto}
             alt={currentProfile.name}
             className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ${isExpanded ? 'scale-105 blur-[2px]' : ''}`}
+            draggable={false}
           />
 
-          {/* Like/Pass Overlays with iOS 26 Style */}
-          {isDragging && touchDelta.x > 50 && (
-            <div className="absolute inset-0 bg-success/20 flex items-center justify-center z-30 animate-fade-in">
-              <div className="w-24 h-24 rounded-full bg-success/90 flex items-center justify-center shadow-lg animate-scale-up">
-                <Heart className="w-12 h-12 text-white fill-white" />
-              </div>
+          {/* Like Overlay - Smooth gradient reveal */}
+          <div 
+            className="absolute inset-0 bg-gradient-to-l from-success/0 via-success/0 to-success/40 flex items-center justify-start pl-8 z-30 pointer-events-none"
+            style={{ opacity: Math.max(0, likeOpacity) }}
+          >
+            <div 
+              className="w-20 h-20 rounded-full bg-success/90 flex items-center justify-center shadow-2xl"
+              style={{ 
+                transform: `scale(${0.5 + likeOpacity * 0.5})`,
+                opacity: likeOpacity
+              }}
+            >
+              <Heart className="w-10 h-10 text-white fill-white" />
             </div>
-          )}
-          {isDragging && touchDelta.x < -50 && (
-            <div className="absolute inset-0 bg-destructive/20 flex items-center justify-center z-30 animate-fade-in">
-              <div className="w-24 h-24 rounded-full bg-destructive/90 flex items-center justify-center shadow-lg animate-scale-up">
-                <X className="w-12 h-12 text-white" strokeWidth={3} />
-              </div>
+          </div>
+
+          {/* Pass Overlay - Smooth gradient reveal */}
+          <div 
+            className="absolute inset-0 bg-gradient-to-r from-destructive/0 via-destructive/0 to-destructive/40 flex items-center justify-end pr-8 z-30 pointer-events-none"
+            style={{ opacity: Math.max(0, passOpacity) }}
+          >
+            <div 
+              className="w-20 h-20 rounded-full bg-destructive/90 flex items-center justify-center shadow-2xl"
+              style={{ 
+                transform: `scale(${0.5 + passOpacity * 0.5})`,
+                opacity: passOpacity
+              }}
+            >
+              <X className="w-10 h-10 text-white" strokeWidth={3} />
             </div>
-          )}
+          </div>
 
           {/* Gradient Overlay */}
-          <div className={`absolute inset-0 pointer-events-none transition-all duration-400 ${isExpanded ? 'bg-black/70' : 'gradient-overlay-bottom'}`} />
+          <div className={`absolute inset-0 pointer-events-none transition-all duration-400 ${
+            isExpanded 
+              ? 'bg-black/70' 
+              : 'bg-gradient-to-t from-black/80 via-black/20 to-transparent'
+          }`} />
 
           {/* Profile Info */}
-          <div className={`absolute bottom-0 left-0 right-0 z-10 transition-all duration-500 ease-out ${isExpanded ? 'h-[75%] overflow-y-auto smooth-scroll' : ''}`}>
+          <div className={`absolute bottom-0 left-0 right-0 z-10 transition-all duration-500 ease-out ${isExpanded ? 'h-[75%] overflow-y-auto' : ''}`}>
             <div className="p-5">
               {/* Name, Age, Verified */}
               <div className="flex items-center gap-2 mb-2">
@@ -401,7 +508,7 @@ const Discover = () => {
               {/* Location */}
               {currentProfile.city && (
                 <div className="flex items-center gap-1.5 text-white/85 text-sm mb-3">
-                  <MapPin className="w-4 h-4" />
+                  <MapPin className="w-4 h-4" strokeWidth={1.5} />
                   <span>{currentProfile.city}</span>
                 </div>
               )}
@@ -418,7 +525,7 @@ const Discover = () => {
                 <div className="space-y-5 animate-float-up">
                   {/* Full Bio */}
                   {currentProfile.bio && (
-                    <div className="liquid-glass-light rounded-2xl p-4">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
                       <h3 className="text-white/60 text-xs uppercase tracking-wider mb-2 font-medium">About</h3>
                       <p className="text-white text-sm leading-relaxed">
                         {currentProfile.bio}
@@ -445,14 +552,14 @@ const Discover = () => {
 
                   {/* Looking For */}
                   {currentProfile.looking_for && (
-                    <div className="liquid-glass-light rounded-2xl p-4">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
                       <h3 className="text-white/60 text-xs uppercase tracking-wider mb-2 font-medium">Looking For</h3>
                       <p className="text-white text-sm">{currentProfile.looking_for}</p>
                     </div>
                   )}
 
                   {/* Gender */}
-                  <div className="liquid-glass-light rounded-2xl p-4">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
                     <h3 className="text-white/60 text-xs uppercase tracking-wider mb-2 font-medium">Gender</h3>
                     <p className="text-white text-sm capitalize">{currentProfile.gender}</p>
                   </div>
@@ -460,71 +567,68 @@ const Discover = () => {
               )}
             </div>
 
-            {/* Expand Button - Text only */}
+            {/* Expand Button */}
             <button 
               onClick={toggleExpand}
-              className="absolute right-5 bottom-5 flex items-center gap-1 transition-all duration-300 active:scale-90 z-20"
+              className="absolute right-5 bottom-5 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all duration-300 active:scale-90 hover:bg-white/30 z-20"
             >
               {isExpanded ? (
-                <ChevronDown className="w-5 h-5 text-white drop-shadow-lg" />
+                <ChevronDown className="w-5 h-5 text-white" />
               ) : (
-                <ChevronUp className="w-5 h-5 text-white drop-shadow-lg" />
+                <ChevronUp className="w-5 h-5 text-white" />
               )}
             </button>
           </div>
         </div>
 
-        {/* Action Buttons - iOS 26 Style */}
+        {/* Action Buttons */}
         <div className="flex items-center justify-center gap-4 py-5">
           {/* Rewind */}
           <button 
             onClick={handleRewind}
-            className="action-btn action-btn-rewind w-12 h-12 haptic-light"
+            className="w-12 h-12 rounded-full bg-card shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 border border-border/50"
           >
-            <RotateCcw className="w-5 h-5 text-warning" />
+            <RotateCcw className="w-5 h-5 text-warning" strokeWidth={1.5} />
           </button>
 
           {/* Pass */}
           <button 
-            className="action-btn action-btn-pass w-[60px] h-[60px] haptic-medium"
+            className="w-16 h-16 rounded-full bg-card shadow-xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 border-2 border-destructive/20"
             onClick={handlePass}
           >
-            <X className="w-8 h-8 text-destructive" strokeWidth={2.5} />
+            <X className="w-8 h-8 text-destructive" strokeWidth={2} />
           </button>
 
           {/* Super Like */}
           <button 
             onClick={handleSuperLike}
             disabled={actionLoading}
-            className="action-btn action-btn-star w-12 h-12 haptic-light"
+            className="w-12 h-12 rounded-full bg-card shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 border border-border/50"
           >
-            <Star className="w-5 h-5 text-star fill-star" />
+            <Star className="w-5 h-5 text-star fill-star" strokeWidth={1.5} />
           </button>
 
           {/* Like */}
           <button 
-            className="action-btn action-btn-like w-[60px] h-[60px] haptic-medium"
+            className="w-16 h-16 rounded-full bg-gradient-to-br from-success to-emerald-500 shadow-xl flex items-center justify-center transition-all hover:scale-110 active:scale-95"
             onClick={handleLike}
             disabled={actionLoading}
           >
             {actionLoading ? (
-              <Loader2 className="w-8 h-8 animate-spin text-success" />
+              <Loader2 className="w-8 h-8 animate-spin text-white" />
             ) : (
-              <Heart className="w-8 h-8 text-success fill-success" />
+              <Heart className="w-8 h-8 text-white fill-white" />
             )}
           </button>
 
-          {/* Message - Replaced Boost */}
+          {/* Message */}
           <button 
             onClick={handleMessage}
-            className="action-btn action-btn-message w-12 h-12 haptic-light"
+            className="w-12 h-12 rounded-full bg-card shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 border border-border/50"
           >
-            <MessageCircle className="w-5 h-5 text-boost" />
+            <MessageCircle className="w-5 h-5 text-boost" strokeWidth={1.5} />
           </button>
         </div>
-        
-        {/* Ad placeholder below action buttons */}
-        <AdPlaceholder variant="banner" className="mx-4 mb-4" />
       </div>
     </Layout>
   );
