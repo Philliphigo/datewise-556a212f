@@ -602,4 +602,31 @@
   .capsule {
     border-radius: 9999px;
   }
+
+  /* Hide Lovable watermark/badge */
+  [data-lovable-badge],
+  .lovable-badge,
+  [class*="lovable-badge"],
+  [id*="lovable-badge"],
+  a[href*="lovable.dev"]:not([href*="docs"]),
+  div[style*="lovable"],
+  iframe[src*="lovable.dev"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+  }
+
+  /* Alternative selector for Edit with Lovable button */
+  body > div:last-child[style*="position: fixed"],
+  body > a[style*="position: fixed"],
+  #lovable-badge,
+  .lovable-watermark {
+    display: none !important;
+  }
 }
