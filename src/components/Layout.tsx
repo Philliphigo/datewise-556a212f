@@ -58,7 +58,6 @@ export const Layout = ({ children }: LayoutProps) => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Get dynamic page title
   const getPageTitle = () => {
     switch (location.pathname) {
       case "/discover": return "Discover";
@@ -153,7 +152,7 @@ export const Layout = ({ children }: LayoutProps) => {
   if (suspension?.active) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
-        <Card className="liquid-glass max-w-md w-full">
+        <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Ban className="w-5 h-5 text-destructive" />
@@ -171,7 +170,7 @@ export const Layout = ({ children }: LayoutProps) => {
               </p>
             )}
             <div className="pt-2">
-              <Button variant="outline" className="w-full rounded-2xl" onClick={signOut}>
+              <Button variant="outline" className="w-full" onClick={signOut}>
                 Sign out
               </Button>
             </div>
@@ -183,17 +182,17 @@ export const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* iOS 26 Header with Liquid Glass */}
+      {/* Header */}
       {!isAdminRoute && (
-        <header className="fixed top-0 left-0 right-0 z-50 ios-header">
-          <div className="flex items-center justify-between h-14 px-4">
+        <header className="fixed top-0 left-0 right-0 z-50 header-bar">
+          <div className="flex items-center justify-between h-14 px-4 max-w-lg mx-auto">
             {/* Left - Filter/Settings */}
             <Link 
               to="/discovery-settings"
-              className="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+              className="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 hover:bg-secondary active:scale-95"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-foreground">
-                <path d="M3 6H21M3 12H21M3 18H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M3 6H21M3 12H21M3 18H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </Link>
 
@@ -202,41 +201,41 @@ export const Layout = ({ children }: LayoutProps) => {
               className="absolute left-1/2 -translate-x-1/2 cursor-default"
               onClick={handleAdminClick}
             >
-              <h1 className="text-lg font-semibold text-foreground tracking-tight">{getPageTitle()}</h1>
+              <h1 className="text-lg font-semibold text-foreground tracking-tight font-display">{getPageTitle()}</h1>
             </div>
 
             {/* Right - Theme Toggle & Settings */}
             <div className="flex items-center gap-1">
               <button 
                 onClick={toggleTheme}
-                className="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-primary/10 active:scale-95"
+                className="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 hover:bg-secondary active:scale-95"
                 aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
               >
                 {isDark ? (
-                  <Sun className="w-5 h-5 text-primary" />
+                  <Sun className="w-5 h-5 text-primary" strokeWidth={1.5} />
                 ) : (
-                  <Moon className="w-5 h-5 text-foreground" />
+                  <Moon className="w-5 h-5 text-foreground" strokeWidth={1.5} />
                 )}
               </button>
               <Link 
                 to="/settings"
-                className="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-primary/10 active:scale-95"
+                className="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 hover:bg-secondary active:scale-95"
               >
-                <Settings className="w-5 h-5 text-foreground" />
+                <Settings className="w-5 h-5 text-foreground" strokeWidth={1.5} />
               </Link>
             </div>
           </div>
         </header>
       )}
 
-      {/* Admin Access Dialog - iOS 26 Style */}
+      {/* Admin Access Dialog */}
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-        <DialogContent className="liquid-glass-heavy rounded-3xl border-0 max-w-sm mx-4">
+        <DialogContent className="rounded-2xl border-0 max-w-sm mx-4 shadow-soft-2xl">
           <DialogHeader className="text-center">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <Settings className="w-8 h-8 text-primary" />
+            <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-4">
+              <Settings className="w-8 h-8 text-primary" strokeWidth={1.5} />
             </div>
-            <DialogTitle className="text-xl">Admin Access</DialogTitle>
+            <DialogTitle className="text-xl font-display">Admin Access</DialogTitle>
             <DialogDescription className="text-muted-foreground">
               Verifying your admin permissions...
             </DialogDescription>
@@ -244,7 +243,7 @@ export const Layout = ({ children }: LayoutProps) => {
           <Button 
             onClick={handleAdminAccess} 
             disabled={isCheckingAuth} 
-            className="w-full rounded-2xl h-12 text-base font-medium mt-2"
+            className="w-full h-12 text-base font-medium mt-2"
           >
             {isCheckingAuth ? "Verifying..." : "Access Dashboard"}
           </Button>
@@ -254,10 +253,10 @@ export const Layout = ({ children }: LayoutProps) => {
       <main className={isAdminRoute ? "flex-1" : "flex-1 pt-14 pb-24"}>{children}</main>
       {!isAdminRoute && <Footer />}
 
-      {/* iOS 26 Tab Bar with Liquid Glass */}
+      {/* Tab Bar */}
       {!isAdminRoute && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 ios-nav">
-          <div className="flex items-center justify-around h-[84px] px-2 max-w-lg mx-auto pb-safe-bottom">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 tab-bar">
+          <div className="flex items-center justify-around h-[80px] px-2 max-w-lg mx-auto pb-safe-bottom">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);
@@ -265,18 +264,15 @@ export const Layout = ({ children }: LayoutProps) => {
                 <Link 
                   key={item.path} 
                   to={item.path} 
-                  className="relative flex flex-col items-center justify-center gap-1 min-w-[60px] py-2 transition-transform active:scale-95"
+                  className="relative flex flex-col items-center justify-center gap-1 min-w-[64px] py-2 rounded-xl transition-all duration-200 hover:bg-secondary active:scale-95"
                 >
                   <div className="relative">
-                    {/* Active state with filled icon */}
-                    <div className={`transition-all duration-200 ${active ? 'scale-110' : 'scale-100'}`}>
-                      <Icon 
-                        className={`w-6 h-6 transition-all duration-200 ${
-                          active ? "text-primary" : "text-muted-foreground"
-                        }`} 
-                        strokeWidth={active ? 2.5 : 1.8}
-                      />
-                    </div>
+                    <Icon 
+                      className={`w-6 h-6 transition-colors duration-200 ${
+                        active ? "text-primary" : "text-muted-foreground"
+                      }`} 
+                      strokeWidth={active ? 2 : 1.5}
+                    />
                     
                     {/* Notification Badge */}
                     {item.badge && item.badge > 0 && (
@@ -292,11 +288,6 @@ export const Layout = ({ children }: LayoutProps) => {
                   }`}>
                     {item.label}
                   </span>
-                  
-                  {/* Active indicator dot */}
-                  {active && (
-                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary animate-scale-up" />
-                  )}
                 </Link>
               );
             })}

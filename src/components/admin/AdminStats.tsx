@@ -26,7 +26,7 @@ export const AdminStats = ({ stats, onStatClick }: AdminStatsProps) => {
     { key: "reports", label: "Pending Reports", value: stats.pendingReports, icon: AlertCircle, color: "text-destructive" },
     { key: "verification", label: "Pending Verifications", value: stats.pendingVerifications, icon: FileCheck, color: "text-info" },
     { key: "broadcast", label: "Broadcasts Sent", value: stats.broadcastsSent, icon: Megaphone, color: "text-primary" },
-    { key: "posts", label: "Total Posts", value: stats.totalPosts, icon: Activity, color: "text-accent" },
+    { key: "posts", label: "Total Posts", value: stats.totalPosts, icon: Activity, color: "text-accent-foreground" },
     { key: "messages", label: "Messages", value: stats.totalMessages, icon: MessageSquare, color: "text-muted-foreground" },
   ];
 
@@ -35,17 +35,19 @@ export const AdminStats = ({ stats, onStatClick }: AdminStatsProps) => {
       {statItems.map((item) => (
         <Card 
           key={item.key} 
-          className="liquid-glass cursor-pointer hover:scale-[1.02] transition-all duration-300 group"
+          className="cursor-pointer hover:shadow-card-hover transition-all duration-200 group active:scale-[0.98]"
           onClick={() => onStatClick(item.key)}
         >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
             <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               {item.label}
             </CardTitle>
-            <item.icon className={`h-4 w-4 ${item.color} group-hover:scale-110 transition-transform`} />
+            <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center group-hover:scale-105 transition-transform">
+              <item.icon className={`h-4 w-4 ${item.color}`} strokeWidth={1.5} />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{item.value}</div>
+          <CardContent className="p-4 pt-0">
+            <div className="text-2xl font-semibold font-display">{item.value}</div>
             {item.sub && (
               <p className="text-xs text-muted-foreground mt-1">{item.sub}</p>
             )}
