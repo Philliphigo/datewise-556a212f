@@ -248,6 +248,38 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_earnings: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          source_type: string
+          transaction_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          source_type: string
+          transaction_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          source_type?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_earnings_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_comments: {
         Row: {
           content: string
@@ -380,6 +412,7 @@ export type Database = {
           subscription_tier: string | null
           updated_at: string | null
           verified: boolean | null
+          wallet_balance: number
         }
         Insert: {
           age: number
@@ -402,6 +435,7 @@ export type Database = {
           subscription_tier?: string | null
           updated_at?: string | null
           verified?: boolean | null
+          wallet_balance?: number
         }
         Update: {
           age?: number
@@ -424,6 +458,7 @@ export type Database = {
           subscription_tier?: string | null
           updated_at?: string | null
           verified?: boolean | null
+          wallet_balance?: number
         }
         Relationships: []
       }
@@ -634,6 +669,87 @@ export type Database = {
           rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          fee: number | null
+          id: string
+          metadata: Json | null
+          net_amount: number
+          related_user_id: string | null
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          fee?: number | null
+          id?: string
+          metadata?: Json | null
+          net_amount: number
+          related_user_id?: string | null
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          fee?: number | null
+          id?: string
+          metadata?: Json | null
+          net_amount?: number
+          related_user_id?: string | null
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          amount: number
+          created_at: string
+          failure_reason: string | null
+          fee: number
+          id: string
+          net_amount: number
+          phone_number: string
+          processed_at: string | null
+          provider: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          failure_reason?: string | null
+          fee?: number
+          id?: string
+          net_amount: number
+          phone_number: string
+          processed_at?: string | null
+          provider: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          failure_reason?: string | null
+          fee?: number
+          id?: string
+          net_amount?: number
+          phone_number?: string
+          processed_at?: string | null
+          provider?: string
           status?: string
           user_id?: string
         }
