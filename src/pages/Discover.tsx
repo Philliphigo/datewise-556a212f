@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
-import { Heart, X, Loader2, Star, RotateCcw, MessageCircle, ChevronUp, ChevronDown, MapPin } from "lucide-react";
+import { Heart, X, Loader2, Gift, RotateCcw, MessageCircle, ChevronUp, ChevronDown, MapPin, Wallet } from "lucide-react";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator, PullToRefreshContainer } from "@/components/PullToRefresh";
 import { DiscoverAd } from "@/components/DiscoverAd";
+import { GiftDialog } from "@/components/GiftDialog";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 
 interface Profile {
@@ -45,6 +46,8 @@ const Discover = () => {
   const [velocity, setVelocity] = useState(0);
   const lastTouchTime = useRef(Date.now());
   const lastTouchX = useRef(0);
+  const [showGiftDialog, setShowGiftDialog] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -91,13 +94,26 @@ const Discover = () => {
     threshold: 80,
   });
 
+  const fetchWalletBalance = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('profiles')
+      .select('wallet_balance')
+      .eq('id', user.id)
+      .single();
+    if (data) {
+      setWalletBalance(data.wallet_balance || 0);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!user) {
       navigate("/auth");
       return;
     }
     fetchProfiles();
-  }, [user, navigate, fetchProfiles]);
+    fetchWalletBalance();
+  }, [user, navigate, fetchProfiles, fetchWalletBalance]);
 
   const handleLike = async () => {
     if (!user || actionLoading) return;
@@ -144,40 +160,9 @@ const Discover = () => {
     }, 350);
   };
 
-  const handleSuperLike = async () => {
-    if (!user || actionLoading) return;
-    const currentProfile = profiles[currentIndex];
-    if (!currentProfile) return;
-
-    setActionLoading(true);
-    
-    try {
-      const { error } = await supabase.from("likes").insert({
-        liker_id: user.id,
-        liked_id: currentProfile.id,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "⭐ Super Liked!",
-        description: `${currentProfile.name} will see you first!`,
-      });
-
-      setSwipeDirection('right');
-      setTimeout(() => {
-        setSwipeDirection(null);
-        nextProfile();
-      }, 350);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setActionLoading(false);
-    }
+  const handleGift = () => {
+    if (!profiles[currentIndex]) return;
+    setShowGiftDialog(true);
   };
 
   const handleMessage = () => {
@@ -599,13 +584,13 @@ const Discover = () => {
             <X className="w-8 h-8 text-destructive" strokeWidth={2} />
           </button>
 
-          {/* Super Like */}
+          {/* Gift */}
           <button 
-            onClick={handleSuperLike}
+            onClick={handleGift}
             disabled={actionLoading}
-            className="w-12 h-12 rounded-full bg-card shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 border border-border/50"
+            className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95"
           >
-            <Star className="w-5 h-5 text-star fill-star" strokeWidth={1.5} />
+            <Gift className="w-5 h-5 text-white" strokeWidth={1.5} />
           </button>
 
           {/* Like */}
@@ -629,7 +614,25 @@ const Discover = () => {
             <MessageCircle className="w-5 h-5 text-boost" strokeWidth={1.5} />
           </button>
         </div>
+
+        {/* Wallet Balance Badge */}
+        <div className="absolute top-4 right-4 z-30 flex items-center gap-2 bg-card/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+          <Wallet className="w-4 h-4 text-primary" strokeWidth={1.5} />
+          <span className="text-sm font-semibold">MWK {walletBalance.toLocaleString()}</span>
+        </div>
       </div>
+
+      {/* Gift Dialog */}
+      {currentProfile && (
+        <GiftDialog
+          isOpen={showGiftDialog}
+          onClose={() => setShowGiftDialog(false)}
+          recipientId={currentProfile.id}
+          recipientName={currentProfile.name}
+          senderBalance={walletBalance}
+          onSuccess={fetchWalletBalance}
+        />
+      )}
     </Layout>
   );
 };
