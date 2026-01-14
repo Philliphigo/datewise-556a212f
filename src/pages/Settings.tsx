@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Shield, Bell, Eye, Trash2, Moon, Sun, AlertTriangle, ChevronDown, User, BadgeCheck, UserX, MessageSquare, Heart, Sparkles, X, Plus, MapPin } from "lucide-react";
+import { Loader2, Shield, Bell, Eye, Trash2, Moon, Sun, AlertTriangle, ChevronDown, User, BadgeCheck, UserX, MessageSquare, Heart, Sparkles, X, Plus, MapPin, Wallet } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { VerificationRequest } from "@/components/VerificationRequest";
@@ -262,6 +262,33 @@ const Settings = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
+          {/* Wallet Section */}
+          <Collapsible defaultOpen onOpenChange={handleCollapsibleToggle}>
+            <Card className="glass-card overflow-hidden border-primary/20">
+              <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Wallet className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold">My Wallet</h2>
+                </div>
+                <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="p-4 pt-0 space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    View transactions, manage withdrawals, and top up your balance.
+                  </p>
+                  <Button 
+                    onClick={() => navigate('/wallet')} 
+                    className="w-full rounded-xl bg-gradient-to-r from-primary to-pink-500 text-white"
+                  >
+                    <Wallet className="w-4 h-4 mr-2" />
+                    Open Wallet
+                  </Button>
                 </div>
               </CollapsibleContent>
             </Card>

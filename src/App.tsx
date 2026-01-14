@@ -26,6 +26,7 @@ import Contact from "./pages/Contact";
 import Help from "./pages/Help";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import Wallet from "./pages/Wallet";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/edit-profile" element={<EditProfile />} />
             <Route path="/inbox" element={<Inbox />} />
+            <Route path="/wallet" element={<Wallet />} />
             <Route path="/donate" element={<Donate />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/discovery-settings" element={<DiscoverySettings />} />
