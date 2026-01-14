@@ -35,6 +35,7 @@ import { RevenueAnalytics } from "@/components/admin/RevenueAnalytics";
 import { ActivityLog } from "@/components/admin/ActivityLog";
 import { RealTimeCharts } from "@/components/admin/RealTimeCharts";
 import { FeedbackManagement } from "@/components/admin/FeedbackManagement";
+import { WithdrawalManagement } from "@/components/admin/WithdrawalManagement";
 
 interface DashboardStats {
   totalUsers: number;
