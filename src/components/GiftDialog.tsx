@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Gift, Loader2, Sparkles, Heart, DollarSign } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,13 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 interface GiftDialogProps {
   isOpen: boolean;
   onClose: () => void;
   recipientId: string;
   recipientName: string;
-  senderBalance: number;
   onSuccess?: () => void;
 }
 
@@ -25,18 +25,35 @@ export const GiftDialog = ({
   onClose, 
   recipientId, 
   recipientName, 
-  senderBalance,
   onSuccess 
 }: GiftDialogProps) => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [amount, setAmount] = useState<number>(500);
   const [customAmount, setCustomAmount] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [senderBalance, setSenderBalance] = useState(0);
 
   const fee = Math.round(amount * PLATFORM_FEE);
   const recipientReceives = amount - fee;
+
+  // Fetch balance when dialog opens
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!user || !isOpen) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('wallet_balance')
+        .eq('id', user.id)
+        .single();
+      if (data) {
+        setSenderBalance(data.wallet_balance || 0);
+      }
+    };
+    fetchBalance();
+  }, [user, isOpen]);
 
   const handleAmountSelect = (value: number) => {
     setAmount(value);

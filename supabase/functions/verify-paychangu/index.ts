@@ -17,31 +17,12 @@ serve(async (req) => {
   }
 
   try {
-    // Get authenticated user
+    // Get authenticated user (optional for admin verification)
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Authentication required' }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    
+    const { txRef, adminOverride } = await req.json();
 
-    const supabaseClient = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid authentication' }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const { txRef } = await req.json();
-    const userId = user.id;
-
-    console.log("Verifying PayChangu payment:", { txRef, userId });
+    console.log("Verifying PayChangu payment:", { txRef, adminOverride });
 
     if (!txRef) {
       return new Response(
@@ -50,12 +31,11 @@ serve(async (req) => {
       );
     }
 
-    // Get payment record to verify ownership
+    // Get payment record - no user ownership check for admin
     const { data: payment, error: fetchError } = await supabase
       .from("payments")
       .select("*")
       .eq("transaction_id", txRef)
-      .eq("user_id", userId)
       .single();
 
     if (fetchError || !payment) {
@@ -64,6 +44,22 @@ serve(async (req) => {
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // For non-admin requests, verify user owns this payment
+    if (!adminOverride && authHeader) {
+      const supabaseClient = createClient(supabaseUrl, supabaseKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (user && user.id !== payment.user_id) {
+        return new Response(
+          JSON.stringify({ error: 'Not authorized to verify this payment' }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    const userId = payment.user_id;
 
     // Already completed?
     if (payment.status === "completed") {

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
-import { Heart, X, Loader2, Gift, RotateCcw, MessageCircle, ChevronUp, ChevronDown, MapPin, Wallet } from "lucide-react";
+import { Heart, X, Loader2, Gift, RotateCcw, MessageCircle, ChevronUp, ChevronDown, MapPin } from "lucide-react";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -47,7 +47,7 @@ const Discover = () => {
   const lastTouchTime = useRef(Date.now());
   const lastTouchX = useRef(0);
   const [showGiftDialog, setShowGiftDialog] = useState(false);
-  const [walletBalance, setWalletBalance] = useState(0);
+  
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -94,17 +94,6 @@ const Discover = () => {
     threshold: 80,
   });
 
-  const fetchWalletBalance = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from('profiles')
-      .select('wallet_balance')
-      .eq('id', user.id)
-      .single();
-    if (data) {
-      setWalletBalance(data.wallet_balance || 0);
-    }
-  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -112,8 +101,7 @@ const Discover = () => {
       return;
     }
     fetchProfiles();
-    fetchWalletBalance();
-  }, [user, navigate, fetchProfiles, fetchWalletBalance]);
+  }, [user, navigate, fetchProfiles]);
 
   const handleLike = async () => {
     if (!user || actionLoading) return;
@@ -614,12 +602,6 @@ const Discover = () => {
             <MessageCircle className="w-5 h-5 text-boost" strokeWidth={1.5} />
           </button>
         </div>
-
-        {/* Wallet Balance Badge */}
-        <div className="absolute top-4 right-4 z-30 flex items-center gap-2 bg-card/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
-          <Wallet className="w-4 h-4 text-primary" strokeWidth={1.5} />
-          <span className="text-sm font-semibold">MWK {walletBalance.toLocaleString()}</span>
-        </div>
       </div>
 
       {/* Gift Dialog */}
@@ -629,8 +611,6 @@ const Discover = () => {
           onClose={() => setShowGiftDialog(false)}
           recipientId={currentProfile.id}
           recipientName={currentProfile.name}
-          senderBalance={walletBalance}
-          onSuccess={fetchWalletBalance}
         />
       )}
     </Layout>
