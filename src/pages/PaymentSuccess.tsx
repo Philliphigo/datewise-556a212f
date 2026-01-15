@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { CheckCircle, Loader2, XCircle, Crown, Star, Heart, Calendar, Sparkles, PartyPopper, Gift, Zap } from "lucide-react";
+import { CheckCircle, Loader2, XCircle, Crown, Star, Heart, Calendar, Sparkles, PartyPopper, Gift, Zap, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -15,6 +16,7 @@ const PaymentSuccess = () => {
   const [status, setStatus] = useState<"loading" | "success" | "pending" | "failed">("loading");
   const [subscription, setSubscription] = useState<any>(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   
   const txRef = searchParams.get("tx_ref");
   const tier = searchParams.get("tier");
@@ -24,17 +26,62 @@ const PaymentSuccess = () => {
       navigate("/auth");
       return;
     }
-    checkPaymentStatus();
+    verifyPaymentWithPayChangu();
   }, [user, txRef]);
 
-  const checkPaymentStatus = async () => {
+  const verifyPaymentWithPayChangu = async () => {
     if (!txRef || !user) {
       setStatus("failed");
       return;
     }
 
+    setIsVerifying(true);
+
+    try {
+      // Call our edge function to verify with PayChangu
+      const { data, error } = await supabase.functions.invoke('verify-paychangu', {
+        body: { txRef }
+      });
+
+      if (error) throw error;
+
+      console.log("Verification result:", data);
+
+      if (data.success || data.status === "completed") {
+        // Fetch subscription details
+        const { data: sub } = await supabase
+          .from("subscriptions")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .single();
+        
+        setSubscription(sub);
+        setStatus("success");
+        setShowConfetti(true);
+        toast.success("Payment verified successfully!");
+        
+        // Hide confetti after animation
+        setTimeout(() => setShowConfetti(false), 5000);
+      } else if (data.status === "pending") {
+        setStatus("pending");
+        toast.info("Payment is still being processed");
+      } else {
+        setStatus("failed");
+        toast.error("Payment verification failed");
+      }
+    } catch (error: any) {
+      console.error("Verification error:", error);
+      // Fallback to polling database
+      pollDatabase();
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const pollDatabase = async () => {
     let attempts = 0;
-    const maxAttempts = 10;
+    const maxAttempts = 5;
     
     const poll = async () => {
       const { data: payment } = await supabase
@@ -47,15 +94,13 @@ const PaymentSuccess = () => {
         const { data: sub } = await supabase
           .from("subscriptions")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("user_id", user!.id)
           .eq("is_active", true)
           .single();
         
         setSubscription(sub);
         setStatus("success");
         setShowConfetti(true);
-        
-        // Hide confetti after animation
         setTimeout(() => setShowConfetti(false), 5000);
         return;
       }
@@ -74,6 +119,11 @@ const PaymentSuccess = () => {
     };
 
     poll();
+  };
+
+  const handleRetryVerification = () => {
+    setStatus("loading");
+    verifyPaymentWithPayChangu();
   };
 
   const getTierIcon = () => {
@@ -244,12 +294,26 @@ const PaymentSuccess = () => {
                   Your payment is being processed. This may take a few minutes.
                 </p>
                 <p className="text-sm text-muted-foreground/80">
-                  Your subscription will be activated once confirmed. You can safely leave this page.
+                  Click "Verify Again" if you've completed payment but it's not showing.
                 </p>
               </div>
-              <Button onClick={() => navigate("/profile")} className="w-full rounded-2xl h-12">
-                Go to Profile
-              </Button>
+              <div className="space-y-3">
+                <Button 
+                  onClick={handleRetryVerification} 
+                  disabled={isVerifying}
+                  className="w-full rounded-2xl h-12 gradient-romantic"
+                >
+                  {isVerifying ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                  )}
+                  Verify Again
+                </Button>
+                <Button onClick={() => navigate("/profile")} variant="outline" className="w-full rounded-2xl h-12">
+                  Go to Profile
+                </Button>
+              </div>
             </>
           )}
 

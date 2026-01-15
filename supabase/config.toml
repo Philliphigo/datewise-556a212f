@@ -18,5 +18,26 @@ verify_jwt = true
 [functions.verify-payment]
 verify_jwt = true
 
+[functions.verify-paychangu]
+verify_jwt = true
+
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.process-gift]
+verify_jwt = true
+
+[functions.process-withdrawal]
+verify_jwt = true
+
+[functions.send-direct-message]
+verify_jwt = true
+
+[functions.delete-account]
+verify_jwt = true
+
+[functions.manage-broadcast]
+verify_jwt = true
+
+[functions.send-broadcast-email]
+verify_jwt = true

@@ -36,6 +36,7 @@ import { ActivityLog } from "@/components/admin/ActivityLog";
 import { RealTimeCharts } from "@/components/admin/RealTimeCharts";
 import { FeedbackManagement } from "@/components/admin/FeedbackManagement";
 import { WithdrawalManagement } from "@/components/admin/WithdrawalManagement";
+import { PaymentManagement } from "@/components/admin/PaymentManagement";
 
 interface DashboardStats {
   totalUsers: number;
@@ -371,6 +372,14 @@ const AdminDashboard = () => {
               <MessageSquare className="w-4 h-4 mr-2" />
               Feedback
             </TabsTrigger>
+            <TabsTrigger value="payments" className="rounded-lg">
+              <DollarSign className="w-4 h-4 mr-2" />
+              Payments
+            </TabsTrigger>
+            <TabsTrigger value="withdrawals" className="rounded-lg">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Withdrawals
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -553,6 +562,16 @@ const AdminDashboard = () => {
           {/* Feedback Tab */}
           <TabsContent value="feedback">
             <FeedbackManagement messages={contactMessages} onRefresh={fetchDashboardData} refreshing={refreshing} />
+          </TabsContent>
+
+          {/* Payments Tab */}
+          <TabsContent value="payments">
+            <PaymentManagement />
+          </TabsContent>
+
+          {/* Withdrawals Tab */}
+          <TabsContent value="withdrawals">
+            <WithdrawalManagement />
           </TabsContent>
         </Tabs>
 
