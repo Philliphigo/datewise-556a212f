@@ -74,9 +74,9 @@ export const PaymentManagement = () => {
     setProcessingId(payment.id);
 
     try {
-      // Call verify edge function with service role
+      // Call verify edge function with admin override
       const { data, error } = await supabase.functions.invoke('verify-paychangu', {
-        body: { txRef: payment.transaction_id }
+        body: { txRef: payment.transaction_id, adminOverride: true }
       });
 
       if (error) throw error;
