@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,25 +17,35 @@ const PaymentSuccess = () => {
   const [subscription, setSubscription] = useState<any>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [verifyAttempts, setVerifyAttempts] = useState(0);
+  const verificationInProgress = useRef(false);
   
   const txRef = searchParams.get("tx_ref");
   const tier = searchParams.get("tier");
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
+  const fetchSubscriptionDetails = useCallback(async () => {
+    if (!user) return null;
+    
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    return sub;
+  }, [user]);
+
+  const verifyPaymentWithPayChangu = useCallback(async (silent = false) => {
+    if (!txRef || !user || verificationInProgress.current) {
+      if (!txRef || !user) setStatus("failed");
       return;
     }
-    verifyPaymentWithPayChangu();
-  }, [user, txRef]);
 
-  const verifyPaymentWithPayChangu = async () => {
-    if (!txRef || !user) {
-      setStatus("failed");
-      return;
-    }
-
-    setIsVerifying(true);
+    verificationInProgress.current = true;
+    if (!silent) setIsVerifying(true);
 
     try {
       // Call our edge function to verify with PayChangu
@@ -49,81 +59,112 @@ const PaymentSuccess = () => {
 
       if (data.success || data.status === "completed") {
         // Fetch subscription details
-        const { data: sub } = await supabase
-          .from("subscriptions")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("is_active", true)
-          .single();
-        
+        const sub = await fetchSubscriptionDetails();
         setSubscription(sub);
         setStatus("success");
         setShowConfetti(true);
-        toast.success("Payment verified successfully!");
+        if (!silent) toast.success("Payment verified successfully! 🎉");
         
         // Hide confetti after animation
         setTimeout(() => setShowConfetti(false), 5000);
-      } else if (data.status === "pending") {
-        setStatus("pending");
-        toast.info("Payment is still being processed");
+        return true;
+      } else if (data.status === "pending" || data.paychangu_status === "pending") {
+        if (!silent) {
+          setStatus("pending");
+          toast.info("Payment is still being processed");
+        }
+        return false;
       } else {
-        setStatus("failed");
-        toast.error("Payment verification failed");
+        if (!silent) {
+          setStatus("failed");
+          toast.error("Payment verification failed");
+        }
+        return false;
       }
     } catch (error: any) {
       console.error("Verification error:", error);
-      // Fallback to polling database
-      pollDatabase();
+      return false;
     } finally {
-      setIsVerifying(false);
+      verificationInProgress.current = false;
+      if (!silent) setIsVerifying(false);
     }
-  };
+  }, [txRef, user, fetchSubscriptionDetails]);
 
-  const pollDatabase = async () => {
+  // Auto-verify on mount and poll until success
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+
+    let pollInterval: NodeJS.Timeout | null = null;
     let attempts = 0;
-    const maxAttempts = 5;
-    
-    const poll = async () => {
-      const { data: payment } = await supabase
-        .from("payments")
-        .select("status")
-        .eq("transaction_id", txRef)
-        .single();
+    const maxAttempts = 15; // Poll for up to 30 seconds (15 * 2s)
 
-      if (payment?.status === "completed") {
-        const { data: sub } = await supabase
-          .from("subscriptions")
-          .select("*")
-          .eq("user_id", user!.id)
-          .eq("is_active", true)
-          .single();
+    const startPolling = async () => {
+      // First immediate verification attempt
+      const success = await verifyPaymentWithPayChangu(false);
+      
+      if (success) return;
+
+      // If not immediately successful, start polling
+      pollInterval = setInterval(async () => {
+        attempts++;
+        setVerifyAttempts(attempts);
         
-        setSubscription(sub);
-        setStatus("success");
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 5000);
-        return;
-      }
+        console.log(`Verification attempt ${attempts}/${maxAttempts}`);
+        
+        // Check database first (webhook might have updated it)
+        const { data: payment } = await supabase
+          .from("payments")
+          .select("status")
+          .eq("transaction_id", txRef)
+          .single();
 
-      if (payment?.status === "failed") {
-        setStatus("failed");
-        return;
-      }
+        if (payment?.status === "completed") {
+          const sub = await fetchSubscriptionDetails();
+          setSubscription(sub);
+          setStatus("success");
+          setShowConfetti(true);
+          toast.success("Payment verified successfully! 🎉");
+          setTimeout(() => setShowConfetti(false), 5000);
+          
+          if (pollInterval) clearInterval(pollInterval);
+          return;
+        }
 
-      attempts++;
-      if (attempts < maxAttempts) {
-        setTimeout(poll, 2000);
-      } else {
-        setStatus("pending");
-      }
+        if (payment?.status === "failed") {
+          setStatus("failed");
+          if (pollInterval) clearInterval(pollInterval);
+          return;
+        }
+
+        // Try API verification
+        const success = await verifyPaymentWithPayChangu(true);
+        
+        if (success) {
+          if (pollInterval) clearInterval(pollInterval);
+          return;
+        }
+        
+        if (attempts >= maxAttempts) {
+          setStatus("pending");
+          if (pollInterval) clearInterval(pollInterval);
+        }
+      }, 2000);
     };
 
-    poll();
-  };
+    startPolling();
+
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [user, txRef, verifyPaymentWithPayChangu, fetchSubscriptionDetails, navigate]);
 
   const handleRetryVerification = () => {
     setStatus("loading");
-    verifyPaymentWithPayChangu();
+    setVerifyAttempts(0);
+    verifyPaymentWithPayChangu(false);
   };
 
   const getTierIcon = () => {
@@ -193,6 +234,11 @@ const PaymentSuccess = () => {
               <div className="space-y-2">
                 <h1 className="text-2xl font-bold">Verifying Payment</h1>
                 <p className="text-muted-foreground">Please wait while we confirm your payment...</p>
+                {verifyAttempts > 0 && (
+                  <p className="text-xs text-muted-foreground/60">
+                    Checking... ({verifyAttempts}/15)
+                  </p>
+                )}
               </div>
               <div className="flex justify-center gap-2">
                 {[0, 1, 2].map((i) => (
@@ -226,10 +272,10 @@ const PaymentSuccess = () => {
               
               <div className="space-y-3">
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-soft bg-clip-text text-transparent">
-                  Welcome to {tier?.charAt(0).toUpperCase()}{tier?.slice(1)}!
+                  Thank You! 💕
                 </h1>
                 <p className="text-lg text-muted-foreground">
-                  Thank you for supporting DateWise! 💕
+                  Welcome to {tier?.charAt(0).toUpperCase()}{tier?.slice(1)}!
                 </p>
               </div>
               
@@ -289,12 +335,12 @@ const PaymentSuccess = () => {
                 <Loader2 className="w-12 h-12 text-warning animate-spin" />
               </div>
               <div className="space-y-2">
-                <h1 className="text-2xl font-bold text-warning">Payment Processing</h1>
+                <h1 className="text-2xl font-bold text-warning">Almost There!</h1>
                 <p className="text-muted-foreground">
-                  Your payment is being processed. This may take a few minutes.
+                  Your payment is being processed. This usually takes a moment.
                 </p>
                 <p className="text-sm text-muted-foreground/80">
-                  Click "Verify Again" if you've completed payment but it's not showing.
+                  If you've completed payment, click "Verify Now" to check status.
                 </p>
               </div>
               <div className="space-y-3">
@@ -308,7 +354,7 @@ const PaymentSuccess = () => {
                   ) : (
                     <RefreshCw className="w-4 h-4 mr-2" />
                   )}
-                  Verify Again
+                  Verify Now
                 </Button>
                 <Button onClick={() => navigate("/profile")} variant="outline" className="w-full rounded-2xl h-12">
                   Go to Profile
@@ -323,16 +369,29 @@ const PaymentSuccess = () => {
                 <XCircle className="w-12 h-12 text-destructive" />
               </div>
               <div className="space-y-2">
-                <h1 className="text-2xl font-bold text-destructive">Payment Failed</h1>
+                <h1 className="text-2xl font-bold text-destructive">Payment Issue</h1>
                 <p className="text-muted-foreground">
                   We couldn't verify your payment. If money was deducted, please contact support.
                 </p>
               </div>
               <div className="space-y-3">
-                <Button onClick={() => navigate("/donate")} className="w-full gradient-romantic rounded-2xl h-12">
-                  Try Again
+                <Button 
+                  onClick={handleRetryVerification} 
+                  disabled={isVerifying}
+                  variant="outline"
+                  className="w-full rounded-2xl h-12"
+                >
+                  {isVerifying ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                  )}
+                  Try Verifying Again
                 </Button>
-                <Button onClick={() => navigate("/contact")} variant="outline" className="w-full rounded-2xl h-12">
+                <Button onClick={() => navigate("/donate")} className="w-full gradient-romantic rounded-2xl h-12">
+                  Make New Payment
+                </Button>
+                <Button onClick={() => navigate("/contact")} variant="ghost" className="w-full rounded-2xl h-12">
                   Contact Support
                 </Button>
               </div>
