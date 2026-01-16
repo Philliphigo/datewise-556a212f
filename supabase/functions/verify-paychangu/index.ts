@@ -17,9 +17,7 @@ serve(async (req) => {
   }
 
   try {
-    // Get authenticated user (optional for admin verification)
     const authHeader = req.headers.get('Authorization');
-    
     const { txRef, adminOverride } = await req.json();
 
     console.log("Verifying PayChangu payment:", { txRef, adminOverride });
@@ -31,7 +29,7 @@ serve(async (req) => {
       );
     }
 
-    // Get payment record - no user ownership check for admin
+    // Get payment record
     const { data: payment, error: fetchError } = await supabase
       .from("payments")
       .select("*")
@@ -39,6 +37,7 @@ serve(async (req) => {
       .single();
 
     if (fetchError || !payment) {
+      console.error("Payment not found:", txRef, fetchError);
       return new Response(
         JSON.stringify({ error: 'Payment not found' }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -61,8 +60,9 @@ serve(async (req) => {
 
     const userId = payment.user_id;
 
-    // Already completed?
+    // Already completed? Return success immediately
     if (payment.status === "completed") {
+      console.log("Payment already completed:", txRef);
       return new Response(
         JSON.stringify({ success: true, status: "completed", already: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -70,6 +70,7 @@ serve(async (req) => {
     }
 
     // Verify with PayChangu API
+    console.log("Calling PayChangu API for verification...");
     const verifyResponse = await fetch(
       `https://api.paychangu.com/verify-payment/${txRef}`,
       {
@@ -85,27 +86,51 @@ serve(async (req) => {
 
     console.log("PayChangu verification response:", {
       txRef,
-      status: verificationData.status,
+      httpStatus: verifyResponse.status,
+      apiStatus: verificationData.status,
       paymentStatus: verificationData.data?.status,
+      message: verificationData.message,
     });
 
-    if (!verifyResponse.ok || verificationData.status !== "success") {
+    // Handle API error
+    if (!verifyResponse.ok) {
+      console.error("PayChangu API error:", verificationData);
       return new Response(
         JSON.stringify({ 
           success: false, 
           status: "verification_failed",
-          message: "Could not verify payment with PayChangu"
+          message: verificationData.message || "Could not verify payment with PayChangu"
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check if the API returned success
+    if (verificationData.status !== "success") {
+      console.log("PayChangu returned non-success status:", verificationData.status);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          status: "pending",
+          paychangu_status: verificationData.data?.status || "unknown",
+          message: "Payment not yet confirmed"
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const paymentStatus = verificationData.data?.status;
+    console.log("Payment status from PayChangu:", paymentStatus);
+
+    // Map PayChangu status to our status
+    let newStatus = "pending";
+    if (paymentStatus === "successful" || paymentStatus === "success" || paymentStatus === "completed") {
+      newStatus = "completed";
+    } else if (paymentStatus === "failed" || paymentStatus === "cancelled") {
+      newStatus = "failed";
+    }
 
     // Update payment record
-    const newStatus = paymentStatus === "successful" ? "completed" : 
-                      paymentStatus === "failed" ? "failed" : "pending";
-
     const { error: updateError } = await supabase
       .from("payments")
       .update({
@@ -123,48 +148,63 @@ serve(async (req) => {
       throw updateError;
     }
 
-    // If payment successful, activate subscription
-    if (paymentStatus === "successful") {
-      const tier = payment.metadata?.tier;
+    // If payment successful, activate subscription automatically
+    if (newStatus === "completed") {
+      const tier = payment.metadata?.tier || "supporter";
       const subscriptionDays = payment.metadata?.subscriptionDays || 30;
 
-      if (tier) {
-        // Calculate subscription end date
-        const endDate = new Date();
-        endDate.setDate(endDate.getDate() + subscriptionDays);
+      console.log("Activating subscription:", { userId, tier, subscriptionDays });
 
-        // Create or update subscription
-        const { error: subError } = await supabase.from("subscriptions").upsert({
+      // Calculate subscription end date
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + subscriptionDays);
+
+      // Create or update subscription using upsert
+      const { error: subError } = await supabase.from("subscriptions").upsert({
+        user_id: userId,
+        tier,
+        is_active: true,
+        start_date: new Date().toISOString(),
+        end_date: endDate.toISOString(),
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: "user_id",
+      });
+
+      if (subError) {
+        console.error("Error creating/updating subscription:", subError);
+        // Try insert if upsert fails
+        const { error: insertError } = await supabase.from("subscriptions").insert({
           user_id: userId,
           tier,
           is_active: true,
           start_date: new Date().toISOString(),
           end_date: endDate.toISOString(),
-        }, {
-          onConflict: "user_id",
         });
-
-        if (subError) {
-          console.error("Error updating subscription:", subError);
+        if (insertError) {
+          console.error("Error inserting subscription:", insertError);
         }
-
-        // Update user profile
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({ subscription_tier: tier })
-          .eq("id", userId);
-
-        if (profileError) {
-          console.error("Error updating profile:", profileError);
-        }
-
-        console.log("Subscription activated:", { userId, tier, txRef, endDate });
       }
+
+      // Update user profile subscription tier
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ 
+          subscription_tier: tier,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", userId);
+
+      if (profileError) {
+        console.error("Error updating profile:", profileError);
+      }
+
+      console.log("Subscription activated successfully:", { userId, tier, txRef, endDate: endDate.toISOString() });
     }
 
     return new Response(
       JSON.stringify({ 
-        success: paymentStatus === "successful", 
+        success: newStatus === "completed", 
         status: newStatus,
         paychangu_status: paymentStatus 
       }),
@@ -173,7 +213,7 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Error in verify-paychangu:", error);
     return new Response(
-      JSON.stringify({ error: 'Payment verification failed. Please contact support.' }),
+      JSON.stringify({ error: 'Payment verification failed. Please try again.' }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
