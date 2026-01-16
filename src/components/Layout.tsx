@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, User, Compass, Flame, Settings, Moon, Sun, Ban } from "lucide-react";
+import { Heart, MessageCircle, User, Compass, Flame, Settings, Moon, Sun, Ban, Crown, Star } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Footer } from "./Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,12 +29,29 @@ export const Layout = ({ children }: LayoutProps) => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [newMatches, setNewMatches] = useState(0);
+  const [subscription, setSubscription] = useState<{ tier: string } | null>(null);
   const [isDark, setIsDark] = useState(() => {
     if (typeof document !== 'undefined') {
       return document.documentElement.classList.contains('dark');
     }
     return false;
   });
+
+  const getTierIcon = (tier: string) => {
+    switch (tier) {
+      case "vip": return Crown;
+      case "premium": return Star;
+      default: return Heart;
+    }
+  };
+
+  const getTierColor = (tier: string) => {
+    switch (tier) {
+      case "vip": return "from-yellow-500 to-amber-600";
+      case "premium": return "from-primary to-primary-soft";
+      default: return "from-pink-500 to-rose-600";
+    }
+  };
 
   const toggleTheme = () => {
     const newIsDark = !isDark;
@@ -100,13 +117,26 @@ export const Layout = ({ children }: LayoutProps) => {
       }
     };
 
+    const fetchSubscription = async () => {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("tier")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .single();
+      
+      setSubscription(data);
+    };
+
     fetchCounts();
+    fetchSubscription();
 
     const channel = supabase
       .channel('notifications')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => fetchCounts())
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, () => fetchCounts())
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'matches' }, () => fetchCounts())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'subscriptions' }, () => fetchSubscription())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -196,12 +226,21 @@ export const Layout = ({ children }: LayoutProps) => {
               </svg>
             </Link>
 
-            {/* Center - Dynamic Title */}
+            {/* Center - Dynamic Title with Subscription Badge */}
             <div 
-              className="absolute left-1/2 -translate-x-1/2 cursor-default"
+              className="absolute left-1/2 -translate-x-1/2 cursor-default flex items-center gap-2"
               onClick={handleAdminClick}
             >
               <h1 className="text-lg font-semibold text-foreground tracking-tight font-display">{getPageTitle()}</h1>
+              {subscription && (
+                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r ${getTierColor(subscription.tier)} text-white text-[10px] font-semibold shadow-sm`}>
+                  {(() => {
+                    const TierIcon = getTierIcon(subscription.tier);
+                    return <TierIcon className="w-3 h-3" />;
+                  })()}
+                  <span className="capitalize">{subscription.tier}</span>
+                </div>
+              )}
             </div>
 
             {/* Right - Theme Toggle & Settings */}

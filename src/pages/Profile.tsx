@@ -217,6 +217,16 @@ const Profile = () => {
                   </h1>
                   <span className="text-2xl text-white/85 font-light">{profile?.age}</span>
                   {profile?.verified && <VerifiedBadge size="lg" />}
+                  {/* Subscription Tier Badge */}
+                  {subscription && (
+                    <div className={`flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r ${getTierColor(subscription.tier)} text-white text-xs font-semibold shadow-lg`}>
+                      {(() => {
+                        const TierIcon = getTierIcon(subscription.tier);
+                        return <TierIcon className="w-3 h-3" />;
+                      })()}
+                      <span className="capitalize">{subscription.tier}</span>
+                    </div>
+                  )}
                 </div>
                 {profile?.city && (
                   <div className="flex items-center gap-1.5 text-white/85">
