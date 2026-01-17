@@ -140,7 +140,7 @@ export const GiftDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md rounded-3xl">
+      <DialogContent className="sm:max-w-md rounded-3xl max-h-[85vh] overflow-y-auto">
         <AnimatePresence mode="wait">
           {showSuccess ? (
             <motion.div 
@@ -156,14 +156,14 @@ export const GiftDialog = ({
                   rotate: [0, 10, -10, 0]
                 }}
                 transition={{ duration: 0.6 }}
-                className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-pink-500 flex items-center justify-center mb-6"
-              >
-                <Gift className="w-12 h-12 text-white" />
-              </motion.div>
-              <h3 className="text-2xl font-bold text-center mb-2">Gift Sent!</h3>
-              <p className="text-muted-foreground text-center">
-                {recipientName} will be so happy 💖
-              </p>
+                 className="w-24 h-24 rounded-full bg-primary flex items-center justify-center mb-6"
+               >
+                 <Gift className="w-12 h-12 text-primary-foreground" />
+               </motion.div>
+               <h3 className="text-2xl font-bold text-center mb-2">Gift Sent!</h3>
+               <p className="text-muted-foreground text-center">
+                 {recipientName} will be so happy
+               </p>
               {[...Array(12)].map((_, i) => (
                 <motion.div
                   key={i}
@@ -216,19 +216,19 @@ export const GiftDialog = ({
                   <label className="text-sm font-medium text-muted-foreground mb-3 block">
                     Select Amount
                   </label>
-                  <div className="grid grid-cols-5 gap-2">
-                    {PRESET_AMOUNTS.map((preset) => (
-                      <Button
-                        key={preset}
-                        type="button"
-                        variant={amount === preset && !customAmount ? "default" : "outline"}
-                        className="rounded-xl h-12 text-sm font-semibold"
-                        onClick={() => handleAmountSelect(preset)}
-                      >
-                        {preset >= 1000 ? `${preset/1000}K` : preset}
-                      </Button>
-                    ))}
-                  </div>
+                   <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                     {PRESET_AMOUNTS.map((preset) => (
+                       <Button
+                         key={preset}
+                         type="button"
+                         variant={amount === preset && !customAmount ? "default" : "outline"}
+                         className="rounded-xl h-14 text-base font-semibold touch-manipulation"
+                         onClick={() => handleAmountSelect(preset)}
+                       >
+                         {preset >= 1000 ? `${preset / 1000}K` : preset}
+                       </Button>
+                     ))}
+                   </div>
                 </div>
 
                 {/* Custom Amount */}
@@ -277,24 +277,26 @@ export const GiftDialog = ({
                   />
                 </div>
 
-                {/* Send Button */}
-                <Button
-                  onClick={handleSendGift}
-                  disabled={isLoading || amount < 100 || amount > senderBalance}
-                  className="w-full h-14 rounded-2xl text-lg font-semibold bg-gradient-to-r from-primary to-pink-500 hover:opacity-90"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Gift className="w-5 h-5 mr-2" />
-                      Send MWK {amount.toLocaleString()}
-                    </>
-                  )}
-                </Button>
+                 {/* Send Button */}
+                 <div className="sticky bottom-0 pt-4 pb-1 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                   <Button
+                     onClick={handleSendGift}
+                     disabled={isLoading || amount < 100 || amount > senderBalance}
+                     className="w-full h-14 rounded-2xl text-base font-semibold touch-manipulation"
+                   >
+                     {isLoading ? (
+                       <>
+                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                         Sending...
+                       </>
+                     ) : (
+                       <>
+                         <Gift className="w-5 h-5 mr-2" />
+                         Send MWK {amount.toLocaleString()}
+                       </>
+                     )}
+                   </Button>
+                 </div>
               </div>
             </motion.div>
           )}

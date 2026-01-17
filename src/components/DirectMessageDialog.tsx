@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MessageSquare, Loader2, Send, Wallet, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,30 +7,55 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DirectMessageDialogProps {
   isOpen: boolean;
   onClose: () => void;
   recipientId: string;
   recipientName: string;
-  senderBalance: number;
   onSuccess?: () => void;
 }
 
 const DIRECT_MESSAGE_FEE = 10000; // 10,000 MWK
 
-export const DirectMessageDialog = ({ 
-  isOpen, 
-  onClose, 
-  recipientId, 
-  recipientName, 
-  senderBalance,
-  onSuccess 
+export const DirectMessageDialog = ({
+  isOpen,
+  onClose,
+  recipientId,
+  recipientName,
+  onSuccess,
 }: DirectMessageDialogProps) => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [senderBalance, setSenderBalance] = useState(0);
+  const [balanceLoading, setBalanceLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!user || !isOpen) return;
+      setBalanceLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("wallet_balance")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+        setSenderBalance(data?.wallet_balance || 0);
+      } catch (e) {
+        setSenderBalance(0);
+      } finally {
+        setBalanceLoading(false);
+      }
+    };
+
+    fetchBalance();
+  }, [user, isOpen]);
 
   const canAfford = senderBalance >= DIRECT_MESSAGE_FEE;
 
@@ -133,7 +158,7 @@ export const DirectMessageDialog = ({
               <span className="text-sm text-muted-foreground">Your Balance</span>
             </div>
             <span className={`font-bold ${canAfford ? '' : 'text-destructive'}`}>
-              MWK {senderBalance.toLocaleString()}
+              {balanceLoading ? "…" : `MWK ${senderBalance.toLocaleString()}`}
             </span>
           </div>
 

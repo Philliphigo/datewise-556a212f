@@ -8,9 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import { PullToRefreshIndicator, PullToRefreshContainer } from "@/components/PullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefresh";
 import { DiscoverAd } from "@/components/DiscoverAd";
 import { GiftDialog } from "@/components/GiftDialog";
+import { DirectMessageDialog } from "@/components/DirectMessageDialog";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 
 interface Profile {
@@ -47,8 +48,7 @@ const Discover = () => {
   const lastTouchTime = useRef(Date.now());
   const lastTouchX = useRef(0);
   const [showGiftDialog, setShowGiftDialog] = useState(false);
-  
-
+  const [showDirectMessageDialog, setShowDirectMessageDialog] = useState(false);
   const fetchProfiles = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -154,7 +154,8 @@ const Discover = () => {
   };
 
   const handleMessage = () => {
-    navigate("/messages");
+    if (!profiles[currentIndex]) return;
+    setShowDirectMessageDialog(true);
   };
 
   const handleRewind = () => {
@@ -609,6 +610,16 @@ const Discover = () => {
         <GiftDialog
           isOpen={showGiftDialog}
           onClose={() => setShowGiftDialog(false)}
+          recipientId={currentProfile.id}
+          recipientName={currentProfile.name}
+        />
+      )}
+
+      {/* Direct Message Dialog (paid unlock for unmatched) */}
+      {currentProfile && (
+        <DirectMessageDialog
+          isOpen={showDirectMessageDialog}
+          onClose={() => setShowDirectMessageDialog(false)}
           recipientId={currentProfile.id}
           recipientName={currentProfile.name}
         />

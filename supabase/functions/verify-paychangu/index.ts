@@ -34,13 +34,15 @@ serve(async (req) => {
       .from("payments")
       .select("*")
       .eq("transaction_id", txRef)
-      .single();
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (fetchError || !payment) {
       console.error("Payment not found:", txRef, fetchError);
       return new Response(
-        JSON.stringify({ error: 'Payment not found' }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Payment not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -213,8 +215,12 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Error in verify-paychangu:", error);
     return new Response(
-      JSON.stringify({ error: 'Payment verification failed. Please try again.' }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: false,
+        status: "error",
+        error: error?.message || "Payment verification failed. Please try again.",
+      }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
