@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, XCircle, RefreshCw, CreditCard, ExternalLink } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, RefreshCw, CreditCard } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -74,23 +74,23 @@ export const PaymentManagement = () => {
     setProcessingId(payment.id);
 
     try {
-      // Call verify edge function with admin override
-      const { data, error } = await supabase.functions.invoke('verify-paychangu', {
-        body: { txRef: payment.transaction_id, adminOverride: true }
+      const { data, error } = await supabase.functions.invoke("verify-paychangu", {
+        body: { txRef: payment.transaction_id, adminOverride: true },
       });
 
       if (error) throw error;
 
-      if (data.success) {
+      if (data?.success) {
         toast.success("Payment verified and completed!");
       } else {
-        toast.info(`Payment status: ${data.status}`);
+        const status = data?.status || "unknown";
+        toast.info(data?.message ? data.message : `Payment status: ${status}`);
       }
 
       queryClient.invalidateQueries({ queryKey: ["admin-payments"] });
     } catch (error: any) {
       console.error("Verify error:", error);
-      toast.error("Failed to verify payment");
+      toast.error(error?.message || "Failed to verify payment");
     } finally {
       setProcessingId(null);
     }
@@ -100,52 +100,18 @@ export const PaymentManagement = () => {
     setProcessingId(payment.id);
 
     try {
-      // Update payment status
-      const { error: paymentError } = await supabase
-        .from("payments")
-        .update({ 
-          status: "completed",
-          metadata: {
-            ...payment.metadata,
-            manual_completion: true,
-            completed_at: new Date().toISOString(),
-          }
-        })
-        .eq("id", payment.id);
+      const { data, error } = await supabase.functions.invoke("admin-payment-action", {
+        body: { action: "complete", paymentId: payment.id },
+      });
 
-      if (paymentError) throw paymentError;
-
-      // Activate subscription
-      const tier = payment.metadata?.tier || "supporter";
-      const subscriptionDays = payment.metadata?.subscriptionDays || 30;
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + subscriptionDays);
-
-      const { error: subError } = await supabase
-        .from("subscriptions")
-        .upsert({
-          user_id: payment.user_id,
-          tier,
-          is_active: true,
-          start_date: new Date().toISOString(),
-          end_date: endDate.toISOString(),
-        });
-
-      if (subError) throw subError;
-
-      // Update profile
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({ subscription_tier: tier })
-        .eq("id", payment.user_id);
-
-      if (profileError) throw profileError;
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Failed to complete payment");
 
       toast.success("Payment marked as completed and subscription activated!");
       queryClient.invalidateQueries({ queryKey: ["admin-payments"] });
     } catch (error: any) {
       console.error("Manual complete error:", error);
-      toast.error("Failed to complete payment");
+      toast.error(error?.message || "Failed to complete payment");
     } finally {
       setProcessingId(null);
     }
@@ -155,24 +121,18 @@ export const PaymentManagement = () => {
     setProcessingId(payment.id);
 
     try {
-      const { error } = await supabase
-        .from("payments")
-        .update({ 
-          status: "failed",
-          metadata: {
-            ...payment.metadata,
-            marked_failed_at: new Date().toISOString(),
-          }
-        })
-        .eq("id", payment.id);
+      const { data, error } = await supabase.functions.invoke("admin-payment-action", {
+        body: { action: "fail", paymentId: payment.id },
+      });
 
       if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Failed to update payment");
 
       toast.success("Payment marked as failed");
       queryClient.invalidateQueries({ queryKey: ["admin-payments"] });
     } catch (error: any) {
       console.error("Mark failed error:", error);
-      toast.error("Failed to update payment");
+      toast.error(error?.message || "Failed to update payment");
     } finally {
       setProcessingId(null);
     }
