@@ -1,19 +1,21 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, Circle, CheckCheck, ArrowLeft, MoreVertical, Paperclip, User, Settings, AlertTriangle, Ban, Palette, MessageSquare, Search, Megaphone } from "lucide-react";
+import { Send, Loader2, CheckCheck, ArrowLeft, MoreVertical, Paperclip, User, Settings, Ban, Palette, MessageSquare, Search, Megaphone, Gift } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ReportDialog } from "@/components/ReportDialog";
 import { LiquidToggle } from "@/components/ui/liquid-toggle";
 import { SystemInbox } from "@/components/SystemInbox";
+import { GiftDialog } from "@/components/GiftDialog";
 import defaultAvatar from "@/assets/default-avatar.jpg";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,13 +51,14 @@ interface MatchInfo {
   };
 }
 
-// Component to load and display chat images from storage
+// Memoized component to load and display chat images from storage
 const ChatImage = ({ filePath }: { filePath: string }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     const loadImage = async () => {
       try {
         const { data, error: urlError } = await supabase.storage
@@ -63,28 +66,29 @@ const ChatImage = ({ filePath }: { filePath: string }) => {
           .createSignedUrl(filePath, 3600);
         
         if (urlError) throw urlError;
-        setImageUrl(data.signedUrl);
+        if (!cancelled) setImageUrl(data.signedUrl);
       } catch (err) {
         console.error('Failed to load image:', err);
-        setError(true);
+        if (!cancelled) setError(true);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     loadImage();
+    return () => { cancelled = true; };
   }, [filePath]);
 
   if (loading) {
     return (
-      <div className="w-48 h-32 rounded-xl bg-white/10 animate-pulse flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      <div className="w-48 h-32 rounded-xl bg-muted/30 animate-pulse flex items-center justify-center">
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (error || !imageUrl) {
     return (
-      <div className="w-48 h-32 rounded-xl bg-white/10 flex items-center justify-center text-muted-foreground text-xs">
+      <div className="w-48 h-32 rounded-xl bg-muted/30 flex items-center justify-center text-muted-foreground text-xs">
         Failed to load image
       </div>
     );
@@ -94,8 +98,9 @@ const ChatImage = ({ filePath }: { filePath: string }) => {
     <img 
       src={imageUrl} 
       alt="Shared image" 
-      className="max-w-full rounded-xl max-h-60 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+      className="max-w-full rounded-xl max-h-60 object-cover cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
       onClick={() => window.open(imageUrl, '_blank')}
+      loading="lazy"
     />
   );
 };
@@ -130,8 +135,10 @@ const Messages = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"chats" | "updates">(showInbox ? "updates" : "chats");
   const [unreadSystemCount, setUnreadSystemCount] = useState(0);
+  const [showGiftDialog, setShowGiftDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) {
@@ -167,7 +174,17 @@ const Messages = () => {
     scrollToBottom();
   }, [messages]);
 
-  const fetchUnreadSystemCount = async () => {
+  // Memoized filtered matches for performance
+  const filteredMatches = useMemo(() => 
+    matches.filter(match => 
+      match.profile.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ), [matches, searchQuery]);
+
+  const currentMatch = useMemo(() => 
+    matches.find(m => m.id === selectedMatch), 
+    [matches, selectedMatch]);
+
+  const fetchUnreadSystemCount = useCallback(async () => {
     try {
       const { count } = await supabase
         .from("system_messages")
@@ -179,9 +196,9 @@ const Messages = () => {
     } catch (error) {
       console.error("Error fetching system count:", error);
     }
-  };
+  }, [user?.id]);
 
-  const updateOnlineStatus = async (isOnline: boolean) => {
+  const updateOnlineStatus = useCallback(async (isOnline: boolean) => {
     if (!user) return;
     await supabase
       .from("profiles")
@@ -190,9 +207,9 @@ const Messages = () => {
         last_seen: new Date().toISOString(),
       })
       .eq("id", user.id);
-  };
+  }, [user]);
 
-  const markMessagesAsRead = async () => {
+  const markMessagesAsRead = useCallback(async () => {
     if (!selectedMatch || !user) return;
 
     await supabase
@@ -201,13 +218,13 @@ const Messages = () => {
       .eq("match_id", selectedMatch)
       .neq("sender_id", user.id)
       .eq("is_read", false);
-  };
+  }, [selectedMatch, user]);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
-  const fetchMatches = async () => {
+  const fetchMatches = useCallback(async () => {
     try {
       const { data: matchesData, error } = await supabase
         .from("matches")
@@ -243,9 +260,9 @@ const Messages = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, toast]);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!selectedMatch) return;
 
     try {
@@ -264,9 +281,9 @@ const Messages = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [selectedMatch, toast]);
 
-  const subscribeToMessages = () => {
+  const subscribeToMessages = useCallback(() => {
     if (!selectedMatch) return () => {};
 
     const channel = supabase
@@ -302,11 +319,11 @@ const Messages = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [selectedMatch]);
 
-  const handleSend = async (e: React.FormEvent) => {
+  const handleSend = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedMatch || !user) return;
+    if (!newMessage.trim() || !selectedMatch || !user || sending) return;
 
     setSending(true);
 
@@ -328,9 +345,9 @@ const Messages = () => {
     } finally {
       setSending(false);
     }
-  };
+  }, [newMessage, selectedMatch, user, sending, toast]);
 
-  const handleBlockUser = async () => {
+  const handleBlockUser = useCallback(async () => {
     if (!currentMatch || !user) return;
     
     try {
@@ -355,13 +372,13 @@ const Messages = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [currentMatch, user, toast, fetchMatches]);
 
-  const handleFileUpload = () => {
+  const handleFileUpload = useCallback(() => {
     fileInputRef.current?.click();
-  };
+  }, []);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !selectedMatch || !user) return;
 
@@ -403,23 +420,20 @@ const Messages = () => {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
-  };
-
-  const filteredMatches = matches.filter(match => 
-    match.profile.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  }, [selectedMatch, user, uploading, toast]);
 
   if (loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[calc(100vh-140px)]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading chats...</p>
+          </div>
         </div>
       </Layout>
     );
   }
-
-  const currentMatch = matches.find(m => m.id === selectedMatch);
 
   return (
     <Layout>
@@ -565,6 +579,16 @@ const Messages = () => {
                       currentMatch?.profile.last_seen ? `Active ${formatDistanceToNow(new Date(currentMatch.profile.last_seen), { addSuffix: true })}` : "Offline"}
                   </div>
                 </div>
+
+                {/* Gift Button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full text-pink-500 hover:text-pink-600 hover:bg-pink-500/10"
+                  onClick={() => setShowGiftDialog(true)}
+                >
+                  <Gift className="w-5 h-5" />
+                </Button>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -716,6 +740,16 @@ const Messages = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Gift Dialog */}
+        {currentMatch && (
+          <GiftDialog
+            isOpen={showGiftDialog}
+            onClose={() => setShowGiftDialog(false)}
+            recipientId={currentMatch.profile.id}
+            recipientName={currentMatch.profile.name}
+          />
+        )}
 
       </div>
     </Layout>

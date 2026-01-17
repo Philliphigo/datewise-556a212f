@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,9 +21,10 @@ import {
   XCircle,
   Phone,
   Smartphone,
-  CreditCard
+  RefreshCw
 } from "lucide-react";
 import { WithdrawDialog } from "@/components/WithdrawDialog";
+import { TopUpDialog } from "@/components/TopUpDialog";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 
@@ -64,7 +65,9 @@ const WalletPage = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [showWithdraw, setShowWithdraw] = useState(false);
+  const [showTopUp, setShowTopUp] = useState(false);
   const [activeTab, setActiveTab] = useState("transactions");
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -74,7 +77,7 @@ const WalletPage = () => {
     fetchWalletData();
   }, [user, navigate]);
 
-  const fetchWalletData = async () => {
+  const fetchWalletData = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -114,7 +117,14 @@ const WalletPage = () => {
       console.error('Error fetching wallet data:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  }, [user]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchWalletData();
+    toast({ title: "Refreshed", description: "Wallet data updated" });
   };
 
   const getTransactionIcon = (type: string, amount: number) => {
@@ -173,10 +183,19 @@ const WalletPage = () => {
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full">
               <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
             </Button>
-            <div>
+            <div className="flex-1">
               <h1 className="text-2xl font-bold">My Wallet</h1>
               <p className="text-sm text-muted-foreground">Manage your funds</p>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="rounded-full"
+            >
+              <RefreshCw className={`w-5 h-5 ${refreshing ? "animate-spin" : ""}`} strokeWidth={1.5} />
+            </Button>
           </div>
 
           {/* Balance Card */}
@@ -197,8 +216,8 @@ const WalletPage = () => {
 
               <div className="flex gap-3 mt-6">
                 <Button
-                  onClick={() => navigate('/donate')}
-                  className="flex-1 bg-white/20 hover:bg-white/30 text-white rounded-2xl h-12"
+                  onClick={() => setShowTopUp(true)}
+                  className="flex-1 bg-white/20 hover:bg-white/30 text-white rounded-2xl h-12 touch-manipulation"
                 >
                   <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
                   Top Up
@@ -206,7 +225,7 @@ const WalletPage = () => {
                 <Button
                   onClick={() => setShowWithdraw(true)}
                   disabled={balance < 500}
-                  className="flex-1 bg-white text-primary hover:bg-white/90 rounded-2xl h-12"
+                  className="flex-1 bg-white text-primary hover:bg-white/90 rounded-2xl h-12 touch-manipulation"
                 >
                   <ArrowUpRight className="w-4 h-4 mr-2" strokeWidth={1.5} />
                   Withdraw
@@ -215,35 +234,31 @@ const WalletPage = () => {
             </div>
           </Card>
 
-          {/* Top Up Options */}
-          <Card className="rounded-3xl border-0 shadow-ambient">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                Top Up Options
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  variant="outline"
-                  className="h-20 rounded-2xl flex flex-col gap-2 hover:bg-primary/5 hover:border-primary/30"
-                  onClick={() => navigate('/donate')}
-                >
-                  <Smartphone className="w-6 h-6 text-primary" strokeWidth={1.5} />
-                  <span className="text-sm">Mobile Money</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-20 rounded-2xl flex flex-col gap-2 hover:bg-primary/5 hover:border-primary/30"
-                  onClick={() => navigate('/donate')}
-                >
-                  <CreditCard className="w-6 h-6 text-primary" strokeWidth={1.5} />
-                  <span className="text-sm">PayChangu</span>
-                </Button>
+          {/* Quick Actions */}
+          <div className="grid grid-cols-2 gap-3">
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setShowTopUp(true)}
+              className="p-4 rounded-2xl border border-border bg-card hover:bg-muted/50 transition-all text-left touch-manipulation"
+            >
+              <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center mb-3">
+                <Smartphone className="w-5 h-5 text-success" strokeWidth={1.5} />
               </div>
-            </CardContent>
-          </Card>
+              <h3 className="font-semibold text-sm">Mobile Money</h3>
+              <p className="text-xs text-muted-foreground">Airtel, TNM</p>
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setShowTopUp(true)}
+              className="p-4 rounded-2xl border border-border bg-card hover:bg-muted/50 transition-all text-left touch-manipulation"
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                <Plus className="w-5 h-5 text-primary" strokeWidth={1.5} />
+              </div>
+              <h3 className="font-semibold text-sm">PayChangu</h3>
+              <p className="text-xs text-muted-foreground">Cards & More</p>
+            </motion.button>
+          </div>
 
           {/* Transactions & Withdrawals Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -365,6 +380,12 @@ const WalletPage = () => {
         isOpen={showWithdraw}
         onClose={() => setShowWithdraw(false)}
         balance={balance}
+        onSuccess={fetchWalletData}
+      />
+
+      <TopUpDialog
+        isOpen={showTopUp}
+        onClose={() => setShowTopUp(false)}
         onSuccess={fetchWalletData}
       />
     </Layout>
