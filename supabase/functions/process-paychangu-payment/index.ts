@@ -18,7 +18,15 @@ const SUBSCRIPTION_TIERS = {
 } as const;
 
 function validatePayment(tier: string, amount: number, currency: string, isCustom: boolean = false): void {
-  // For custom amounts, just validate minimum
+  // For wallet top-ups, just validate minimum amount
+  if (tier === 'wallet_topup') {
+    if (amount < 100) {
+      throw new Error('Minimum top-up is MWK 100');
+    }
+    return;
+  }
+
+  // For custom donations, validate minimum
   if (isCustom) {
     if (amount < 500) {
       throw new Error('Minimum donation is MWK 500');
@@ -153,7 +161,8 @@ serve(async (req) => {
     // Only expose safe, user-friendly error messages
     const safeErrors = [
       'Invalid amount', 'Invalid phone number', 'Minimum donation',
-      'Authentication required', 'Invalid authentication', 'Invalid subscription tier'
+      'Authentication required', 'Invalid authentication', 'Invalid subscription tier',
+      'Minimum top-up'
     ];
     
     let message = 'Payment processing failed. Please try again or contact support.';
