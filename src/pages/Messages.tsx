@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, CheckCheck, ArrowLeft, MoreVertical, Paperclip, User, Settings, Ban, Palette, MessageSquare, Search, Megaphone, Gift } from "lucide-react";
+import { Send, Loader2, ArrowLeft, MoreVertical, Paperclip, User, Settings, Ban, Palette, MessageSquare, Search, Megaphone, Gift } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ReportDialog } from "@/components/ReportDialog";
@@ -16,6 +16,10 @@ import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { motion, AnimatePresence } from "framer-motion";
+import { TypingIndicator } from "@/components/chat/TypingIndicator";
+import { MessageReactions } from "@/components/chat/MessageReactions";
+import { ReadReceipt } from "@/components/chat/ReadReceipt";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +41,7 @@ interface Message {
   content: string;
   created_at: string;
   is_read: boolean;
+  read_at?: string | null;
 }
 
 interface MatchInfo {
@@ -161,6 +166,22 @@ const Messages = () => {
     }
   }, [matches, matchId, selectedMatch]);
 
+  // Memoized filtered matches for performance
+  const filteredMatches = useMemo(() => 
+    matches.filter(match => 
+      match.profile.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ), [matches, searchQuery]);
+
+  const currentMatch = useMemo(() => 
+    matches.find(m => m.id === selectedMatch), 
+    [matches, selectedMatch]);
+
+  // Typing indicator hook - must come after currentMatch is defined
+  const { isOtherTyping, sendTypingIndicator } = useTypingIndicator({
+    matchId: selectedMatch,
+    otherUserId: currentMatch?.profile.id || null,
+  });
+
   useEffect(() => {
     if (selectedMatch) {
       fetchMessages();
@@ -172,17 +193,7 @@ const Messages = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
-
-  // Memoized filtered matches for performance
-  const filteredMatches = useMemo(() => 
-    matches.filter(match => 
-      match.profile.name.toLowerCase().includes(searchQuery.toLowerCase())
-    ), [matches, searchQuery]);
-
-  const currentMatch = useMemo(() => 
-    matches.find(m => m.id === selectedMatch), 
-    [matches, selectedMatch]);
+  }, [messages, isOtherTyping]);
 
   const fetchUnreadSystemCount = useCallback(async () => {
     try {
@@ -214,7 +225,7 @@ const Messages = () => {
 
     await supabase
       .from("messages")
-      .update({ is_read: true })
+      .update({ is_read: true, read_at: new Date().toISOString() })
       .eq("match_id", selectedMatch)
       .neq("sender_id", user.id)
       .eq("is_read", false);
@@ -223,6 +234,12 @@ const Messages = () => {
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
+
+  // Handle typing input change
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    sendTypingIndicator();
+  }, [sendTypingIndicator]);
 
   const fetchMatches = useCallback(async () => {
     try {
@@ -626,44 +643,68 @@ const Messages = () => {
                   const isOwn = message.sender_id === user?.id;
                   const isImage = message.content.startsWith('[IMAGE]');
                   const imagePath = isImage ? message.content.replace('[IMAGE]', '') : null;
+                  const isLastMessage = index === messages.length - 1;
                   
                   return (
                     <div
                       key={message.id}
-                      className={`flex ${isOwn ? "justify-end" : "justify-start"} animate-float-up`}
+                      className={`flex ${isOwn ? "justify-end" : "justify-start"} animate-float-up group`}
                       style={{ animationDelay: `${index * 0.02}s` }}
                     >
-                      <div
-                        className={`max-w-[75%] px-4 py-2.5 rounded-2xl ${
-                          isOwn ? "text-white rounded-br-md" : "liquid-glass rounded-bl-md"
-                        }`}
-                        style={isOwn ? { background: chatTheme.gradient } : {}}
-                      >
-                        {isImage && imagePath ? (
-                          <ChatImage filePath={imagePath} />
-                        ) : /^https?:\/\//.test(message.content) ? (
-                          /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(message.content) ? (
-                            <img src={message.content} alt="attachment" className="max-w-full rounded-xl max-h-60 object-cover" />
+                      <div className="flex flex-col max-w-[75%]">
+                        <div
+                          className={`px-4 py-2.5 rounded-2xl ${
+                            isOwn ? "text-white rounded-br-md" : "liquid-glass rounded-bl-md"
+                          }`}
+                          style={isOwn ? { background: chatTheme.gradient } : {}}
+                        >
+                          {isImage && imagePath ? (
+                            <ChatImage filePath={imagePath} />
+                          ) : /^https?:\/\//.test(message.content) ? (
+                            /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(message.content) ? (
+                              <img src={message.content} alt="attachment" className="max-w-full rounded-xl max-h-60 object-cover" />
+                            ) : (
+                              <a href={message.content} target="_blank" rel="noopener noreferrer" className="underline text-sm break-all">
+                                View Attachment
+                              </a>
+                            )
                           ) : (
-                            <a href={message.content} target="_blank" rel="noopener noreferrer" className="underline text-sm break-all">
-                              View Attachment
-                            </a>
-                          )
-                        ) : (
-                          <p className="text-sm leading-relaxed">{message.content}</p>
-                        )}
-                        <div className={`flex items-center gap-1 mt-1 ${isOwn ? "justify-end" : ""}`}>
-                          <span className={`text-[10px] ${isOwn ? "text-white/60" : "text-muted-foreground"}`}>
-                            {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                          {isOwn && (
-                            <CheckCheck className={`w-3 h-3 ${message.is_read ? "text-white" : "text-white/40"}`} />
+                            <p className="text-sm leading-relaxed">{message.content}</p>
                           )}
+                          <div className={`flex items-center gap-1 mt-1 ${isOwn ? "justify-end" : ""}`}>
+                            <span className={`text-[10px] ${isOwn ? "text-white/60" : "text-muted-foreground"}`}>
+                              {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
                         </div>
+                        
+                        {/* Reactions */}
+                        <MessageReactions messageId={message.id} isOwn={isOwn} />
+                        
+                        {/* Read receipt - show on last own message */}
+                        {isOwn && isLastMessage && (
+                          <ReadReceipt 
+                            isRead={message.is_read} 
+                            readAt={message.read_at}
+                            avatarUrl={currentMatch?.profile.avatar_url}
+                            isOwn={isOwn}
+                          />
+                        )}
                       </div>
                     </div>
                   );
                 })}
+                
+                {/* Typing Indicator */}
+                <AnimatePresence>
+                  {isOtherTyping && currentMatch && (
+                    <TypingIndicator 
+                      avatarUrl={currentMatch.profile.avatar_url}
+                      name={currentMatch.profile.name}
+                    />
+                  )}
+                </AnimatePresence>
+                
                 <div ref={messagesEndRef} />
               </div>
 
@@ -683,7 +724,7 @@ const Messages = () => {
                   </Button>
                   <Input
                     value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
+                    onChange={handleInputChange}
                     placeholder="Type a message..."
                     className="flex-1 bg-white/5 border-white/10 rounded-2xl py-6"
                   />
