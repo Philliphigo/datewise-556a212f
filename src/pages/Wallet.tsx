@@ -21,7 +21,12 @@ import {
   XCircle,
   Phone,
   Smartphone,
-  RefreshCw
+  RefreshCw,
+  Gift,
+  MessageCircle,
+  CreditCard,
+  TrendingUp,
+  Filter
 } from "lucide-react";
 import { WithdrawDialog } from "@/components/WithdrawDialog";
 import { TopUpDialog } from "@/components/TopUpDialog";
@@ -66,7 +71,7 @@ const WalletPage = () => {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [showTopUp, setShowTopUp] = useState(false);
-  const [activeTab, setActiveTab] = useState("transactions");
+  const [activeTab, setActiveTab] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -127,11 +132,26 @@ const WalletPage = () => {
     toast({ title: "Refreshed", description: "Wallet data updated" });
   };
 
+
   const getTransactionIcon = (type: string, amount: number) => {
-    if (type === 'gift_received' || amount > 0) {
-      return <ArrowDownLeft className="w-4 h-4 text-success" strokeWidth={1.5} />;
+    switch (type) {
+      case 'gift_sent':
+        return <Gift className="w-4 h-4 text-pink-500" strokeWidth={1.5} />;
+      case 'gift_received':
+        return <Gift className="w-4 h-4 text-success" strokeWidth={1.5} />;
+      case 'topup':
+      case 'deposit':
+        return <TrendingUp className="w-4 h-4 text-success" strokeWidth={1.5} />;
+      case 'direct_message_fee':
+        return <MessageCircle className="w-4 h-4 text-primary" strokeWidth={1.5} />;
+      case 'withdrawal':
+        return <ArrowUpRight className="w-4 h-4 text-destructive" strokeWidth={1.5} />;
+      default:
+        if (amount > 0) {
+          return <ArrowDownLeft className="w-4 h-4 text-success" strokeWidth={1.5} />;
+        }
+        return <ArrowUpRight className="w-4 h-4 text-destructive" strokeWidth={1.5} />;
     }
-    return <ArrowUpRight className="w-4 h-4 text-destructive" strokeWidth={1.5} />;
   };
 
   const getTransactionLabel = (tx: Transaction) => {
@@ -144,10 +164,29 @@ const WalletPage = () => {
         return 'Withdrawal';
       case 'deposit':
         return 'Deposit';
+      case 'topup':
+        return 'Wallet Top-up';
       case 'direct_message_fee':
-        return 'Direct Message Fee';
+        return `DM to ${tx.metadata?.recipient_name || 'User'}`;
       default:
-        return tx.type;
+        return tx.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+  };
+
+  const getTransactionCategory = (type: string) => {
+    switch (type) {
+      case 'gift_sent':
+      case 'gift_received':
+        return { label: 'Gift', color: 'bg-pink-500/10 text-pink-500' };
+      case 'topup':
+      case 'deposit':
+        return { label: 'Top-up', color: 'bg-success/10 text-success' };
+      case 'direct_message_fee':
+        return { label: 'DM', color: 'bg-primary/10 text-primary' };
+      case 'withdrawal':
+        return { label: 'Withdraw', color: 'bg-destructive/10 text-destructive' };
+      default:
+        return { label: 'Other', color: 'bg-muted text-muted-foreground' };
     }
   };
 
@@ -260,119 +299,244 @@ const WalletPage = () => {
             </motion.button>
           </div>
 
-          {/* Transactions & Withdrawals Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="w-full rounded-2xl h-12 p-1 bg-muted/50">
-              <TabsTrigger value="transactions" className="flex-1 rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                <History className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                Transactions
-              </TabsTrigger>
-              <TabsTrigger value="withdrawals" className="flex-1 rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                <ArrowUpRight className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                Withdrawals
-              </TabsTrigger>
-            </TabsList>
+          {/* Transaction History Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <History className="w-5 h-5" strokeWidth={1.5} />
+                Transaction History
+              </h2>
+              <Badge variant="outline" className="text-xs">
+                {transactions.length} transactions
+              </Badge>
+            </div>
 
-            <TabsContent value="transactions" className="mt-4">
-              <Card className="rounded-3xl border-0 shadow-ambient">
-                <CardContent className="p-4">
-                  {transactions.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Wallet className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                      <p className="font-medium">No transactions yet</p>
-                      <p className="text-sm">Send or receive gifts to see activity here</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {transactions.map((tx, index) => (
-                        <motion.div
-                          key={tx.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.03 }}
-                          className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                              {getTransactionIcon(tx.type, tx.net_amount)}
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="w-full rounded-2xl h-11 p-1 bg-muted/50">
+                <TabsTrigger value="all" className="flex-1 rounded-xl text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  All
+                </TabsTrigger>
+                <TabsTrigger value="topups" className="flex-1 rounded-xl text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  Top-ups
+                </TabsTrigger>
+                <TabsTrigger value="gifts" className="flex-1 rounded-xl text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  Gifts
+                </TabsTrigger>
+                <TabsTrigger value="withdrawals" className="flex-1 rounded-xl text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  Withdrawals
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="all" className="mt-4">
+                <Card className="rounded-3xl border-0 shadow-ambient">
+                  <CardContent className="p-4">
+                    {transactions.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Wallet className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                        <p className="font-medium">No transactions yet</p>
+                        <p className="text-sm">Your activity will appear here</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {transactions.map((tx, index) => {
+                          const category = getTransactionCategory(tx.type);
+                          return (
+                            <motion.div
+                              key={tx.id}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.03 }}
+                              className="flex items-center justify-between p-4 rounded-2xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                                  {getTransactionIcon(tx.type, tx.net_amount)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium text-sm truncate">{getTransactionLabel(tx)}</p>
+                                    <Badge className={`text-[10px] px-1.5 py-0 h-4 ${category.color} border-0`}>
+                                      {category.label}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    {format(new Date(tx.created_at), 'MMM d, h:mm a')}
+                                  </p>
+                                  {tx.metadata?.message && (
+                                    <p className="text-xs text-muted-foreground mt-1 italic truncate max-w-[180px]">"{tx.metadata.message}"</p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <div className={`font-semibold ${tx.net_amount > 0 ? 'text-success' : 'text-foreground'}`}>
+                                  {tx.net_amount > 0 ? '+' : ''}MWK {Math.abs(tx.net_amount).toLocaleString()}
+                                </div>
+                                {tx.fee > 0 && (
+                                  <p className="text-xs text-muted-foreground">Fee: MWK {tx.fee.toLocaleString()}</p>
+                                )}
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="topups" className="mt-4">
+                <Card className="rounded-3xl border-0 shadow-ambient">
+                  <CardContent className="p-4">
+                    {transactions.filter(tx => tx.type === 'topup' || tx.type === 'deposit').length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <TrendingUp className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                        <p className="font-medium">No top-ups yet</p>
+                        <p className="text-sm">Add funds to your wallet to get started</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {transactions
+                          .filter(tx => tx.type === 'topup' || tx.type === 'deposit')
+                          .map((tx, index) => (
+                            <motion.div
+                              key={tx.id}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.03 }}
+                              className="flex items-center justify-between p-4 rounded-2xl bg-success/5 hover:bg-success/10 transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center">
+                                  <TrendingUp className="w-4 h-4 text-success" strokeWidth={1.5} />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm">Wallet Top-up</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {format(new Date(tx.created_at), 'MMM d, yyyy • h:mm a')}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-semibold text-success">
+                                  +MWK {tx.net_amount.toLocaleString()}
+                                </div>
+                                {getStatusBadge(tx.status)}
+                              </div>
+                            </motion.div>
+                          ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="gifts" className="mt-4">
+                <Card className="rounded-3xl border-0 shadow-ambient">
+                  <CardContent className="p-4">
+                    {transactions.filter(tx => tx.type === 'gift_sent' || tx.type === 'gift_received').length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Gift className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                        <p className="font-medium">No gifts yet</p>
+                        <p className="text-sm">Send or receive gifts to see them here</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {transactions
+                          .filter(tx => tx.type === 'gift_sent' || tx.type === 'gift_received')
+                          .map((tx, index) => {
+                            const isReceived = tx.type === 'gift_received';
+                            return (
+                              <motion.div
+                                key={tx.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.03 }}
+                                className={`flex items-center justify-between p-4 rounded-2xl ${isReceived ? 'bg-success/5' : 'bg-pink-500/5'} hover:opacity-80 transition-colors`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-10 h-10 rounded-full ${isReceived ? 'bg-success/10' : 'bg-pink-500/10'} flex items-center justify-center`}>
+                                    <Gift className={`w-4 h-4 ${isReceived ? 'text-success' : 'text-pink-500'}`} strokeWidth={1.5} />
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-sm">{getTransactionLabel(tx)}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {format(new Date(tx.created_at), 'MMM d, yyyy • h:mm a')}
+                                    </p>
+                                    {tx.metadata?.message && (
+                                      <p className="text-xs text-muted-foreground mt-1 italic max-w-[200px] truncate">"{tx.metadata.message}"</p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className={`font-semibold ${isReceived ? 'text-success' : 'text-foreground'}`}>
+                                    {isReceived ? '+' : '-'}MWK {Math.abs(tx.net_amount).toLocaleString()}
+                                  </div>
+                                  {tx.fee > 0 && (
+                                    <p className="text-xs text-muted-foreground">Fee: MWK {tx.fee.toLocaleString()}</p>
+                                  )}
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="withdrawals" className="mt-4">
+                <Card className="rounded-3xl border-0 shadow-ambient">
+                  <CardContent className="p-4">
+                    {withdrawals.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <ArrowUpRight className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                        <p className="font-medium">No withdrawals yet</p>
+                        <p className="text-sm">Your withdrawal history will appear here</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {withdrawals.map((wd, index) => (
+                          <motion.div
+                            key={wd.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.03 }}
+                            className="p-4 rounded-2xl bg-muted/30"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                {wd.provider === 'airtel_money' ? (
+                                  <Smartphone className="w-4 h-4 text-primary" />
+                                ) : (
+                                  <Phone className="w-4 h-4 text-primary" />
+                                )}
+                                <span className="font-medium">
+                                  {wd.provider === 'airtel_money' ? 'Airtel Money' : 'TNM Mpamba'}
+                                </span>
+                              </div>
+                              {getStatusBadge(wd.status)}
                             </div>
-                            <div>
-                              <p className="font-medium text-sm">{getTransactionLabel(tx)}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {format(new Date(tx.created_at), 'MMM d, h:mm a')}
-                              </p>
-                              {tx.metadata?.message && (
-                                <p className="text-xs text-muted-foreground mt-1 italic">"{tx.metadata.message}"</p>
-                              )}
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">{wd.phone_number}</span>
+                              <span className="font-semibold">MWK {wd.net_amount.toLocaleString()}</span>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <div className={`font-semibold ${tx.net_amount > 0 ? 'text-success' : 'text-foreground'}`}>
-                              {tx.net_amount > 0 ? '+' : ''}MWK {Math.abs(tx.net_amount).toLocaleString()}
+                            <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
+                              <span>{format(new Date(wd.created_at), 'MMM d, yyyy h:mm a')}</span>
+                              {wd.fee > 0 && <span>Fee: MWK {wd.fee.toLocaleString()}</span>}
                             </div>
-                            {tx.fee > 0 && (
-                              <p className="text-xs text-muted-foreground">Fee: MWK {tx.fee.toLocaleString()}</p>
+                            {wd.failure_reason && (
+                              <p className="text-xs text-destructive mt-2">{wd.failure_reason}</p>
                             )}
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
 
-            <TabsContent value="withdrawals" className="mt-4">
-              <Card className="rounded-3xl border-0 shadow-ambient">
-                <CardContent className="p-4">
-                  {withdrawals.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <ArrowUpRight className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                      <p className="font-medium">No withdrawals yet</p>
-                      <p className="text-sm">Your withdrawal history will appear here</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {withdrawals.map((wd, index) => (
-                        <motion.div
-                          key={wd.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.03 }}
-                          className="p-4 rounded-2xl bg-muted/30"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              {wd.provider === 'airtel_money' ? (
-                                <Smartphone className="w-4 h-4 text-primary" />
-                              ) : (
-                                <Phone className="w-4 h-4 text-primary" />
-                              )}
-                              <span className="font-medium">
-                                {wd.provider === 'airtel_money' ? 'Airtel Money' : 'TNM Mpamba'}
-                              </span>
-                            </div>
-                            {getStatusBadge(wd.status)}
-                          </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">{wd.phone_number}</span>
-                            <span className="font-semibold">MWK {wd.net_amount.toLocaleString()}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
-                            <span>{format(new Date(wd.created_at), 'MMM d, yyyy h:mm a')}</span>
-                            {wd.fee > 0 && <span>Fee: MWK {wd.fee.toLocaleString()}</span>}
-                          </div>
-                          {wd.failure_reason && (
-                            <p className="text-xs text-destructive mt-2">{wd.failure_reason}</p>
-                          )}
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
         </div>
       </div>
 
