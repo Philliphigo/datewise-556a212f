@@ -87,41 +87,79 @@ serve(async (req) => {
       return new Response("OK", { status: 200 });
     }
 
-    // If payment successful, create/update subscription
+    // If payment successful, handle based on tier type
     if (paymentStatus === "successful") {
       const tier = payment.metadata?.tier;
       const userId = payment.user_id;
       const subscriptionDays = payment.metadata?.subscriptionDays || 30;
 
       if (tier && userId) {
-        // Calculate subscription end date based on payment amount
-        const endDate = new Date();
-        endDate.setDate(endDate.getDate() + subscriptionDays);
+        // Check if this is a wallet top-up
+        if (tier === "wallet_topup") {
+          // Add funds to user's wallet
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("wallet_balance")
+            .eq("id", userId)
+            .single();
 
-        // Create or update subscription
-        const { error: subError } = await supabase.from("subscriptions").upsert({
-          user_id: userId,
-          tier,
-          is_active: true,
-          start_date: new Date().toISOString(),
-          end_date: endDate.toISOString(),
-        });
+          const currentBalance = profile?.wallet_balance || 0;
+          const newBalance = currentBalance + amount;
 
-        if (subError) {
-          console.error("Error updating subscription:", subError);
+          const { error: walletError } = await supabase
+            .from("profiles")
+            .update({ wallet_balance: newBalance })
+            .eq("id", userId);
+
+          if (walletError) {
+            console.error("Error updating wallet balance:", walletError);
+          }
+
+          // Record wallet transaction
+          await supabase.from("wallet_transactions").insert({
+            user_id: userId,
+            type: "topup",
+            amount,
+            fee: 0,
+            net_amount: amount,
+            status: "completed",
+            metadata: {
+              tx_ref: txRef,
+              payment_method: "paychangu",
+            },
+          });
+
+          console.log("Wallet topped up:", { userId, amount, newBalance, txRef });
+        } else {
+          // Regular subscription payment
+          const endDate = new Date();
+          endDate.setDate(endDate.getDate() + subscriptionDays);
+
+          // Create or update subscription
+          const { error: subError } = await supabase.from("subscriptions").upsert({
+            user_id: userId,
+            tier,
+            is_active: true,
+            start_date: new Date().toISOString(),
+            end_date: endDate.toISOString(),
+          });
+
+          if (subError) {
+            console.error("Error updating subscription:", subError);
+          }
+
+          // Update user profile
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .update({ subscription_tier: tier })
+            .eq("id", userId);
+
+          if (profileError) {
+            console.error("Error updating profile:", profileError);
+          }
+
+          console.log("Subscription activated:", { userId, tier, txRef });
         }
-
-        // Update user profile
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({ subscription_tier: tier })
-          .eq("id", userId);
-
-        if (profileError) {
-          console.error("Error updating profile:", profileError);
-        }
-
-        console.log("Subscription activated:", { userId, tier, txRef });
       }
     }
 
