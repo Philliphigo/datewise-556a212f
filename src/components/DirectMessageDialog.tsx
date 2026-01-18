@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MessageSquare, Loader2, Send, Wallet, AlertCircle } from "lucide-react";
+import { MessageSquare, Loader2, Send, Wallet, AlertCircle, Crown, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,21 +32,40 @@ export const DirectMessageDialog = ({
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [senderBalance, setSenderBalance] = useState(0);
+  const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
 
+  const isVIP = subscriptionTier === "vip";
+  const isPremium = subscriptionTier === "premium";
+  const hasFreeMessages = isVIP; // VIP users can message anyone for free
+
   useEffect(() => {
-    const fetchBalance = async () => {
+    const fetchUserData = async () => {
       if (!user || !isOpen) return;
       setBalanceLoading(true);
       try {
-        const { data, error } = await supabase
+        // Fetch balance
+        const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("wallet_balance")
+          .select("wallet_balance, subscription_tier")
           .eq("id", user.id)
           .maybeSingle();
 
-        if (error) throw error;
-        setSenderBalance(data?.wallet_balance || 0);
+        if (profileError) throw profileError;
+        setSenderBalance(profileData?.wallet_balance || 0);
+        setSubscriptionTier(profileData?.subscription_tier || null);
+
+        // Also check subscriptions table for active subscription
+        const { data: subData } = await supabase
+          .from("subscriptions")
+          .select("tier, is_active")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (subData?.tier) {
+          setSubscriptionTier(subData.tier);
+        }
       } catch (e) {
         setSenderBalance(0);
       } finally {
@@ -54,10 +73,10 @@ export const DirectMessageDialog = ({
       }
     };
 
-    fetchBalance();
+    fetchUserData();
   }, [user, isOpen]);
 
-  const canAfford = senderBalance >= DIRECT_MESSAGE_FEE;
+  const canAfford = hasFreeMessages || senderBalance >= DIRECT_MESSAGE_FEE;
 
   const handleSend = async () => {
     if (!message.trim()) {
@@ -86,7 +105,8 @@ export const DirectMessageDialog = ({
       const response = await supabase.functions.invoke('send-direct-message', {
         body: {
           recipientId,
-          message: message.trim()
+          message: message.trim(),
+          isVipFree: hasFreeMessages // Tell server if this is a free VIP message
         },
         headers: {
           Authorization: `Bearer ${session?.access_token}`
@@ -140,29 +160,50 @@ export const DirectMessageDialog = ({
         </DialogHeader>
 
         <div className="space-y-6 mt-4">
-          {/* Fee Info */}
-          <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-medium">Direct Message Fee</span>
-              <span className="text-xl font-bold text-primary">MWK {DIRECT_MESSAGE_FEE.toLocaleString()}</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              This creates a conversation so you can chat freely afterwards.
-            </p>
-          </div>
+          {/* VIP Badge */}
+          {hasFreeMessages && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 p-4 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-2xl border border-amber-500/30"
+            >
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center">
+                <Crown className="w-5 h-5 text-black" />
+              </div>
+              <div>
+                <p className="font-semibold text-amber-400">VIP Privilege</p>
+                <p className="text-sm text-muted-foreground">You can message anyone for free!</p>
+              </div>
+            </motion.div>
+          )}
 
-          {/* Balance Check */}
-          <div className={`flex items-center justify-between p-4 rounded-2xl ${canAfford ? 'bg-muted/50' : 'bg-destructive/10'}`}>
-            <div className="flex items-center gap-2">
-              <Wallet className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
-              <span className="text-sm text-muted-foreground">Your Balance</span>
+          {/* Fee Info - only show if not VIP */}
+          {!hasFreeMessages && (
+            <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium">Direct Message Fee</span>
+                <span className="text-xl font-bold text-primary">MWK {DIRECT_MESSAGE_FEE.toLocaleString()}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                This creates a conversation so you can chat freely afterwards.
+              </p>
             </div>
-            <span className={`font-bold ${canAfford ? '' : 'text-destructive'}`}>
-              {balanceLoading ? "…" : `MWK ${senderBalance.toLocaleString()}`}
-            </span>
-          </div>
+          )}
 
-          {!canAfford && (
+          {/* Balance Check - only show if not VIP */}
+          {!hasFreeMessages && (
+            <div className={`flex items-center justify-between p-4 rounded-2xl ${canAfford ? 'bg-muted/50' : 'bg-destructive/10'}`}>
+              <div className="flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+                <span className="text-sm text-muted-foreground">Your Balance</span>
+              </div>
+              <span className={`font-bold ${canAfford ? '' : 'text-destructive'}`}>
+                {balanceLoading ? "…" : `MWK ${senderBalance.toLocaleString()}`}
+              </span>
+            </div>
+          )}
+
+          {!canAfford && !hasFreeMessages && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -219,6 +260,11 @@ export const DirectMessageDialog = ({
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                 Sending...
               </>
+            ) : hasFreeMessages ? (
+              <>
+                <Sparkles className="w-5 h-5 mr-2" />
+                Send Free Message
+              </>
             ) : (
               <>
                 <Send className="w-5 h-5 mr-2" />
@@ -228,7 +274,9 @@ export const DirectMessageDialog = ({
           </Button>
 
           <p className="text-xs text-center text-muted-foreground">
-            Once sent, you'll be matched and can chat freely forever.
+            {hasFreeMessages 
+              ? "As a VIP member, you can message anyone instantly!"
+              : "Once sent, you'll be matched and can chat freely forever."}
           </p>
         </div>
       </DialogContent>

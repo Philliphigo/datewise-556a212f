@@ -40,7 +40,7 @@ serve(async (req) => {
       );
     }
 
-    const { recipientId, message } = await req.json();
+    const { recipientId, message, isVipFree } = await req.json();
 
     if (!recipientId || !message) {
       return new Response(
@@ -63,10 +63,10 @@ serve(async (req) => {
       );
     }
 
-    // Check sender's balance
+    // Check sender's profile and subscription
     const { data: senderProfile, error: senderError } = await supabase
       .from('profiles')
-      .select('wallet_balance, name')
+      .select('wallet_balance, name, subscription_tier')
       .eq('id', user.id)
       .single();
 
@@ -77,15 +77,29 @@ serve(async (req) => {
       );
     }
 
-    if (senderProfile.wallet_balance < DIRECT_MESSAGE_FEE) {
-      return new Response(
-        JSON.stringify({ 
-          error: `Insufficient balance. You need MWK ${DIRECT_MESSAGE_FEE.toLocaleString()} to send a direct message.`,
-          required: DIRECT_MESSAGE_FEE,
-          balance: senderProfile.wallet_balance
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Check for active VIP subscription
+    const { data: activeSubscription } = await supabase
+      .from('subscriptions')
+      .select('tier, is_active')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    const isVIP = activeSubscription?.tier === 'vip' || senderProfile.subscription_tier === 'vip';
+    const skipPayment = isVIP && isVipFree;
+
+    // If not VIP, check balance
+    if (!skipPayment) {
+      if (senderProfile.wallet_balance < DIRECT_MESSAGE_FEE) {
+        return new Response(
+          JSON.stringify({ 
+            error: `Insufficient balance. You need MWK ${DIRECT_MESSAGE_FEE.toLocaleString()} to send a direct message.`,
+            required: DIRECT_MESSAGE_FEE,
+            balance: senderProfile.wallet_balance
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Get recipient info
@@ -95,18 +109,20 @@ serve(async (req) => {
       .eq('id', recipientId)
       .single();
 
-    // Calculate fees
-    const platformFee = Math.round(DIRECT_MESSAGE_FEE * PLATFORM_FEE_RATE);
-    const recipientAmount = DIRECT_MESSAGE_FEE - platformFee;
+    // Calculate fees (only if not VIP free)
+    const platformFee = skipPayment ? 0 : Math.round(DIRECT_MESSAGE_FEE * PLATFORM_FEE_RATE);
+    const recipientAmount = skipPayment ? 0 : DIRECT_MESSAGE_FEE - platformFee;
 
-    // Deduct from sender
-    const { error: deductError } = await supabase
-      .from('profiles')
-      .update({ wallet_balance: senderProfile.wallet_balance - DIRECT_MESSAGE_FEE })
-      .eq('id', user.id);
+    // Deduct from sender (only if not VIP free)
+    if (!skipPayment) {
+      const { error: deductError } = await supabase
+        .from('profiles')
+        .update({ wallet_balance: senderProfile.wallet_balance - DIRECT_MESSAGE_FEE })
+        .eq('id', user.id);
 
-    if (deductError) {
-      throw new Error('Failed to process payment');
+      if (deductError) {
+        throw new Error('Failed to process payment');
+      }
     }
 
     // Create a match between users so they can continue chatting
@@ -141,34 +157,36 @@ serve(async (req) => {
       console.error('Message insert error:', messageError);
     }
 
-    // Record transaction for sender
-    const { data: transaction } = await supabase
-      .from('wallet_transactions')
-      .insert({
-        user_id: user.id,
-        type: 'direct_message_fee',
-        amount: DIRECT_MESSAGE_FEE,
-        fee: platformFee,
-        net_amount: -DIRECT_MESSAGE_FEE,
-        related_user_id: recipientId,
-        metadata: {
-          recipient_name: recipientProfile?.name || 'User',
-          message_preview: message.substring(0, 50)
-        },
-        status: 'completed'
-      })
-      .select()
-      .single();
-
-    // Record platform earnings
-    if (transaction) {
-      await supabase
-        .from('platform_earnings')
+    // Record transaction for sender (only if paid)
+    if (!skipPayment) {
+      const { data: transaction } = await supabase
+        .from('wallet_transactions')
         .insert({
-          transaction_id: transaction.id,
-          amount: platformFee,
-          source_type: 'direct_message_fee'
-        });
+          user_id: user.id,
+          type: 'direct_message_fee',
+          amount: DIRECT_MESSAGE_FEE,
+          fee: platformFee,
+          net_amount: -DIRECT_MESSAGE_FEE,
+          related_user_id: recipientId,
+          metadata: {
+            recipient_name: recipientProfile?.name || 'User',
+            message_preview: message.substring(0, 50)
+          },
+          status: 'completed'
+        })
+        .select()
+        .single();
+
+      // Record platform earnings
+      if (transaction) {
+        await supabase
+          .from('platform_earnings')
+          .insert({
+            transaction_id: transaction.id,
+            amount: platformFee,
+            source_type: 'direct_message_fee'
+          });
+      }
     }
 
     // Send notification to recipient
@@ -178,7 +196,9 @@ serve(async (req) => {
         user_id: recipientId,
         type: 'direct_message',
         title: 'New Message',
-        message: `${senderProfile.name} paid to message you directly!`
+        message: skipPayment 
+          ? `${senderProfile.name} (VIP) sent you a message!`
+          : `${senderProfile.name} paid to message you directly!`
       });
 
     return new Response(

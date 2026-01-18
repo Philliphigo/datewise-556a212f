@@ -137,6 +137,38 @@ export type Database = {
           },
         ]
       }
+      message_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          reaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -144,6 +176,7 @@ export type Database = {
           id: string
           is_read: boolean | null
           match_id: string
+          read_at: string | null
           sender_id: string
         }
         Insert: {
@@ -152,6 +185,7 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           match_id: string
+          read_at?: string | null
           sender_id: string
         }
         Update: {
@@ -160,6 +194,7 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           match_id?: string
+          read_at?: string | null
           sender_id?: string
         }
         Relationships: [
