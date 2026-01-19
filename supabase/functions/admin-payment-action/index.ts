@@ -155,6 +155,85 @@ serve(async (req) => {
       });
     }
 
+    // Handle wallet top-up separately
+    if (tier === "wallet_topup") {
+      console.log("Processing wallet top-up:", { userId: payment.user_id, amount: payment.amount });
+      
+      // Get current wallet balance
+      const { data: profile, error: profileFetchErr } = await supabase
+        .from("profiles")
+        .select("wallet_balance")
+        .eq("id", payment.user_id)
+        .single();
+
+      if (profileFetchErr) {
+        console.error("Error fetching profile for wallet update:", profileFetchErr);
+        return new Response(JSON.stringify({ error: "Failed to fetch user profile" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const currentBalance = profile?.wallet_balance || 0;
+      const topUpAmount = Number(payment.amount);
+      const newBalance = currentBalance + topUpAmount;
+
+      // Update wallet balance
+      const { error: walletErr } = await supabase
+        .from("profiles")
+        .update({ 
+          wallet_balance: newBalance,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", payment.user_id);
+
+      if (walletErr) {
+        console.error("Error updating wallet balance:", walletErr);
+        return new Response(JSON.stringify({ error: "Failed to update wallet balance" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Record wallet transaction
+      const { error: txnErr } = await supabase.from("wallet_transactions").insert({
+        user_id: payment.user_id,
+        type: "topup",
+        amount: topUpAmount,
+        fee: 0,
+        net_amount: topUpAmount,
+        status: "completed",
+        metadata: {
+          tx_ref: payment.transaction_id,
+          payment_method: "paychangu",
+          payment_id: paymentId,
+          completed_by: user.id,
+        },
+      });
+
+      if (txnErr) {
+        console.error("Error recording wallet transaction:", txnErr);
+      }
+
+      console.log("Wallet topped up successfully:", { 
+        userId: payment.user_id, 
+        amount: topUpAmount, 
+        newBalance 
+      });
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          status: "completed", 
+          type: "wallet_topup",
+          amount: topUpAmount,
+          newBalance,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Regular subscription handling
     // Upsert subscription WITHOUT relying on a unique constraint on user_id
     const { data: existingSub, error: subFetchErr } = await supabase
       .from("subscriptions")

@@ -150,58 +150,104 @@ serve(async (req) => {
       throw updateError;
     }
 
-    // If payment successful, activate subscription automatically
+    // If payment successful, handle based on tier type
     if (newStatus === "completed") {
       const tier = payment.metadata?.tier || "supporter";
       const subscriptionDays = payment.metadata?.subscriptionDays || 30;
+      const amount = Number(payment.amount);
 
-      console.log("Activating subscription:", { userId, tier, subscriptionDays });
+      // Handle wallet top-up
+      if (tier === "wallet_topup") {
+        console.log("Processing wallet top-up:", { userId, amount });
 
-      // Calculate subscription end date
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + subscriptionDays);
+        // Get current wallet balance
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("wallet_balance")
+          .eq("id", userId)
+          .single();
 
-      // Create or update subscription using upsert
-      const { error: subError } = await supabase.from("subscriptions").upsert({
-        user_id: userId,
-        tier,
-        is_active: true,
-        start_date: new Date().toISOString(),
-        end_date: endDate.toISOString(),
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: "user_id",
-      });
+        const currentBalance = profile?.wallet_balance || 0;
+        const newBalance = currentBalance + amount;
 
-      if (subError) {
-        console.error("Error creating/updating subscription:", subError);
-        // Try insert if upsert fails
-        const { error: insertError } = await supabase.from("subscriptions").insert({
+        // Update wallet balance
+        const { error: walletErr } = await supabase
+          .from("profiles")
+          .update({ 
+            wallet_balance: newBalance,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", userId);
+
+        if (walletErr) {
+          console.error("Error updating wallet balance:", walletErr);
+        }
+
+        // Record wallet transaction
+        await supabase.from("wallet_transactions").insert({
+          user_id: userId,
+          type: "topup",
+          amount,
+          fee: 0,
+          net_amount: amount,
+          status: "completed",
+          metadata: {
+            tx_ref: txRef,
+            payment_method: "paychangu",
+          },
+        });
+
+        console.log("Wallet topped up successfully:", { userId, amount, newBalance, txRef });
+      } else {
+        // Regular subscription handling
+        console.log("Activating subscription:", { userId, tier, subscriptionDays });
+
+        // Calculate subscription end date
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + subscriptionDays);
+
+        // Create or update subscription using upsert
+        const { error: subError } = await supabase.from("subscriptions").upsert({
           user_id: userId,
           tier,
           is_active: true,
           start_date: new Date().toISOString(),
           end_date: endDate.toISOString(),
-        });
-        if (insertError) {
-          console.error("Error inserting subscription:", insertError);
-        }
-      }
-
-      // Update user profile subscription tier
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({ 
-          subscription_tier: tier,
           updated_at: new Date().toISOString(),
-        })
-        .eq("id", userId);
+        }, {
+          onConflict: "user_id",
+        });
 
-      if (profileError) {
-        console.error("Error updating profile:", profileError);
+        if (subError) {
+          console.error("Error creating/updating subscription:", subError);
+          // Try insert if upsert fails
+          const { error: insertError } = await supabase.from("subscriptions").insert({
+            user_id: userId,
+            tier,
+            is_active: true,
+            start_date: new Date().toISOString(),
+            end_date: endDate.toISOString(),
+          });
+          if (insertError) {
+            console.error("Error inserting subscription:", insertError);
+          }
+        }
+
+        // Update user profile subscription tier
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({ 
+            subscription_tier: tier,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", userId);
+
+        if (profileError) {
+          console.error("Error updating profile:", profileError);
+        }
+
+        console.log("Subscription activated successfully:", { userId, tier, txRef });
       }
-
-      console.log("Subscription activated successfully:", { userId, tier, txRef, endDate: endDate.toISOString() });
     }
 
     return new Response(
