@@ -17,11 +17,24 @@ serve(async (req) => {
   }
 
   try {
-    // Get webhook payload
-    const payload = await req.json();
-    const txRef = payload.tx_ref;
+    // PayChangu may call the webhook with an empty/invalid body; handle gracefully.
+    const rawBody = await req.text();
+    if (!rawBody) {
+      console.warn("PayChangu webhook received with empty body");
+      return new Response("OK", { status: 200 });
+    }
 
-    console.log("PayChangu webhook received:", { txRef, event: payload.event });
+    let payload: any;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch (_e) {
+      console.warn("PayChangu webhook received non-JSON body:", rawBody.slice(0, 200));
+      return new Response("OK", { status: 200 });
+    }
+
+    const txRef = payload?.tx_ref || payload?.data?.tx_ref;
+
+    console.log("PayChangu webhook received:", { txRef, event: payload?.event });
 
     if (!txRef) {
       console.error("No tx_ref in webhook payload");
