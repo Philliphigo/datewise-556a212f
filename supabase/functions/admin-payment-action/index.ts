@@ -128,6 +128,55 @@ serve(async (req) => {
     }
 
     // action === "complete"
+    const completedAt = new Date().toISOString();
+
+    // For PayChangu, never allow manual completion unless the provider confirms it.
+    if (payment.payment_method === "paychangu") {
+      if (!payment.transaction_id) {
+        return new Response(JSON.stringify({ error: "Missing transaction reference for this payment" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const payChanguSecretKey = Deno.env.get("PAYCHANGU_SECRET_KEY") as string;
+      if (!payChanguSecretKey) {
+        return new Response(JSON.stringify({ error: "Payment provider key not configured" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const verifyResponse = await fetch(`https://api.paychangu.com/verify-payment/${payment.transaction_id}`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${payChanguSecretKey}`,
+          "Accept": "application/json",
+        },
+      });
+
+      const verificationData = await verifyResponse.json().catch(() => null);
+      const providerStatus = verificationData?.data?.status;
+
+      const isConfirmed =
+        verifyResponse.ok &&
+        verificationData?.status === "success" &&
+        (providerStatus === "successful" || providerStatus === "success" || providerStatus === "completed");
+
+      if (!isConfirmed) {
+        return new Response(
+          JSON.stringify({
+            error: "Payment is not confirmed by the provider. Use Verify, or wait for the webhook to update.",
+            provider_status: providerStatus || "unknown",
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+    }
+
     const tier = payment.metadata?.tier || "supporter";
     const subscriptionDays = payment.metadata?.subscriptionDays || 30;
     const endDate = new Date();
@@ -142,7 +191,7 @@ serve(async (req) => {
           ...(payment.metadata || {}),
           manual_completion: true,
           completed_by: user.id,
-          completed_at: new Date().toISOString(),
+          completed_at: completedAt,
         },
       })
       .eq("id", paymentId);
