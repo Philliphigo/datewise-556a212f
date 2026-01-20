@@ -11,7 +11,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+type PayChanguWebhookPayload = {
+  tx_ref?: string;
+  event?: string;
+  data?: { tx_ref?: string };
+};
+
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -24,9 +30,9 @@ serve(async (req) => {
       return new Response("OK", { status: 200 });
     }
 
-    let payload: any;
+    let payload: PayChanguWebhookPayload;
     try {
-      payload = JSON.parse(rawBody);
+      payload = JSON.parse(rawBody) as PayChanguWebhookPayload;
     } catch (_e) {
       console.warn("PayChangu webhook received non-JSON body:", rawBody.slice(0, 200));
       return new Response("OK", { status: 200 });
@@ -43,16 +49,13 @@ serve(async (req) => {
 
     // CRITICAL: Always verify transaction status by querying PayChangu API
     // Never trust webhook data alone
-    const verifyResponse = await fetch(
-      `https://api.paychangu.com/verify-payment/${txRef}`,
-      {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${payChanguSecretKey}`,
-          "Accept": "application/json",
-        },
-      }
-    );
+    const verifyResponse = await fetch(`https://api.paychangu.com/verify-payment/${txRef}`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${payChanguSecretKey}`,
+        "Accept": "application/json",
+      },
+    });
 
     const verificationData = await verifyResponse.json();
 
@@ -68,9 +71,15 @@ serve(async (req) => {
     }
 
     const paymentStatus = verificationData.data?.status;
-    const amount = verificationData.data?.amount;
+    const amountFromProvider = Number(verificationData.data?.amount ?? 0);
 
-    // Update payment record in database
+    const normalizedStatus = String(paymentStatus || "").toLowerCase();
+    const isSuccessful = ["successful", "success", "completed"].includes(normalizedStatus);
+    const isFailed = ["failed", "cancelled", "canceled"].includes(normalizedStatus);
+
+    const newStatus = isSuccessful ? "completed" : isFailed ? "failed" : "pending";
+
+    // Load the corresponding payment row
     const { data: payment, error: fetchError } = await supabase
       .from("payments")
       .select("*")
@@ -82,11 +91,17 @@ serve(async (req) => {
       return new Response("OK", { status: 200 });
     }
 
+    // Prefer provider amount, but fall back to our recorded amount
+    const creditedAmount =
+      Number.isFinite(amountFromProvider) && amountFromProvider > 0
+        ? amountFromProvider
+        : Number(payment.amount);
+
     // Update payment status
     const { error: updateError } = await supabase
       .from("payments")
       .update({
-        status: paymentStatus === "successful" ? "completed" : "failed",
+        status: newStatus,
         metadata: {
           ...payment.metadata,
           verification: verificationData.data,
@@ -101,15 +116,14 @@ serve(async (req) => {
     }
 
     // If payment successful, handle based on tier type
-    if (paymentStatus === "successful") {
+    if (newStatus === "completed") {
       const tier = payment.metadata?.tier;
       const userId = payment.user_id;
       const subscriptionDays = payment.metadata?.subscriptionDays || 30;
 
       if (tier && userId) {
-        // Check if this is a wallet top-up
+        // Wallet top-up
         if (tier === "wallet_topup") {
-          // Add funds to user's wallet
           const { data: profile } = await supabase
             .from("profiles")
             .select("wallet_balance")
@@ -117,24 +131,23 @@ serve(async (req) => {
             .single();
 
           const currentBalance = profile?.wallet_balance || 0;
-          const newBalance = currentBalance + amount;
+          const newBalance = currentBalance + creditedAmount;
 
           const { error: walletError } = await supabase
             .from("profiles")
-            .update({ wallet_balance: newBalance })
+            .update({ wallet_balance: newBalance, updated_at: new Date().toISOString() })
             .eq("id", userId);
 
           if (walletError) {
             console.error("Error updating wallet balance:", walletError);
           }
 
-          // Record wallet transaction
           await supabase.from("wallet_transactions").insert({
             user_id: userId,
             type: "topup",
-            amount,
+            amount: creditedAmount,
             fee: 0,
-            net_amount: amount,
+            net_amount: creditedAmount,
             status: "completed",
             metadata: {
               tx_ref: txRef,
@@ -142,29 +155,28 @@ serve(async (req) => {
             },
           });
 
-          console.log("Wallet topped up:", { userId, amount, newBalance, txRef });
+          console.log("Wallet topped up:", { userId, amount: creditedAmount, newBalance, txRef });
         } else {
-          // Regular subscription payment
+          // Subscription payment
           const endDate = new Date();
           endDate.setDate(endDate.getDate() + subscriptionDays);
 
-          // Create or update subscription
           const { error: subError } = await supabase.from("subscriptions").upsert({
             user_id: userId,
             tier,
             is_active: true,
             start_date: new Date().toISOString(),
             end_date: endDate.toISOString(),
+            updated_at: new Date().toISOString(),
           });
 
           if (subError) {
             console.error("Error updating subscription:", subError);
           }
 
-          // Update user profile
           const { error: profileError } = await supabase
             .from("profiles")
-            .update({ subscription_tier: tier })
+            .update({ subscription_tier: tier, updated_at: new Date().toISOString() })
             .eq("id", userId);
 
           if (profileError) {
@@ -178,7 +190,7 @@ serve(async (req) => {
 
     // Return 200 OK to acknowledge webhook receipt
     return new Response("OK", { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in paychangu-webhook:", error);
     // Still return 200 to prevent webhook retries
     return new Response("OK", { status: 200 });
