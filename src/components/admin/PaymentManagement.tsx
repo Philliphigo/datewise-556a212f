@@ -229,6 +229,7 @@ export const PaymentManagement = () => {
                           variant="outline"
                           onClick={() => handleVerifyPayment(payment)}
                           disabled={processingId === payment.id}
+                          title="Verify with provider"
                         >
                           {processingId === payment.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -236,28 +237,31 @@ export const PaymentManagement = () => {
                             <RefreshCw className="w-4 h-4" />
                           )}
                         </Button>
-                        
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="default" disabled={processingId === payment.id}>
-                              <CheckCircle className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Mark Payment as Completed?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will activate the user's subscription. Only do this if you've confirmed the payment was received.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleManualComplete(payment)}>
-                                Complete Payment
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+
+                        {/* PayChangu payments must never be manually completed; provider verification only. */}
+                        {payment.payment_method !== "paychangu" && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="default" disabled={processingId === payment.id}>
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Mark Payment as Completed?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will activate the user's subscription / apply the purchase. Use this only for non-PayChangu methods where you have external proof of payment.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleManualComplete(payment)}>
+                                  Complete Payment
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
 
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -274,7 +278,7 @@ export const PaymentManagement = () => {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
+                              <AlertDialogAction
                                 onClick={() => handleMarkFailed(payment)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
