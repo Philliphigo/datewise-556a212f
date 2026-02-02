@@ -41,3 +41,9 @@ verify_jwt = true
 
 [functions.send-broadcast-email]
 verify_jwt = true
+
+[functions.philai-admin]
+verify_jwt = true
+
+[functions.admin-payment-action]
+verify_jwt = true
