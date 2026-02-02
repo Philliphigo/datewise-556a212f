@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, ArrowLeft, MoreVertical, Paperclip, User, Settings, Ban, Palette, MessageSquare, Search, Megaphone, Gift } from "lucide-react";
+import { Send, Loader2, ArrowLeft, MoreVertical, Paperclip, User, Settings, Ban, Palette, MessageSquare, Search, Megaphone, Gift, Mic } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ReportDialog } from "@/components/ReportDialog";
@@ -19,6 +19,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { TypingIndicator } from "@/components/chat/TypingIndicator";
 import { MessageReactions } from "@/components/chat/MessageReactions";
 import { ReadReceipt } from "@/components/chat/ReadReceipt";
+import { VoiceRecorder } from "@/components/chat/VoiceRecorder";
+import { AudioMessage } from "@/components/chat/AudioMessage";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import {
   DropdownMenu,
@@ -133,6 +135,8 @@ const Messages = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [voiceUploading, setVoiceUploading] = useState(false);
   
   const [showSettings, setShowSettings] = useState(false);
   const [chatTheme, setChatTheme] = useState(CHAT_THEMES[0]);
@@ -439,6 +443,35 @@ const Messages = () => {
     }
   }, [selectedMatch, user, uploading, toast]);
 
+  const handleVoiceRecordingComplete = useCallback(async (audioBlob: Blob, duration: number) => {
+    if (!selectedMatch || !user) return;
+    
+    setVoiceUploading(true);
+    try {
+      const ext = 'webm';
+      const filePath = `${user.id}/${selectedMatch}/${Date.now()}_voice.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('chat-attachments')
+        .upload(filePath, audioBlob, { upsert: false, contentType: 'audio/webm' });
+      if (uploadError) throw uploadError;
+
+      // Store as [VOICE:duration] prefix to identify it as a voice message
+      const { error: insertError } = await supabase.from('messages').insert({
+        match_id: selectedMatch,
+        sender_id: user.id,
+        content: `[VOICE:${duration}]${filePath}`,
+      });
+      if (insertError) throw insertError;
+
+      toast({ title: 'Voice sent', description: 'Your voice message was sent successfully' });
+      setIsVoiceMode(false);
+    } catch (error: any) {
+      toast({ title: 'Failed to send voice', description: error.message, variant: 'destructive' });
+    } finally {
+      setVoiceUploading(false);
+    }
+  }, [selectedMatch, user, toast]);
+
   if (loading) {
     return (
       <Layout>
@@ -643,6 +676,10 @@ const Messages = () => {
                   const isOwn = message.sender_id === user?.id;
                   const isImage = message.content.startsWith('[IMAGE]');
                   const imagePath = isImage ? message.content.replace('[IMAGE]', '') : null;
+                  const isVoice = message.content.startsWith('[VOICE:');
+                  const voiceMatch = isVoice ? message.content.match(/\[VOICE:(\d+)\](.+)/) : null;
+                  const voiceDuration = voiceMatch ? parseInt(voiceMatch[1]) : 0;
+                  const voicePath = voiceMatch ? voiceMatch[2] : null;
                   const isLastMessage = index === messages.length - 1;
                   
                   return (
@@ -658,7 +695,9 @@ const Messages = () => {
                           }`}
                           style={isOwn ? { background: chatTheme.gradient } : {}}
                         >
-                          {isImage && imagePath ? (
+                          {isVoice && voicePath ? (
+                            <AudioMessage filePath={voicePath} duration={voiceDuration} isOwn={isOwn} />
+                          ) : isImage && imagePath ? (
                             <ChatImage filePath={imagePath} />
                           ) : /^https?:\/\//.test(message.content) ? (
                             /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(message.content) ? (
@@ -710,33 +749,62 @@ const Messages = () => {
 
               {/* Message Input */}
               <div className="p-4 border-t border-white/10">
-                <form onSubmit={handleSend} className="flex items-center gap-3">
-                  <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleFileUpload}
-                    disabled={uploading}
-                    className="rounded-full shrink-0"
-                  >
-                    {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
-                  </Button>
-                  <Input
-                    value={newMessage}
-                    onChange={handleInputChange}
-                    placeholder="Type a message..."
-                    className="flex-1 bg-white/5 border-white/10 rounded-2xl py-6"
-                  />
-                  <Button
-                    type="submit"
-                    disabled={!newMessage.trim() || sending}
-                    className="rounded-full w-11 h-11 p-0 shrink-0"
-                    style={{ background: chatTheme.gradient }}
-                  >
-                    {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                  </Button>
-                </form>
+                <AnimatePresence mode="wait">
+                  {isVoiceMode ? (
+                    <VoiceRecorder
+                      key="voice-recorder"
+                      onRecordingComplete={handleVoiceRecordingComplete}
+                      onCancel={() => setIsVoiceMode(false)}
+                      isUploading={voiceUploading}
+                    />
+                  ) : (
+                    <motion.form 
+                      key="text-input"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onSubmit={handleSend} 
+                      className="flex items-center gap-3"
+                    >
+                      <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleFileUpload}
+                        disabled={uploading}
+                        className="rounded-full shrink-0"
+                      >
+                        {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
+                      </Button>
+                      <Input
+                        value={newMessage}
+                        onChange={handleInputChange}
+                        placeholder="Type a message..."
+                        className="flex-1 bg-white/5 border-white/10 rounded-2xl py-6"
+                      />
+                      {newMessage.trim() ? (
+                        <Button
+                          type="submit"
+                          disabled={!newMessage.trim() || sending}
+                          className="rounded-full w-11 h-11 p-0 shrink-0"
+                          style={{ background: chatTheme.gradient }}
+                        >
+                          {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          onClick={() => setIsVoiceMode(true)}
+                          className="rounded-full w-11 h-11 p-0 shrink-0"
+                          style={{ background: chatTheme.gradient }}
+                        >
+                          <Mic className="w-5 h-5" />
+                        </Button>
+                      )}
+                    </motion.form>
+                  )}
+                </AnimatePresence>
               </div>
             </>
           )}
