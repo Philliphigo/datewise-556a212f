@@ -25,6 +25,7 @@ import {
   DollarSign,
   Activity,
   BarChart3,
+  Bot,
 } from "lucide-react";
 import { format } from "date-fns";
 import { AdminStats } from "@/components/admin/AdminStats";
@@ -37,6 +38,7 @@ import { RealTimeCharts } from "@/components/admin/RealTimeCharts";
 import { FeedbackManagement } from "@/components/admin/FeedbackManagement";
 import { WithdrawalManagement } from "@/components/admin/WithdrawalManagement";
 import { PaymentManagement } from "@/components/admin/PaymentManagement";
+import { PhilAIAdminPanel } from "@/components/admin/PhilAIAdminPanel";
 
 interface DashboardStats {
   totalUsers: number;
@@ -380,6 +382,10 @@ const AdminDashboard = () => {
               <TrendingUp className="w-4 h-4 mr-2" />
               Withdrawals
             </TabsTrigger>
+            <TabsTrigger value="philai" className="rounded-lg">
+              <Bot className="w-4 h-4 mr-2" />
+              PhilAI
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -572,6 +578,19 @@ const AdminDashboard = () => {
           {/* Withdrawals Tab */}
           <TabsContent value="withdrawals">
             <WithdrawalManagement />
+          </TabsContent>
+
+          {/* PhilAI Admin Tab */}
+          <TabsContent value="philai">
+            <PhilAIAdminPanel
+              pendingPayments={payments.filter((p) => p.status === "pending")}
+              stats={stats}
+              selectedReport={selectedReport}
+              onApplyReportDraft={(msg) => {
+                setFeedbackMessage(msg);
+                setFeedbackDialog(true);
+              }}
+            />
           </TabsContent>
         </Tabs>
 
