@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Heart, Sparkles, Shield, Zap, Star, ArrowRight } from "lucide-react";
+import { Heart, Sparkles, Shield, Zap, ArrowRight, ShieldCheck, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const Landing = () => {
   const features = [
@@ -29,95 +30,122 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Subtle gradient overlay */}
-        <div 
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse 80% 60% at 50% 40%, hsl(var(--primary) / 0.08), transparent)'
-          }}
-        />
-
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-3xl mx-auto text-center space-y-8">
-            {/* Logo Icon */}
-            <div className="flex items-center justify-center mb-6 animate-fade-in">
-              <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Heart className="w-10 h-10 text-primary" strokeWidth={1.5} />
-              </div>
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-6">
+        <div className="max-w-md mx-auto text-center space-y-8">
+          {/* Logo Icon with cartoon shadow */}
+          <motion.div 
+            initial={{ scale: 0, rotate: -10 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            className="flex items-center justify-center"
+          >
+            <div className="w-24 h-24 bg-primary rounded-[32px] flex items-center justify-center cartoon-shadow-lg">
+              <Heart className="w-12 h-12 text-primary-foreground fill-current" />
             </div>
-            
-            {/* Title */}
-            <h1 
-              className="text-5xl md:text-7xl font-display font-bold tracking-tight animate-fade-in text-foreground"
-              style={{ animationDelay: '0.1s' }}
-            >
-              DateWise
-            </h1>
-            
-            {/* Tagline */}
-            <p 
-              className="text-xl md:text-2xl text-muted-foreground max-w-xl mx-auto animate-slide-up"
-              style={{ animationDelay: '0.2s' }}
-            >
-              Find meaningful connections. Your perfect match is waiting.
-            </p>
+          </motion.div>
+          
+          {/* Title */}
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="text-6xl md:text-7xl font-black tracking-tighter leading-[0.9] uppercase"
+          >
+            Connect<br />
+            <span className="text-accent">with Intent.</span>
+          </motion.h1>
+          
+          {/* Tagline */}
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="text-xl font-medium text-muted-foreground"
+          >
+            A minimalist space for meaningful connections. No noise. Just stories.
+          </motion.p>
 
-            {/* CTA Buttons */}
-            <div 
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6 animate-slide-up"
-              style={{ animationDelay: '0.3s' }}
-            >
-              <Link to="/auth?mode=signup">
-                <Button
-                  size="lg"
-                  className="px-8 h-14 text-base group"
-                >
-                  <span>Get Started</span>
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Link to="/auth?mode=signin">
-                <Button
-                  size="lg"
-                  variant="secondary"
-                  className="px-8 h-14 text-base"
-                >
-                  Sign In
-                </Button>
-              </Link>
-            </div>
-          </div>
+          {/* CTA Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
+            <Link to="/auth?mode=signup">
+              <motion.button
+                whileHover={{ scale: 1.02, x: -2, y: -2 }}
+                whileTap={{ scale: 0.98, x: 2, y: 2 }}
+                className="w-full bg-primary text-primary-foreground py-5 rounded-3xl text-xl font-black flex items-center justify-center gap-3 transition-all"
+                style={{ 
+                  boxShadow: '8px 8px 0px 0px hsl(var(--accent))'
+                }}
+              >
+                Find My Person <ArrowRight className="w-5 h-5" />
+              </motion.button>
+            </Link>
+          </motion.div>
+
+          {/* Trust Badges */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="flex justify-center gap-8 pt-4"
+          >
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+              <Lock className="w-3 h-3" /> Private
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+              <ShieldCheck className="w-3 h-3" /> Safe
+            </span>
+          </motion.div>
+
+          {/* Sign In Link */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="text-muted-foreground"
+          >
+            Already have an account?{" "}
+            <Link to="/auth?mode=signin" className="font-bold text-foreground underline underline-offset-4 hover:text-accent transition-colors">
+              Sign In
+            </Link>
+          </motion.p>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-24 relative">
-        <div className="container mx-auto px-6 relative z-10">
+      <section className="py-24 relative px-6">
+        <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-display font-bold text-foreground mb-4">
-              Why DateWise?
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase mb-4">
+              Why <span className="text-accent">DateWise</span>?
             </h2>
-            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+            <p className="text-muted-foreground text-lg">
               Discover what makes us different
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <div
+                <motion.div
                   key={index}
-                  className="bento-card p-6 text-center space-y-4 group hover-lift animate-slide-up"
-                  style={{ animationDelay: `${0.1 * index}s` }}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ y: -4, x: -2 }}
+                  className="cartoon-card p-6 space-y-4 group"
                 >
-                  <div className="w-14 h-14 mx-auto rounded-2xl bg-secondary flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                    <Icon className="w-7 h-7 text-primary" strokeWidth={1.5} />
+                  <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center group-hover:bg-accent group-hover:text-accent-foreground transition-colors cartoon-shadow">
+                    <Icon className="w-7 h-7" strokeWidth={2} />
                   </div>
-                  <h3 className="text-lg font-display font-semibold text-foreground">{feature.title}</h3>
-                  <p className="text-muted-foreground text-sm">{feature.description}</p>
-                </div>
+                  <h3 className="text-xl font-bold tracking-tight">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
+                </motion.div>
               );
             })}
           </div>
@@ -125,32 +153,48 @@ const Landing = () => {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-24 relative overflow-hidden">
-        <div 
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse 60% 50% at 50% 50%, hsl(var(--primary) / 0.06), transparent)'
-          }}
-        />
-        
-        <div className="container mx-auto px-6 relative z-10 text-center space-y-8">
-          <h2 className="text-3xl md:text-5xl font-display font-bold text-foreground">
-            Ready to Find Your Match?
+      <section className="py-24 relative overflow-hidden px-6">
+        <div className="max-w-md mx-auto text-center space-y-8">
+          <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">
+            Ready to Find<br />
+            <span className="text-accent">Your Match?</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+          <p className="text-lg text-muted-foreground">
             Join thousands of people finding meaningful connections every day
           </p>
           <Link to="/auth?mode=signup">
-            <Button
-              size="lg"
-              className="px-10 h-14 text-base"
+            <motion.button
+              whileHover={{ scale: 1.02, x: -2, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-accent text-accent-foreground px-10 py-4 rounded-2xl text-lg font-bold inline-flex items-center gap-2"
+              style={{ 
+                boxShadow: '6px 6px 0px 0px hsl(var(--foreground) / 0.2)'
+              }}
             >
-              <Star className="w-5 h-5 mr-2" />
+              <Sparkles className="w-5 h-5" />
               Get Started Free
-            </Button>
+            </motion.button>
           </Link>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="border-t-2 border-foreground/5 py-8 px-6">
+        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center">
+              <Heart className="w-4 h-4 text-primary-foreground fill-current" />
+            </div>
+            <span className="font-black tracking-tight">DateWise</span>
+          </div>
+          <div className="flex gap-6 text-sm text-muted-foreground">
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+            <Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link>
+          </div>
+          <p className="text-xs text-muted-foreground">© 2025 DateWise</p>
+        </div>
+      </footer>
     </div>
   );
 };

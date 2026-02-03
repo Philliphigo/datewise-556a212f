@@ -1,8 +1,9 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, User, Compass, Flame, Settings, Moon, Sun, Ban, Crown, Star } from "lucide-react";
+import { Heart, MessageCircle, User, Compass, Flame, Settings, Ban, Crown, Star } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Footer } from "./Footer";
+import { HamburgerMenu } from "./HamburgerMenu";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -30,12 +31,6 @@ export const Layout = ({ children }: LayoutProps) => {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [newMatches, setNewMatches] = useState(0);
   const [subscription, setSubscription] = useState<{ tier: string } | null>(null);
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof document !== 'undefined') {
-      return document.documentElement.classList.contains('dark');
-    }
-    return false;
-  });
 
   const getTierIcon = (tier: string) => {
     switch (tier) {
@@ -48,20 +43,8 @@ export const Layout = ({ children }: LayoutProps) => {
   const getTierColor = (tier: string) => {
     switch (tier) {
       case "vip": return "from-yellow-500 to-amber-600";
-      case "premium": return "from-primary to-primary-soft";
+      case "premium": return "from-accent to-accent/80";
       default: return "from-pink-500 to-rose-600";
-    }
-  };
-
-  const toggleTheme = () => {
-    const newIsDark = !isDark;
-    setIsDark(newIsDark);
-    if (newIsDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
     }
   };
 
@@ -74,6 +57,12 @@ export const Layout = ({ children }: LayoutProps) => {
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  // Check if we're in an active chat (Messages page with a match selected)
+  const isInChat = location.pathname === "/messages" && location.search.includes("match=");
+  
+  // Admin route check
+  const isAdminRoute = location.pathname === '/admin';
 
   const getPageTitle = () => {
     switch (location.pathname) {
@@ -175,14 +164,12 @@ export const Layout = ({ children }: LayoutProps) => {
     }
   };
 
-  const isAdminRoute = location.pathname === '/admin';
-
   if (!user) return <>{children}</>;
 
   if (suspension?.active) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
-        <Card className="max-w-md w-full">
+        <Card className="max-w-md w-full cartoon-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Ban className="w-5 h-5 text-destructive" />
@@ -212,67 +199,47 @@ export const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
-      {!isAdminRoute && (
+      {/* Header - Hide when in chat or admin */}
+      {!isAdminRoute && !isInChat && (
         <header className="fixed top-0 left-0 right-0 z-50 header-bar">
           <div className="flex items-center justify-between h-14 px-4 max-w-lg mx-auto">
-            {/* Left - Filter/Settings */}
-            <Link 
-              to="/discovery-settings"
-              className="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 hover:bg-secondary active:scale-95"
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-foreground">
-                <path d="M3 6H21M3 12H21M3 18H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </Link>
+            {/* Left - Hamburger Menu */}
+            <HamburgerMenu />
 
             {/* Center - Dynamic Title with Subscription Badge */}
             <div 
               className="absolute left-1/2 -translate-x-1/2 cursor-default flex items-center gap-2"
               onClick={handleAdminClick}
             >
-              <h1 className="text-lg font-semibold text-foreground tracking-tight font-display">{getPageTitle()}</h1>
+              <h1 className="text-lg font-bold text-foreground tracking-tight font-display">{getPageTitle()}</h1>
               {subscription && (
-                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r ${getTierColor(subscription.tier)} text-white text-[10px] font-semibold shadow-sm`}>
+                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r ${getTierColor(subscription.tier)} text-white text-[10px] font-bold shadow-sm`}>
                   {(() => {
                     const TierIcon = getTierIcon(subscription.tier);
                     return <TierIcon className="w-3 h-3" />;
                   })()}
-                  <span className="capitalize">{subscription.tier}</span>
+                  <span className="uppercase">{subscription.tier}</span>
                 </div>
               )}
             </div>
 
-            {/* Right - Theme Toggle & Settings */}
-            <div className="flex items-center gap-1">
-              <button 
-                onClick={toggleTheme}
-                className="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 hover:bg-secondary active:scale-95"
-                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              >
-                {isDark ? (
-                  <Sun className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                ) : (
-                  <Moon className="w-5 h-5 text-foreground" strokeWidth={1.5} />
-                )}
-              </button>
-              <Link 
-                to="/settings"
-                className="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 hover:bg-secondary active:scale-95"
-              >
-                <Settings className="w-5 h-5 text-foreground" strokeWidth={1.5} />
-              </Link>
-            </div>
+            {/* Right - Settings Only */}
+            <Link 
+              to="/settings"
+              className="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 hover:bg-secondary active:scale-95"
+            >
+              <Settings className="w-5 h-5 text-foreground" strokeWidth={2} />
+            </Link>
           </div>
         </header>
       )}
 
       {/* Admin Access Dialog */}
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-        <DialogContent className="rounded-2xl border-0 max-w-sm mx-4 shadow-soft-2xl">
+        <DialogContent className="rounded-3xl border-2 border-foreground/10 max-w-sm mx-4 cartoon-shadow-lg">
           <DialogHeader className="text-center">
-            <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-4">
-              <Settings className="w-8 h-8 text-primary" strokeWidth={1.5} />
+            <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-4 cartoon-shadow">
+              <Settings className="w-8 h-8 text-accent" strokeWidth={2} />
             </div>
             <DialogTitle className="text-xl font-display">Admin Access</DialogTitle>
             <DialogDescription className="text-muted-foreground">
@@ -282,18 +249,29 @@ export const Layout = ({ children }: LayoutProps) => {
           <Button 
             onClick={handleAdminAccess} 
             disabled={isCheckingAuth} 
-            className="w-full h-12 text-base font-medium mt-2"
+            className="w-full h-12 text-base font-bold mt-2 rounded-2xl bg-accent text-accent-foreground hover:bg-accent/90"
           >
             {isCheckingAuth ? "Verifying..." : "Access Dashboard"}
           </Button>
         </DialogContent>
       </Dialog>
 
-      <main className={isAdminRoute ? "flex-1" : "flex-1 pt-14 pb-24"}>{children}</main>
-      {!isAdminRoute && <Footer />}
+      {/* Main content - Adjust padding based on header/nav visibility */}
+      <main className={
+        isAdminRoute 
+          ? "flex-1" 
+          : isInChat 
+            ? "flex-1" 
+            : "flex-1 pt-14 pb-24"
+      }>
+        {children}
+      </main>
+      
+      {/* Footer - Hide when in chat or admin */}
+      {!isAdminRoute && !isInChat && <Footer />}
 
-      {/* Tab Bar */}
-      {!isAdminRoute && (
+      {/* Tab Bar - Hide when in chat or admin */}
+      {!isAdminRoute && !isInChat && (
         <nav className="fixed bottom-0 left-0 right-0 z-50 tab-bar">
           <div className="flex items-center justify-around h-[80px] px-2 max-w-lg mx-auto pb-safe-bottom">
             {navItems.map((item) => {
@@ -303,14 +281,16 @@ export const Layout = ({ children }: LayoutProps) => {
                 <Link 
                   key={item.path} 
                   to={item.path} 
-                  className="relative flex flex-col items-center justify-center gap-1 min-w-[64px] py-2 rounded-xl transition-all duration-200 hover:bg-secondary active:scale-95"
+                  className={`relative flex flex-col items-center justify-center gap-1 min-w-[64px] py-2 rounded-2xl transition-all duration-200 active:scale-95 ${
+                    active ? "bg-secondary" : "hover:bg-secondary/50"
+                  }`}
                 >
                   <div className="relative">
                     <Icon 
                       className={`w-6 h-6 transition-colors duration-200 ${
-                        active ? "text-primary" : "text-muted-foreground"
+                        active ? "text-accent" : "text-muted-foreground"
                       }`} 
-                      strokeWidth={active ? 2 : 1.5}
+                      strokeWidth={active ? 2.5 : 2}
                     />
                     
                     {/* Notification Badge */}
@@ -322,8 +302,8 @@ export const Layout = ({ children }: LayoutProps) => {
                   </div>
                   
                   {/* Label */}
-                  <span className={`text-[10px] font-medium transition-colors duration-200 ${
-                    active ? "text-primary" : "text-muted-foreground"
+                  <span className={`text-[10px] font-bold transition-colors duration-200 ${
+                    active ? "text-accent" : "text-muted-foreground"
                   }`}>
                     {item.label}
                   </span>
