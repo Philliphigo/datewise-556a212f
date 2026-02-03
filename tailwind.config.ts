@@ -33,6 +33,10 @@ export default {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
         },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
@@ -54,10 +58,6 @@ export default {
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -84,6 +84,10 @@ export default {
       boxShadow: {
         'card': 'var(--shadow-card)',
         'card-hover': 'var(--shadow-card-hover)',
+        'cartoon': 'var(--shadow-cartoon)',
+        'cartoon-md': 'var(--shadow-cartoon-md)',
+        'cartoon-lg': 'var(--shadow-cartoon-lg)',
+        'cartoon-xl': 'var(--shadow-cartoon-xl)',
         'soft-xs': 'var(--shadow-xs)',
         'soft-sm': 'var(--shadow-sm)',
         'soft-md': 'var(--shadow-md)',
@@ -128,6 +132,14 @@ export default {
           "0%": { transform: "translateX(0) rotate(0deg)", opacity: "1" },
           "100%": { transform: "translateX(-150%) rotate(-15deg)", opacity: "0" },
         },
+        "wiggle": {
+          "0%, 100%": { transform: "rotate(-3deg)" },
+          "50%": { transform: "rotate(3deg)" },
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -138,6 +150,8 @@ export default {
         "bounce-in": "bounce-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
         "swipe-right": "swipe-right 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "swipe-left": "swipe-left 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "wiggle": "wiggle 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        "float": "float 3s ease-in-out infinite",
       },
     },
   },

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,41 +6,42 @@
 
 @layer base {
   :root {
-    /* ☀️ Light Mode - Premium Soft-Minimalist */
-    --background: 210 20% 98%;
-    --foreground: 220 20% 12%;
+    /* ☀️ Light Mode - Monochrome Cartoon Style */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 12%;
+    --card-foreground: 0 0% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 12%;
+    --popover-foreground: 0 0% 8%;
 
-    /* Brand Primary - Bold Amber/Gold */
-    --primary: 38 92% 50%;
+    /* Coral Accent - Main Interactive Color */
+    --primary: 0 0% 8%;
     --primary-foreground: 0 0% 100%;
-    --primary-soft: 38 75% 55%;
-    --primary-glow: 38 100% 58%;
+    --primary-soft: 0 0% 20%;
+    --primary-glow: 0 0% 30%;
     
-    /* Neutral Zinc Scale */
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 20% 20%;
+    /* Warm Coral for Accents */
+    --accent: 6 78% 66%;
+    --accent-foreground: 0 0% 100%;
 
-    --accent: 220 14% 96%;
-    --accent-foreground: 220 20% 12%;
+    /* Neutral Scale */
+    --secondary: 0 0% 94%;
+    --secondary-foreground: 0 0% 15%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 45%;
 
     /* System Colors */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 160 84% 39%;
+    --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 220 20% 10%;
+    --warning-foreground: 0 0% 8%;
 
     --info: 200 100% 50%;
     --info-foreground: 0 0% 100%;
@@ -48,29 +49,35 @@
     --star: 200 100% 55%;
     --boost: 280 80% 60%;
 
-    --border: 220 14% 92%;
-    --input: 220 14% 96%;
-    --ring: 38 92% 50%;
+    --border: 0 0% 88%;
+    --input: 0 0% 94%;
+    --ring: 6 78% 66%;
 
-    /* Squircle-ish radius - high but not pill */
+    /* High corner radius for playful look */
     --radius: 1rem;
 
-    /* Soft Ambient Shadows - No borders, just depth */
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
-    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.05);
-    --shadow-2xl: 0 24px 64px rgba(0, 0, 0, 0.12), 0 12px 32px rgba(0, 0, 0, 0.06);
+    /* Cartoon-style hard shadows */
+    --shadow-cartoon: 6px 6px 0px 0px rgba(0, 0, 0, 0.1);
+    --shadow-cartoon-md: 8px 8px 0px 0px rgba(0, 0, 0, 0.08);
+    --shadow-cartoon-lg: 12px 12px 0px 0px rgba(0, 0, 0, 0.06);
+    --shadow-cartoon-xl: 16px 16px 0px 0px rgba(0, 0, 0, 0.05);
     
-    /* Lifted card shadow */
-    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 32px rgba(0, 0, 0, 0.06);
-    --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.08), 0 16px 48px rgba(0, 0, 0, 0.1);
+    /* Soft ambient shadows */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
+    --shadow-2xl: 0 24px 64px rgba(0, 0, 0, 0.15);
+    
+    /* Card shadows */
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.05), 6px 6px 0px 0px rgba(0, 0, 0, 0.03);
+    --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.08), 8px 8px 0px 0px rgba(0, 0, 0, 0.05);
 
-    /* CTA Glow Shadows */
-    --shadow-glow-primary: 0 8px 24px hsla(38, 92%, 50%, 0.25);
-    --shadow-glow-success: 0 8px 24px hsla(160, 84%, 39%, 0.2);
-    --shadow-glow-destructive: 0 8px 24px hsla(0, 72%, 51%, 0.2);
+    /* Coral glow for accents */
+    --shadow-glow-primary: 0 8px 24px hsla(6, 78%, 66%, 0.3);
+    --shadow-glow-success: 0 8px 24px hsla(142, 76%, 36%, 0.25);
+    --shadow-glow-destructive: 0 8px 24px hsla(0, 72%, 51%, 0.25);
 
     /* Animation Curves */
     --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
@@ -79,66 +86,73 @@
   }
 
   .dark {
-    /* 🌙 Dark Mode - Deep Charcoal */
-    --background: 220 20% 7%;
-    --foreground: 0 0% 98%;
+    /* 🌙 Dark Mode - True Black with Charcoal */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 96%;
 
-    --card: 220 18% 11%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 220 18% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 96%;
 
-    /* Brand Primary */
-    --primary: 42 92% 56%;
-    --primary-foreground: 220 20% 7%;
-    --primary-soft: 42 80% 65%;
-    --primary-glow: 42 100% 70%;
+    /* Inverted for dark mode */
+    --primary: 0 0% 96%;
+    --primary-foreground: 0 0% 4%;
+    --primary-soft: 0 0% 85%;
+    --primary-glow: 0 0% 75%;
     
+    /* Coral stays vibrant */
+    --accent: 6 78% 66%;
+    --accent-foreground: 0 0% 100%;
+
     /* Dark Zinc Scale */
-    --secondary: 220 15% 16%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 96%;
 
-    --accent: 220 15% 18%;
-    --accent-foreground: 0 0% 98%;
-
-    --muted: 220 15% 16%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 55%;
 
     /* System Colors */
     --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --success: 160 84% 39%;
-    --success-foreground: 220 20% 7%;
+    --success: 142 76% 42%;
+    --success-foreground: 0 0% 4%;
 
-    --warning: 42 92% 56%;
-    --warning-foreground: 220 20% 7%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 4%;
 
-    --info: 200 100% 50%;
-    --info-foreground: 220 20% 7%;
+    --info: 200 100% 55%;
+    --info-foreground: 0 0% 4%;
 
     --star: 200 100% 60%;
     --boost: 280 100% 70%;
 
-    --border: 220 15% 18%;
-    --input: 220 15% 14%;
-    --ring: 42 92% 56%;
+    --border: 0 0% 18%;
+    --input: 0 0% 12%;
+    --ring: 6 78% 66%;
 
-    /* Dark Shadows */
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.25);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
-    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6), 0 8px 24px rgba(0, 0, 0, 0.35);
-    --shadow-2xl: 0 24px 64px rgba(0, 0, 0, 0.7), 0 12px 32px rgba(0, 0, 0, 0.4);
+    /* Dark cartoon shadows */
+    --shadow-cartoon: 6px 6px 0px 0px rgba(255, 255, 255, 0.03);
+    --shadow-cartoon-md: 8px 8px 0px 0px rgba(255, 255, 255, 0.02);
+    --shadow-cartoon-lg: 12px 12px 0px 0px rgba(255, 255, 255, 0.02);
+    --shadow-cartoon-xl: 16px 16px 0px 0px rgba(255, 255, 255, 0.01);
     
-    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(0, 0, 0, 0.4);
-    --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.4), 0 16px 48px rgba(0, 0, 0, 0.5);
+    /* Dark shadows */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.7);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.8);
+    --shadow-2xl: 0 24px 64px rgba(0, 0, 0, 0.9);
+    
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.4), 4px 4px 0px 0px rgba(255, 255, 255, 0.02);
+    --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.5), 6px 6px 0px 0px rgba(255, 255, 255, 0.03);
 
-    --shadow-glow-primary: 0 8px 24px hsla(42, 92%, 56%, 0.35);
-    --shadow-glow-success: 0 8px 24px hsla(160, 84%, 39%, 0.25);
-    --shadow-glow-destructive: 0 8px 24px hsla(0, 72%, 51%, 0.25);
+    --shadow-glow-primary: 0 8px 24px hsla(6, 78%, 66%, 0.4);
+    --shadow-glow-success: 0 8px 24px hsla(142, 76%, 42%, 0.3);
+    --shadow-glow-destructive: 0 8px 24px hsla(0, 72%, 51%, 0.3);
   }
 
   .hide-scrollbar::-webkit-scrollbar {
@@ -167,42 +181,68 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    @apply font-semibold tracking-tight;
+    @apply font-bold tracking-tight;
   }
 }
 
 @layer utilities {
   /* ========================================
-     BENTO CARD SYSTEM - Soft Minimalist
-     No glass/blur, depth through shadows
+     CARTOON CARD SYSTEM
+     Hard offset shadows for playful depth
      ======================================== */
   
-  /* Base Bento Card - lifted off background */
-  .bento-card {
-    @apply bg-card rounded-2xl;
+  /* Cartoon Card with offset shadow */
+  .cartoon-card {
+    @apply bg-card rounded-3xl border-2 border-foreground/10;
     box-shadow: var(--shadow-card);
-    transition: box-shadow 0.3s var(--ease-smooth), transform 0.3s var(--ease-smooth);
+    transition: box-shadow 0.2s var(--ease-smooth), transform 0.2s var(--ease-smooth);
   }
 
-  .bento-card:hover {
+  .cartoon-card:hover {
     box-shadow: var(--shadow-card-hover);
   }
 
-  /* Interactive Bento Card */
-  .bento-card-interactive {
-    @apply bg-card rounded-2xl cursor-pointer;
-    box-shadow: var(--shadow-card);
-    transition: box-shadow 0.3s var(--ease-smooth), transform 0.2s var(--ease-smooth);
+  /* Cartoon shadow utilities */
+  .cartoon-shadow {
+    box-shadow: var(--shadow-cartoon);
   }
 
-  .bento-card-interactive:hover {
+  .cartoon-shadow-md {
+    box-shadow: var(--shadow-cartoon-md);
+  }
+
+  .cartoon-shadow-lg {
+    box-shadow: var(--shadow-cartoon-lg);
+  }
+
+  .cartoon-shadow-xl {
+    box-shadow: var(--shadow-cartoon-xl);
+  }
+
+  /* Interactive Cartoon Card */
+  .cartoon-card-interactive {
+    @apply bg-card rounded-3xl border-2 border-foreground/10 cursor-pointer;
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.15s var(--ease-smooth), transform 0.15s var(--ease-spring);
+  }
+
+  .cartoon-card-interactive:hover {
     box-shadow: var(--shadow-card-hover);
     transform: translateY(-2px);
   }
 
-  .bento-card-interactive:active {
-    transform: scale(0.98);
+  .cartoon-card-interactive:active {
+    transform: scale(0.98) translateY(0);
     box-shadow: var(--shadow-sm);
+  }
+
+  /* Legacy bento cards mapped to cartoon style */
+  .bento-card {
+    @apply cartoon-card;
+  }
+
+  .bento-card-interactive {
+    @apply cartoon-card-interactive;
   }
 
   /* Bento Grid Layouts */
@@ -219,47 +259,49 @@
   }
 
   /* ========================================
-     BUTTON SYSTEM - Pill-style, tactile
+     BUTTON SYSTEM - Playful pill-style
      ======================================== */
   
-  /* Primary CTA Button */
+  /* Primary CTA Button - Coral accent */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold text-primary-foreground rounded-xl;
-    background: hsl(var(--primary));
-    box-shadow: var(--shadow-md), var(--shadow-glow-primary);
-    transition: all 0.2s var(--ease-smooth);
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-bold text-accent-foreground rounded-2xl border-2 border-transparent;
+    background: hsl(var(--accent));
+    box-shadow: 4px 4px 0px 0px hsl(var(--foreground) / 0.2);
+    transition: all 0.15s var(--ease-spring);
   }
 
   .btn-primary:hover {
-    box-shadow: var(--shadow-lg), var(--shadow-glow-primary);
-    transform: translateY(-1px);
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px 0px hsl(var(--foreground) / 0.25);
   }
 
   .btn-primary:active {
-    transform: scale(0.98);
-    box-shadow: var(--shadow-sm);
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px hsl(var(--foreground) / 0.15);
   }
 
-  /* Secondary Button */
+  /* Secondary Button - Black/White */
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-medium text-foreground rounded-xl;
-    background: hsl(var(--secondary));
-    box-shadow: var(--shadow-sm);
-    transition: all 0.2s var(--ease-smooth);
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-bold text-primary-foreground rounded-2xl border-2;
+    background: hsl(var(--primary));
+    border-color: hsl(var(--primary));
+    box-shadow: 4px 4px 0px 0px hsl(var(--foreground) / 0.15);
+    transition: all 0.15s var(--ease-spring);
   }
 
   .btn-secondary:hover {
-    box-shadow: var(--shadow-md);
-    background: hsl(var(--muted));
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px 0px hsl(var(--foreground) / 0.2);
   }
 
   .btn-secondary:active {
-    transform: scale(0.98);
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px hsl(var(--foreground) / 0.1);
   }
 
   /* Ghost Button */
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-medium text-foreground rounded-xl;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-medium text-foreground rounded-2xl;
     transition: all 0.2s var(--ease-smooth);
   }
 
@@ -273,15 +315,15 @@
 
   /* Icon Button */
   .btn-icon {
-    @apply flex items-center justify-center rounded-xl;
+    @apply flex items-center justify-center rounded-2xl border-2 border-foreground/10;
     background: hsl(var(--card));
     box-shadow: var(--shadow-sm);
-    transition: all 0.2s var(--ease-smooth);
+    transition: all 0.2s var(--ease-spring);
   }
 
   .btn-icon:hover {
-    box-shadow: var(--shadow-md);
     transform: scale(1.05);
+    box-shadow: var(--shadow-md);
   }
 
   .btn-icon:active {
@@ -292,21 +334,19 @@
      NAVIGATION COMPONENTS
      ======================================== */
   
-  /* Header Bar - Clean, no blur */
+  /* Header Bar - Clean solid */
   .header-bar {
-    @apply bg-background/95 backdrop-blur-none;
-    border-bottom: 1px solid hsl(var(--border) / 0.5);
+    @apply bg-background border-b-2 border-foreground/5;
   }
 
-  /* Tab Bar - Lifted */
+  /* Tab Bar - Lifted with shadow */
   .tab-bar {
-    @apply bg-card;
+    @apply bg-card border-t-2 border-foreground/5;
     box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
-    border-top: 1px solid hsl(var(--border) / 0.3);
   }
 
   .dark .tab-bar {
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
   }
 
   /* ========================================
@@ -314,39 +354,54 @@
      ======================================== */
   
   .action-btn {
-    @apply rounded-2xl flex items-center justify-center;
+    @apply rounded-2xl flex items-center justify-center border-2 border-foreground/10;
     background: hsl(var(--card));
-    box-shadow: var(--shadow-md);
+    box-shadow: 4px 4px 0px 0px hsl(var(--foreground) / 0.08);
     transform-origin: center;
-    transition: all 0.2s var(--ease-spring);
+    transition: all 0.15s var(--ease-spring);
   }
 
   .action-btn:hover {
-    transform: scale(1.08);
-    box-shadow: var(--shadow-lg);
+    transform: scale(1.08) translateY(-2px);
+    box-shadow: 6px 6px 0px 0px hsl(var(--foreground) / 0.1);
   }
 
   .action-btn:active {
-    transform: scale(0.92);
-    box-shadow: var(--shadow-xs);
+    transform: scale(0.95);
+    box-shadow: 2px 2px 0px 0px hsl(var(--foreground) / 0.05);
   }
 
-  .action-btn-pass:hover { box-shadow: var(--shadow-lg), var(--shadow-glow-destructive); }
-  .action-btn-like:hover { box-shadow: var(--shadow-lg), var(--shadow-glow-success); }
-  .action-btn-star:hover { box-shadow: var(--shadow-lg), 0 8px 24px hsla(200, 100%, 50%, 0.2); }
-  .action-btn-boost:hover { box-shadow: var(--shadow-lg), 0 8px 24px hsla(280, 80%, 60%, 0.2); }
+  .action-btn-pass:hover { 
+    background: hsl(var(--destructive) / 0.1);
+    border-color: hsl(var(--destructive) / 0.3);
+  }
+  
+  .action-btn-like:hover { 
+    background: hsl(var(--success) / 0.1);
+    border-color: hsl(var(--success) / 0.3);
+  }
+  
+  .action-btn-star:hover { 
+    background: hsl(var(--info) / 0.1);
+    border-color: hsl(var(--info) / 0.3);
+  }
+  
+  .action-btn-boost:hover { 
+    background: hsl(var(--boost) / 0.1);
+    border-color: hsl(var(--boost) / 0.3);
+  }
 
   /* ========================================
      PROFILE & CONTENT CARDS
      ======================================== */
   
   .profile-card {
-    @apply relative overflow-hidden rounded-2xl;
-    box-shadow: var(--shadow-xl);
+    @apply relative overflow-hidden rounded-3xl border-2 border-foreground/10;
+    box-shadow: var(--shadow-xl), 8px 8px 0px 0px hsl(var(--foreground) / 0.05);
   }
 
   .content-tile {
-    @apply bg-card rounded-xl p-4;
+    @apply bg-card rounded-2xl p-4 border border-foreground/5;
     box-shadow: var(--shadow-sm);
     transition: box-shadow 0.2s var(--ease-smooth);
   }
@@ -360,16 +415,15 @@
      ======================================== */
   
   .input-field {
-    @apply bg-secondary rounded-xl px-4 py-3 text-foreground;
-    border: 1px solid transparent;
+    @apply bg-secondary rounded-2xl px-4 py-3 text-foreground border-2 border-transparent;
     transition: all 0.2s var(--ease-smooth);
   }
 
   .input-field:focus {
     @apply outline-none;
     background: hsl(var(--card));
-    border-color: hsl(var(--primary) / 0.3);
-    box-shadow: var(--shadow-md), 0 0 0 3px hsl(var(--primary) / 0.1);
+    border-color: hsl(var(--accent) / 0.5);
+    box-shadow: 0 0 0 3px hsl(var(--accent) / 0.1);
   }
 
   /* ========================================
@@ -407,8 +461,8 @@
   .notification-badge {
     @apply absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1.5 rounded-full;
     @apply flex items-center justify-center text-[10px] font-bold;
-    @apply bg-destructive text-destructive-foreground;
-    box-shadow: var(--shadow-sm);
+    @apply bg-accent text-accent-foreground;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 
   /* ========================================
@@ -425,7 +479,7 @@
   }
 
   .photo-progress-segment.active {
-    background: hsl(var(--primary));
+    background: hsl(var(--accent));
   }
 
   .photo-progress-segment.inactive {
@@ -493,6 +547,21 @@
     100% { transform: translateX(-150%) rotate(-15deg); opacity: 0; }
   }
 
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--accent) / 0.4); }
+    50% { box-shadow: 0 0 0 8px hsl(var(--accent) / 0); }
+  }
+
   .animate-fade-in {
     animation: fade-in 0.3s var(--ease-smooth);
   }
@@ -509,10 +578,6 @@
     animation: bounce-in 0.4s var(--ease-spring);
   }
 
-  .animate-scale-up {
-    animation: scale-in 0.2s var(--ease-spring);
-  }
-
   .animate-swipe-right {
     animation: swipe-right 0.4s var(--ease-smooth) forwards;
   }
@@ -521,112 +586,75 @@
     animation: swipe-left 0.4s var(--ease-smooth) forwards;
   }
 
+  .animate-wiggle {
+    animation: wiggle 0.3s var(--ease-spring);
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  /* Spring animation for cards */
+  @keyframes spring-in {
+    0% { 
+      opacity: 0; 
+      transform: scale(0.9) translateY(10px); 
+    }
+    60% { 
+      transform: scale(1.02) translateY(-2px); 
+    }
+    100% { 
+      opacity: 1; 
+      transform: scale(1) translateY(0); 
+    }
+  }
+
+  .animate-spring-in {
+    animation: spring-in 0.4s var(--ease-spring) both;
+  }
+
+  @keyframes float-up {
+    from { 
+      opacity: 0; 
+      transform: translateY(20px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+
+  .animate-float-up {
+    animation: float-up 0.5s var(--ease-smooth) both;
+  }
+
   /* ========================================
-     LEGACY COMPATIBILITY
+     LEGACY LIQUID GLASS (mapped to cartoon)
      ======================================== */
   
-  /* Keep these for backward compatibility */
   .liquid-glass {
-    @apply bg-card rounded-2xl;
-    box-shadow: var(--shadow-card);
+    @apply cartoon-card;
   }
 
-  .liquid-glass-heavy {
-    @apply bg-card rounded-2xl;
-    box-shadow: var(--shadow-lg);
+  .glass-card {
+    @apply cartoon-card;
   }
 
-  .ios-nav {
-    @apply bg-card;
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
-    border-top: 1px solid hsl(var(--border) / 0.3);
+  /* ========================================
+     GRADIENT TEXT
+     ======================================== */
+  
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--foreground)), hsl(var(--muted-foreground)));
   }
 
-  .dark .ios-nav {
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
-  }
-
-  .ios-header {
-    @apply bg-background/98;
-    border-bottom: 1px solid hsl(var(--border) / 0.5);
-  }
-
-  .frosted-panel {
-    @apply bg-card rounded-2xl;
-    box-shadow: var(--shadow-lg);
-  }
-
-  .floating-element {
-    transform: translateY(0);
-    transition: transform 0.3s var(--ease-smooth), box-shadow 0.3s var(--ease-smooth);
-  }
-
-  .floating-element:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-xl);
-  }
-
-  .liquid-button {
-    @apply btn-primary;
-  }
-
-  .liquid-icon-btn {
-    @apply btn-icon;
-  }
-
-  /* Story link underline animation */
-  .story-link {
-    @apply relative inline-block;
-  }
-
-  .story-link::after {
-    content: '';
-    @apply absolute w-full scale-x-0 h-0.5 bottom-0 left-0 bg-primary origin-bottom-right;
-    transition: transform 0.3s var(--ease-smooth);
-  }
-
-  .story-link:hover::after {
-    @apply scale-x-100 origin-bottom-left;
-  }
-
-  /* Hover scale */
-  .hover-scale {
-    transition: transform 0.2s var(--ease-smooth);
-  }
-
-  .hover-scale:hover {
-    transform: scale(1.05);
-  }
-
-  /* Capsule shape */
-  .capsule {
-    border-radius: 9999px;
-  }
-
-  /* Hide Lovable watermark/badge */
-  [data-lovable-badge],
-  .lovable-badge,
-  [class*="lovable-badge"],
-  [id*="lovable-badge"],
-  a[href*="lovable.dev"]:not([href*="docs"]),
-  div[style*="lovable"],
-  iframe[src*="lovable.dev"] {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    overflow: hidden !important;
-    position: absolute !important;
-    left: -9999px !important;
-  }
-
-  /* Alternative selector for Edit with Lovable button */
-  body > div:last-child[style*="position: fixed"],
-  body > a[style*="position: fixed"],
-  #lovable-badge,
-  .lovable-watermark {
-    display: none !important;
+  .gradient-text-accent {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--accent)), hsl(6, 78%, 55%));
   }
 }
