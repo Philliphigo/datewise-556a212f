@@ -8,8 +8,38 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// Rate limiting for verification requests
+const verificationAttempts = new Map<string, { count: number; timestamp: number }>();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_VERIFICATIONS = 10;
+
+function checkRateLimit(key: string): boolean {
+  const now = Date.now();
+  const attempts = verificationAttempts.get(key);
+  
+  if (!attempts || now - attempts.timestamp > RATE_LIMIT_WINDOW) {
+    verificationAttempts.set(key, { count: 1, timestamp: now });
+    return true;
+  }
+  
+  if (attempts.count >= MAX_VERIFICATIONS) {
+    return false;
+  }
+  
+  attempts.count++;
+  return true;
+}
+
+// Sanitize tx_ref input
+function sanitizeTxRef(input: unknown): string | null {
+  if (typeof input !== "string") return null;
+  // Only allow alphanumeric, dash, underscore
+  const sanitized = input.trim().slice(0, 100).replace(/[^a-zA-Z0-9\-_]/g, "");
+  return sanitized.length > 0 ? sanitized : null;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -18,7 +48,10 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('Authorization');
-    const { txRef, adminOverride } = await req.json();
+    const body = await req.json();
+    
+    const txRef = sanitizeTxRef(body.txRef);
+    const adminOverride = body.adminOverride === true;
 
     console.log("Verifying PayChangu payment:", { txRef, adminOverride });
 
@@ -26,6 +59,14 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Transaction reference required' }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Rate limiting
+    if (!checkRateLimit(txRef)) {
+      return new Response(
+        JSON.stringify({ error: 'Too many verification attempts. Please wait.' }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -55,6 +96,38 @@ serve(async (req) => {
       if (user && user.id !== payment.user_id) {
         return new Response(
           JSON.stringify({ error: 'Not authorized to verify this payment' }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else if (adminOverride) {
+      // Verify admin role for admin override
+      if (!authHeader) {
+        return new Response(
+          JSON.stringify({ error: 'Admin authentication required' }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const supabaseClient = createClient(supabaseUrl, supabaseKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid admin authentication' }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      // Check if user is admin
+      const { data: adminRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .single();
+      
+      if (!adminRole) {
+        return new Response(
+          JSON.stringify({ error: 'Admin privileges required' }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -92,6 +165,7 @@ serve(async (req) => {
       apiStatus: verificationData.status,
       paymentStatus: verificationData.data?.status,
       message: verificationData.message,
+      amount: verificationData.data?.amount,
     });
 
     // Handle API error
@@ -122,7 +196,27 @@ serve(async (req) => {
     }
 
     const paymentStatus = verificationData.data?.status;
+    const verifiedAmount = Number(verificationData.data?.amount || 0);
+    const expectedAmount = Number(payment.amount);
+
     console.log("Payment status from PayChangu:", paymentStatus);
+
+    // SECURITY: Validate amount matches
+    if (verifiedAmount > 0 && Math.abs(verifiedAmount - expectedAmount) > 1) {
+      console.error("SECURITY: Amount mismatch in verification!", {
+        txRef,
+        expected: expectedAmount,
+        verified: verifiedAmount,
+      });
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          status: "failed",
+          message: "Payment amount mismatch. Please contact support."
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Map PayChangu status to our status
     let newStatus = "pending";
@@ -132,7 +226,7 @@ serve(async (req) => {
       newStatus = "failed";
     }
 
-    // Update payment record
+    // Update payment record with idempotency check
     const { error: updateError } = await supabase
       .from("payments")
       .update({
@@ -141,9 +235,11 @@ serve(async (req) => {
           ...payment.metadata,
           verification: verificationData.data,
           verified_at: new Date().toISOString(),
+          verified_amount: verifiedAmount,
         },
       })
-      .eq("transaction_id", txRef);
+      .eq("transaction_id", txRef)
+      .neq("status", "completed"); // Don't overwrite completed status
 
     if (updateError) {
       console.error("Error updating payment:", updateError);
@@ -154,11 +250,26 @@ serve(async (req) => {
     if (newStatus === "completed") {
       const tier = payment.metadata?.tier || "supporter";
       const subscriptionDays = payment.metadata?.subscriptionDays || 30;
-      const amount = Number(payment.amount);
+      const amount = verifiedAmount > 0 ? verifiedAmount : expectedAmount;
 
       // Handle wallet top-up
       if (tier === "wallet_topup") {
         console.log("Processing wallet top-up:", { userId, amount });
+
+        // Check for existing transaction (idempotency)
+        const { data: existingTx } = await supabase
+          .from("wallet_transactions")
+          .select("id")
+          .eq("metadata->>tx_ref", txRef)
+          .single();
+
+        if (existingTx) {
+          console.log("Wallet transaction already exists:", txRef);
+          return new Response(
+            JSON.stringify({ success: true, status: "completed", already: true }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
 
         // Get current wallet balance
         const { data: profile } = await supabase
@@ -194,6 +305,7 @@ serve(async (req) => {
           metadata: {
             tx_ref: txRef,
             payment_method: "paychangu",
+            verified: true,
           },
         });
 
@@ -264,7 +376,7 @@ serve(async (req) => {
       JSON.stringify({
         success: false,
         status: "error",
-        error: error?.message || "Payment verification failed. Please try again.",
+        error: "Payment verification failed. Please try again.",
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );

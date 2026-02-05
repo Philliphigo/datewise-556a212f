@@ -9,6 +9,22 @@ import { CheckCircle, Loader2, XCircle, Crown, Star, Heart, Calendar, Sparkles, 
 import { format } from "date-fns";
 import { toast } from "sonner";
 
+// Sanitize and validate tx_ref from URL
+function sanitizeTxRef(ref: string | null): string | null {
+  if (!ref) return null;
+  // Only allow alphanumeric, dash, underscore - max 100 chars
+  const sanitized = ref.trim().slice(0, 100).replace(/[^a-zA-Z0-9\-_]/g, "");
+  return sanitized.length > 0 ? sanitized : null;
+}
+
+// Sanitize tier name
+function sanitizeTier(tier: string | null): string {
+  if (!tier) return "supporter";
+  const validTiers = ["supporter", "premium", "vip", "wallet_topup"];
+  const normalized = tier.toLowerCase().trim();
+  return validTiers.includes(normalized) ? normalized : "supporter";
+}
+
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -20,8 +36,9 @@ const PaymentSuccess = () => {
   const [verifyAttempts, setVerifyAttempts] = useState(0);
   const verificationInProgress = useRef(false);
   
-  const txRef = searchParams.get("tx_ref");
-  const tier = searchParams.get("tier");
+  // SECURITY: Sanitize URL parameters - never trust client-side data
+  const txRef = sanitizeTxRef(searchParams.get("tx_ref"));
+  const tier = sanitizeTier(searchParams.get("tier"));
 
   const fetchSubscriptionDetails = useCallback(async () => {
     if (!user) return null;
@@ -48,14 +65,18 @@ const PaymentSuccess = () => {
     if (!silent) setIsVerifying(true);
 
     try {
-      // Call our edge function to verify with PayChangu
+      // SECURITY: Call server-side verification - never trust client data
+      // The edge function validates with PayChangu API directly
       const { data, error } = await supabase.functions.invoke('verify-paychangu', {
         body: { txRef }
       });
 
       if (error) throw error;
 
-      console.log("Verification result:", data);
+      // Don't log sensitive payment data in production
+      if (import.meta.env.DEV) {
+        console.log("Verification result:", data?.status);
+      }
 
       if (data.success || data.status === "completed") {
         // Fetch subscription details
@@ -97,6 +118,12 @@ const PaymentSuccess = () => {
       return;
     }
 
+    // SECURITY: If no valid tx_ref, show error immediately
+    if (!txRef) {
+      setStatus("failed");
+      return;
+    }
+
     let pollInterval: NodeJS.Timeout | null = null;
     let attempts = 0;
     const maxAttempts = 15; // Poll for up to 30 seconds (15 * 2s)
@@ -112,9 +139,11 @@ const PaymentSuccess = () => {
         attempts++;
         setVerifyAttempts(attempts);
         
-        console.log(`Verification attempt ${attempts}/${maxAttempts}`);
+        if (import.meta.env.DEV) {
+          console.log(`Verification attempt ${attempts}/${maxAttempts}`);
+        }
         
-        // Check database first (webhook might have updated it)
+        // SECURITY: Check database status (webhook updates this server-side)
         const { data: payment } = await supabase
           .from("payments")
           .select("status")
@@ -139,7 +168,7 @@ const PaymentSuccess = () => {
           return;
         }
 
-        // Try API verification
+        // Try server-side API verification
         const success = await verifyPaymentWithPayChangu(true);
         
         if (success) {
@@ -189,6 +218,8 @@ const PaymentSuccess = () => {
         return ["Ad-free experience", "Priority support", "VIP badge", "Unlimited likes", "See who likes you", "Advanced filters"];
       case "premium":
         return ["Ad-free experience", "Priority support", "Premium badge", "Extra likes daily", "Read receipts"];
+      case "wallet_topup":
+        return ["Wallet balance added", "Send gifts", "Direct messages"];
       default:
         return ["Ad-free experience", "Supporter badge", "Extra likes daily"];
     }

@@ -15,6 +15,14 @@ interface TopUpDialogProps {
 }
 
 const PRESET_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
+const MIN_AMOUNT = 100;
+const MAX_AMOUNT = 1000000;
+
+// Sanitize amount input
+function sanitizeAmount(value: string): number {
+  const num = parseInt(value.replace(/[^0-9]/g, ""), 10);
+  return Number.isNaN(num) ? 0 : Math.min(Math.max(0, num), MAX_AMOUNT);
+}
 
 export const TopUpDialog = ({ isOpen, onClose, onSuccess }: TopUpDialogProps) => {
   const { user } = useAuth();
@@ -30,18 +38,27 @@ export const TopUpDialog = ({ isOpen, onClose, onSuccess }: TopUpDialogProps) =>
   };
 
   const handleCustomAmount = (value: string) => {
-    const num = parseInt(value) || 0;
-    setCustomAmount(value);
-    if (num >= 100) {
+    const sanitized = value.replace(/[^0-9]/g, "");
+    const num = sanitizeAmount(sanitized);
+    setCustomAmount(sanitized);
+    if (num >= MIN_AMOUNT) {
       setAmount(num);
     }
   };
 
   const handleContinue = () => {
-    if (amount < 100) {
+    if (amount < MIN_AMOUNT) {
       toast({
         title: "Minimum amount",
-        description: "Minimum top-up is MWK 100",
+        description: `Minimum top-up is MWK ${MIN_AMOUNT}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    if (amount > MAX_AMOUNT) {
+      toast({
+        title: "Maximum amount",
+        description: `Maximum top-up is MWK ${MAX_AMOUNT.toLocaleString()}`,
         variant: "destructive",
       });
       return;
@@ -51,6 +68,16 @@ export const TopUpDialog = ({ isOpen, onClose, onSuccess }: TopUpDialogProps) =>
 
   const handlePayChangu = async () => {
     if (!user) return;
+
+    // Validate amount before proceeding
+    if (amount < MIN_AMOUNT || amount > MAX_AMOUNT) {
+      toast({
+        title: "Invalid amount",
+        description: `Amount must be between MWK ${MIN_AMOUNT} and MWK ${MAX_AMOUNT.toLocaleString()}`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsLoading(true);
 
@@ -62,6 +89,7 @@ export const TopUpDialog = ({ isOpen, onClose, onSuccess }: TopUpDialogProps) =>
         .eq("id", user.id)
         .single();
 
+      // SECURITY: Server-side handles payment creation and validation
       const response = await supabase.functions.invoke("process-paychangu-payment", {
         body: {
           amount,
@@ -81,6 +109,7 @@ export const TopUpDialog = ({ isOpen, onClose, onSuccess }: TopUpDialogProps) =>
       const data = response.data;
 
       if (data?.checkout_url) {
+        // SECURITY: Redirect to PayChangu's secure hosted checkout
         window.location.href = data.checkout_url;
       } else {
         throw new Error("No checkout URL received");
@@ -156,11 +185,12 @@ export const TopUpDialog = ({ isOpen, onClose, onSuccess }: TopUpDialogProps) =>
                   </label>
                   <Input
                     type="number"
-                    placeholder="Enter amount (min 100)"
+                    placeholder={`Enter amount (min ${MIN_AMOUNT})`}
                     value={customAmount}
                     onChange={(e) => handleCustomAmount(e.target.value)}
                     className="rounded-xl h-12"
-                    min={100}
+                    min={MIN_AMOUNT}
+                    max={MAX_AMOUNT}
                   />
                 </div>
 
