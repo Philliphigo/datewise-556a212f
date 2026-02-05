@@ -8,10 +8,27 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Heart, CreditCard, Smartphone, DollarSign, Bitcoin, Check, Crown, Star, Zap, Clock, Coins } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+// Input validation helpers
+function sanitizePhoneNumber(phone: string): string {
+  return phone.replace(/[^0-9]/g, "").slice(0, 12);
+}
+
+function validateMalawiPhone(phone: string): boolean {
+  const cleanPhone = phone.replace(/\s/g, "");
+  return /^(099|088|0999|0888)\d{6,7}$/.test(cleanPhone);
+}
+
+function sanitizeAmount(amount: string): number {
+  const num = parseInt(amount.replace(/[^0-9]/g, ""), 10);
+  return Number.isNaN(num) ? 0 : Math.min(Math.max(0, num), 1000000);
+}
 
 const Donate = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -94,6 +111,7 @@ const Donate = () => {
         description: "Please sign in to make a payment",
         variant: "destructive",
       });
+      navigate("/auth");
       return;
     }
 
@@ -106,19 +124,9 @@ const Donate = () => {
       return;
     }
 
-    if (!phoneNumber.trim()) {
-      toast({
-        title: "Phone Number Required",
-        description: "Please enter your mobile money phone number",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate phone number format for Malawi (Airtel: 099x, TNM: 088x)
-    const cleanPhone = phoneNumber.replace(/\s/g, '');
-    const phoneRegex = /^(099|088)\d{7}$/;
-    if (!phoneRegex.test(cleanPhone)) {
+    // Validate phone number if provided
+    const cleanPhone = sanitizePhoneNumber(phoneNumber);
+    if (cleanPhone && !validateMalawiPhone(cleanPhone)) {
       toast({
         title: "Invalid Phone Number",
         description: "Please enter a valid Malawi mobile number (e.g., 0991234567 for Airtel or 0881234567 for TNM)",
@@ -129,11 +137,19 @@ const Donate = () => {
 
     // Validate custom amount
     if (selectedTier === "custom") {
-      const amount = parseInt(customAmount);
+      const amount = sanitizeAmount(customAmount);
       if (!amount || amount < 500) {
         toast({
           title: "Invalid Amount",
           description: "Minimum donation is MWK 500",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (amount > 1000000) {
+        toast({
+          title: "Invalid Amount",
+          description: "Maximum donation is MWK 1,000,000",
           variant: "destructive",
         });
         return;
@@ -152,6 +168,7 @@ const Donate = () => {
       const amount = getTierAmount(selectedTier, 'MWK');
       const tierToSend = selectedTier === "custom" ? "supporter" : selectedTier; // Use supporter tier for custom amounts
 
+      // SECURITY: Server-side handles all payment creation and validation
       const { data, error } = await supabase.functions.invoke("process-paychangu-payment", {
         body: {
           amount,
@@ -160,7 +177,7 @@ const Donate = () => {
           email: user.email || "donor@example.com",
           firstName: profile?.name?.split(" ")[0] || "Donor",
           lastName: profile?.name?.split(" ").slice(1).join(" ") || "User",
-          phoneNumber: cleanPhone,
+          phoneNumber: cleanPhone || undefined,
           customAmount: selectedTier === "custom" ? amount : undefined,
         },
       });
@@ -172,6 +189,7 @@ const Donate = () => {
           title: "Redirecting to Payment",
           description: "You'll be redirected to complete your payment securely",
         });
+        // SECURITY: Redirect to PayChangu's secure hosted checkout
         window.location.href = data.checkout_url;
       }
     } catch (error: any) {

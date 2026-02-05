@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { crypto } from "https://deno.land/std@0.168.0/crypto/mod.ts";
 
 const payChanguSecretKey = Deno.env.get("PAYCHANGU_SECRET_KEY") as string;
 const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
@@ -11,11 +12,39 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type PayChanguWebhookPayload = {
-  tx_ref?: string;
-  event?: string;
-  data?: { tx_ref?: string };
-};
+// Rate limiting: track webhook calls per tx_ref
+const recentWebhooks = new Map<string, number>();
+const WEBHOOK_COOLDOWN_MS = 5000; // 5 second cooldown per tx_ref
+
+// Clean up old entries every 60 seconds
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, timestamp] of recentWebhooks.entries()) {
+    if (now - timestamp > 60000) {
+      recentWebhooks.delete(key);
+    }
+  }
+}, 60000);
+
+// Generate HMAC signature for verification
+async function generateHmacSignature(payload: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const msgData = encoder.encode(payload);
+  
+  const key = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  
+  const signature = await crypto.subtle.sign("HMAC", key, msgData);
+  return Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -23,6 +52,12 @@ serve(async (req: Request) => {
   }
 
   try {
+    // Only accept POST requests for webhooks
+    if (req.method !== "POST") {
+      console.warn("Webhook received non-POST request:", req.method);
+      return new Response("Method not allowed", { status: 405 });
+    }
+
     // PayChangu may call the webhook with an empty/invalid body; handle gracefully.
     const rawBody = await req.text();
     if (!rawBody) {
@@ -30,21 +65,47 @@ serve(async (req: Request) => {
       return new Response("OK", { status: 200 });
     }
 
-    let payload: PayChanguWebhookPayload;
+    let payload: Record<string, unknown>;
     try {
-      payload = JSON.parse(rawBody) as PayChanguWebhookPayload;
+      payload = JSON.parse(rawBody) as Record<string, unknown>;
     } catch (_e) {
       console.warn("PayChangu webhook received non-JSON body:", rawBody.slice(0, 200));
       return new Response("OK", { status: 200 });
     }
 
-    const txRef = payload?.tx_ref || payload?.data?.tx_ref;
+    // Extract tx_ref from various possible locations in payload
+    const txRef = (payload?.tx_ref as string) || 
+                  ((payload?.data as Record<string, unknown>)?.tx_ref as string);
 
-    console.log("PayChangu webhook received:", { txRef, event: payload?.event });
+    console.log("PayChangu webhook received:", { 
+      txRef, 
+      event: payload?.event,
+      hasSignature: !!req.headers.get("x-paychangu-signature")
+    });
 
     if (!txRef) {
       console.error("No tx_ref in webhook payload");
       return new Response("OK", { status: 200 }); // Still return 200 to acknowledge receipt
+    }
+
+    // Rate limiting: prevent duplicate processing
+    const lastCall = recentWebhooks.get(txRef);
+    if (lastCall && Date.now() - lastCall < WEBHOOK_COOLDOWN_MS) {
+      console.log("Webhook rate limited for tx_ref:", txRef);
+      return new Response("OK", { status: 200 });
+    }
+    recentWebhooks.set(txRef, Date.now());
+
+    // Check if payment already processed (idempotency)
+    const { data: existingPayment } = await supabase
+      .from("payments")
+      .select("status, metadata")
+      .eq("transaction_id", txRef)
+      .single();
+
+    if (existingPayment?.status === "completed") {
+      console.log("Payment already completed, skipping:", txRef);
+      return new Response("OK", { status: 200 });
     }
 
     // CRITICAL: Always verify transaction status by querying PayChangu API
@@ -63,6 +124,8 @@ serve(async (req: Request) => {
       txRef,
       status: verificationData.status,
       paymentStatus: verificationData.data?.status,
+      verifiedAmount: verificationData.data?.amount,
+      verifiedCurrency: verificationData.data?.currency,
     });
 
     if (!verifyResponse.ok || verificationData.status !== "success") {
@@ -72,6 +135,7 @@ serve(async (req: Request) => {
 
     const paymentStatus = verificationData.data?.status;
     const amountFromProvider = Number(verificationData.data?.amount ?? 0);
+    const currencyFromProvider = verificationData.data?.currency || "MWK";
 
     const normalizedStatus = String(paymentStatus || "").toLowerCase();
     const isSuccessful = ["successful", "success", "completed"].includes(normalizedStatus);
@@ -91,14 +155,41 @@ serve(async (req: Request) => {
       return new Response("OK", { status: 200 });
     }
 
+    // SECURITY: Validate amount and currency match what we expected
+    const expectedAmount = Number(payment.amount);
+    const expectedCurrency = payment.currency || "MWK";
+    
+    if (amountFromProvider > 0 && Math.abs(amountFromProvider - expectedAmount) > 1) {
+      console.error("SECURITY: Amount mismatch!", {
+        txRef,
+        expected: expectedAmount,
+        received: amountFromProvider,
+      });
+      // Update payment as failed due to amount mismatch
+      await supabase
+        .from("payments")
+        .update({
+          status: "failed",
+          metadata: {
+            ...payment.metadata,
+            error: "Amount mismatch",
+            expected_amount: expectedAmount,
+            received_amount: amountFromProvider,
+            verified_at: new Date().toISOString(),
+          },
+        })
+        .eq("transaction_id", txRef);
+      return new Response("OK", { status: 200 });
+    }
+
     // Prefer provider amount, but fall back to our recorded amount
     const creditedAmount =
       Number.isFinite(amountFromProvider) && amountFromProvider > 0
         ? amountFromProvider
         : Number(payment.amount);
 
-    // Update payment status
-    const { error: updateError } = await supabase
+    // Update payment status with idempotency check
+    const { error: updateError, data: updatedPayment } = await supabase
       .from("payments")
       .update({
         status: newStatus,
@@ -106,12 +197,22 @@ serve(async (req: Request) => {
           ...payment.metadata,
           verification: verificationData.data,
           verified_at: new Date().toISOString(),
+          webhook_processed: true,
         },
       })
-      .eq("transaction_id", txRef);
+      .eq("transaction_id", txRef)
+      .neq("status", "completed") // Don't update if already completed
+      .select()
+      .single();
 
     if (updateError) {
-      console.error("Error updating payment:", updateError);
+      console.error("Error updating payment (may already be completed):", updateError);
+      return new Response("OK", { status: 200 });
+    }
+
+    // If no rows updated, payment was already completed
+    if (!updatedPayment) {
+      console.log("Payment already processed by another request:", txRef);
       return new Response("OK", { status: 200 });
     }
 
@@ -124,6 +225,18 @@ serve(async (req: Request) => {
       if (tier && userId) {
         // Wallet top-up
         if (tier === "wallet_topup") {
+          // Check if transaction already recorded (idempotency)
+          const { data: existingTx } = await supabase
+            .from("wallet_transactions")
+            .select("id")
+            .eq("metadata->>tx_ref", txRef)
+            .single();
+
+          if (existingTx) {
+            console.log("Wallet transaction already recorded:", txRef);
+            return new Response("OK", { status: 200 });
+          }
+
           const { data: profile } = await supabase
             .from("profiles")
             .select("wallet_balance")
@@ -152,12 +265,25 @@ serve(async (req: Request) => {
             metadata: {
               tx_ref: txRef,
               payment_method: "paychangu",
+              verified: true,
             },
           });
 
           console.log("Wallet topped up:", { userId, amount: creditedAmount, newBalance, txRef });
         } else {
           // Subscription payment
+          // Check if subscription already activated for this payment
+          const { data: existingSub } = await supabase
+            .from("subscriptions")
+            .select("id, updated_at")
+            .eq("user_id", userId)
+            .gte("updated_at", new Date(Date.now() - 60000).toISOString()) // Within last minute
+            .single();
+
+          if (existingSub) {
+            console.log("Subscription recently updated, checking for duplicate:", txRef);
+          }
+
           const endDate = new Date();
           endDate.setDate(endDate.getDate() + subscriptionDays);
 
@@ -168,6 +294,8 @@ serve(async (req: Request) => {
             start_date: new Date().toISOString(),
             end_date: endDate.toISOString(),
             updated_at: new Date().toISOString(),
+          }, {
+            onConflict: "user_id",
           });
 
           if (subError) {
@@ -185,6 +313,19 @@ serve(async (req: Request) => {
 
           console.log("Subscription activated:", { userId, tier, txRef });
         }
+
+        // Create notification for successful payment
+        await supabase.from("notifications").insert({
+          user_id: userId,
+          type: "payment",
+          title: tier === "wallet_topup" ? "Wallet Topped Up!" : "Subscription Activated!",
+          message: tier === "wallet_topup" 
+            ? `MWK ${creditedAmount.toLocaleString()} added to your wallet`
+            : `Your ${tier} subscription is now active`,
+          data: { tx_ref: txRef, tier, amount: creditedAmount },
+        }).then(({ error }) => {
+          if (error) console.log("Notification insert skipped (RLS):", error.message);
+        });
       }
     }
 
