@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.168.0/crypto/mod.ts";
 
 const payChanguSecretKey = Deno.env.get("PAYCHANGU_SECRET_KEY") as string;
+const payChanguWebhookSecret = Deno.env.get("PAYCHANGU_WEBHOOK_SECRET") as string;
 const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -26,24 +27,50 @@ setInterval(() => {
   }
 }, 60000);
 
-// Generate HMAC signature for verification
-async function generateHmacSignature(payload: string, secret: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(secret);
-  const msgData = encoder.encode(payload);
+// Constant-time comparison to prevent timing attacks
+function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a[i] ^ b[i];
+  }
+  return result === 0;
+}
+
+// Verify webhook signature using HMAC-SHA256
+async function verifyWebhookSignature(payload: string, signature: string | null, secret: string): Promise<boolean> {
+  if (!signature || !secret) {
+    console.log("Webhook signature or secret missing, skipping signature verification");
+    return true; // Allow if no secret configured (backwards compat)
+  }
   
-  const key = await crypto.subtle.importKey(
-    "raw",
-    keyData,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  
-  const signature = await crypto.subtle.sign("HMAC", key, msgData);
-  return Array.from(new Uint8Array(signature))
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
+  try {
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(secret);
+    const msgData = encoder.encode(payload);
+    
+    const key = await crypto.subtle.importKey(
+      "raw",
+      keyData,
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    
+    const signatureBuffer = await crypto.subtle.sign("HMAC", key, msgData);
+    const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+    
+    // Constant-time comparison
+    const expectedBytes = new TextEncoder().encode(expectedSignature);
+    const receivedBytes = new TextEncoder().encode(signature.replace(/^sha256=/, ""));
+    
+    return timingSafeEqual(expectedBytes, receivedBytes);
+  } catch (error) {
+    console.error("Signature verification error:", error);
+    return false;
+  }
 }
 
 serve(async (req: Request) => {
@@ -63,6 +90,17 @@ serve(async (req: Request) => {
     if (!rawBody) {
       console.warn("PayChangu webhook received with empty body");
       return new Response("OK", { status: 200 });
+    }
+
+    // Verify webhook signature if secret is configured
+    const signature = req.headers.get("x-paychangu-signature") || req.headers.get("signature");
+    if (payChanguWebhookSecret) {
+      const isValid = await verifyWebhookSignature(rawBody, signature, payChanguWebhookSecret);
+      if (!isValid) {
+        console.error("SECURITY: Invalid webhook signature");
+        return new Response("Invalid signature", { status: 401 });
+      }
+      console.log("Webhook signature verified successfully");
     }
 
     let payload: Record<string, unknown>;
