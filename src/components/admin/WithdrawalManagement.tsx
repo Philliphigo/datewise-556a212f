@@ -106,6 +106,7 @@ export const WithdrawalManagement = () => {
   const handleApprove = async (withdrawal: Withdrawal) => {
     setProcessing(withdrawal.id);
     try {
+      // Update withdrawal status
       const { error } = await supabase
         .from('withdrawals')
         .update({
@@ -115,6 +116,25 @@ export const WithdrawalManagement = () => {
         .eq('id', withdrawal.id);
 
       if (error) throw error;
+
+      // Also update the corresponding wallet_transaction status
+      const { error: txError } = await supabase
+        .from('wallet_transactions')
+        .update({ status: 'completed' })
+        .eq('metadata->>withdrawal_id', withdrawal.id);
+
+      if (txError) {
+        console.error("Failed to update wallet transaction:", txError);
+      }
+
+      // Create notification for user
+      await supabase.from('notifications').insert({
+        user_id: withdrawal.user_id,
+        type: 'withdrawal_completed',
+        title: '💸 Withdrawal Complete!',
+        message: `MWK ${withdrawal.net_amount.toLocaleString()} has been sent to ${withdrawal.phone_number}`,
+        data: { withdrawal_id: withdrawal.id, amount: withdrawal.net_amount }
+      });
 
       toast({
         title: "✅ Withdrawal Approved",
@@ -150,6 +170,24 @@ export const WithdrawalManagement = () => {
 
       if (wdError) throw wdError;
 
+      // Also update the corresponding wallet_transaction status
+      const { error: txError } = await supabase
+        .from('wallet_transactions')
+        .update({ 
+          status: 'failed',
+          metadata: {
+            withdrawal_id: failDialog.id,
+            failure_reason: failureReason || 'Transaction failed',
+            refunded: true,
+            refunded_at: new Date().toISOString()
+          }
+        })
+        .eq('metadata->>withdrawal_id', failDialog.id);
+
+      if (txError) {
+        console.error("Failed to update wallet transaction:", txError);
+      }
+
       // Refund user's balance
       const { data: profile } = await supabase
         .from('profiles')
@@ -163,6 +201,15 @@ export const WithdrawalManagement = () => {
           .update({ wallet_balance: profile.wallet_balance + failDialog.amount })
           .eq('id', failDialog.user_id);
       }
+
+      // Create notification for user
+      await supabase.from('notifications').insert({
+        user_id: failDialog.user_id,
+        type: 'withdrawal_failed',
+        title: '❌ Withdrawal Failed',
+        message: `Your withdrawal of MWK ${failDialog.amount.toLocaleString()} was not processed. The funds have been returned to your wallet.`,
+        data: { withdrawal_id: failDialog.id, amount: failDialog.amount, reason: failureReason }
+      });
 
       toast({
         title: "❌ Withdrawal Rejected",
